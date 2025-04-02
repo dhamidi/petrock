@@ -35,9 +35,8 @@ func Execute() error {
 }
 
 func init() {
-	// Add subcommands here
-	// newCmd is defined in cmd/petrock/new.go
-	// featureCmd will be defined in cmd/petrock/feature.go
+	// Subcommands are added in their respective files' init() functions (e.g., new.go, test.go).
+	// Placeholder for adding featureCmd later:
 	// rootCmd.AddCommand(featureCmd)
 }
 
