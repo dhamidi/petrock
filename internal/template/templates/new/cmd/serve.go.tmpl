@@ -1,0 +1,182 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"{{ .ModuleName }}/core" // Assuming core package exists
+
+	"github.com/gorilla/mux"
+	"github.com/spf13/cobra"
+)
+
+// NewServeCmd creates the `serve` subcommand
+func NewServeCmd() *cobra.Command {
+	serveCmd := &cobra.Command{
+		Use:   "serve",
+		Short: "Starts the HTTP server",
+		Long:  `Starts the HTTP server to handle web requests.`,
+		RunE:  runServe,
+	}
+
+	// Add flags like --port, --host
+	serveCmd.Flags().IntP("port", "p", 8080, "Port to listen on")
+	serveCmd.Flags().String("host", "localhost", "Host to bind to")
+	// TODO: Add flags for database path, etc.
+
+	return serveCmd
+}
+
+func runServe(cmd *cobra.Command, args []string) error {
+	port, _ := cmd.Flags().GetInt("port")
+	host, _ := cmd.Flags().GetString("host")
+	addr := fmt.Sprintf("%s:%d", host, port)
+
+	// --- Initialization ---
+	slog.Info("Initializing application...")
+
+	// Example: Initialize database connection (replace with actual logic)
+	dbPath := "app.db" // TODO: Make configurable
+	db, err := core.SetupDatabase(dbPath)
+	if err != nil {
+		return fmt.Errorf("failed to setup database: %w", err)
+	}
+	defer db.Close()
+
+	// Example: Initialize message log
+	// TODO: Instantiate a real encoder (e.g., JSONEncoder)
+	// messageLog, err := core.NewMessageLog(db, &core.JSONEncoder{})
+	// if err != nil {
+	// 	return fmt.Errorf("failed to initialize message log: %w", err)
+	// }
+	// TODO: Register message types with messageLog.RegisterType(...)
+
+	// Example: Initialize command/query registries (assuming global or passed instances)
+	// commandRegistry := core.NewCommandRegistry()
+	// queryRegistry := core.NewQueryRegistry()
+
+	// Example: Initialize application state by replaying log
+	// TODO: Implement state struct(s) and Apply method
+	// appState := core.NewAppState() // Replace with actual state struct
+	// messages, err := messageLog.Load(context.Background())
+	// if err != nil {
+	// 	return fmt.Errorf("failed to load messages for replay: %w", err)
+	// }
+	// for _, msg := range messages {
+	// 	if err := appState.Apply(msg); err != nil { // Assuming Apply method exists
+	// 		slog.Error("Failed to apply message during replay", "error", err, "message", msg)
+	// 		// Decide whether to continue or fail startup
+	// 	}
+	// }
+	// slog.Info("State replay completed", "message_count", len(messages))
+
+	// Example: Register feature handlers
+	// RegisterAllFeatures(commandRegistry, queryRegistry /*, appState, messageLog */) // Pass necessary dependencies
+
+	// --- HTTP Server Setup ---
+	slog.Info("Setting up HTTP server...")
+	router := mux.NewRouter()
+
+	// Example: Setup middleware (logging, CSRF, sessions)
+	// router.Use(loggingMiddleware)
+	// router.Use(csrfMiddleware) // Needs session middleware first
+	// router.Use(sessionMiddleware)
+
+	// Example: Setup static file serving (if using embedded assets)
+	// coreAssetsFS := core.GetAssetsFS() // Assuming core has embedded assets
+	// router.PathPrefix("/assets/core/").Handler(http.StripPrefix("/assets/core/", http.FileServer(http.FS(coreAssetsFS))))
+	// TODO: Add similar handlers for feature assets
+
+	// Example: Define HTTP routes/handlers
+	// router.HandleFunc("/", core.HandleIndex(queryRegistry)).Methods("GET") // Pass dependencies
+	// TODO: Add routes for features (e.g., /posts, /posts/{id})
+
+	// --- Server Start and Shutdown ---
+	server := &http.Server{
+		Addr:         addr,
+		Handler:      router, // Use the configured router
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+
+	// Channel to listen for errors starting the server
+	serverErrors := make(chan error, 1)
+
+	// Start the server in a goroutine
+	go func() {
+		slog.Info("Starting server", "address", addr)
+		serverErrors <- server.ListenAndServe()
+	}()
+
+	// Channel to listen for interrupt or terminate signals
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
+	// Block until we receive a signal or server error
+	select {
+	case err := <-serverErrors:
+		return fmt.Errorf("server error: %w", err)
+	case sig := <-shutdown:
+		slog.Info("Shutdown signal received", "signal", sig)
+
+		// Graceful shutdown context with timeout
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+
+		// Attempt to gracefully shut down the server
+		if err := server.Shutdown(ctx); err != nil {
+			slog.Error("Graceful shutdown failed", "error", err)
+			// Force close if shutdown fails
+			if closeErr := server.Close(); closeErr != nil {
+				slog.Error("Failed to close server", "error", closeErr)
+			}
+			return fmt.Errorf("graceful shutdown failed: %w", err)
+		}
+		slog.Info("Server gracefully stopped")
+	}
+
+	return nil
+}
+
+// --- Placeholder Middleware/Handlers (Replace with actual implementations) ---
+
+// func loggingMiddleware(next http.Handler) http.Handler {
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		slog.Info("Request received", "method", r.Method, "path", r.URL.Path)
+// 		next.ServeHTTP(w, r)
+// 	})
+// }
+
+// func csrfMiddleware(next http.Handler) http.Handler {
+// 	// TODO: Implement CSRF protection (e.g., using gorilla/csrf)
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		// Add CSRF token check logic here
+// 		next.ServeHTTP(w, r)
+// 	})
+// }
+
+// func sessionMiddleware(next http.Handler) http.Handler {
+// 	// TODO: Implement session handling (e.g., using gorilla/sessions)
+// 	// var store = sessions.NewCookieStore([]byte("your-secret-key")) // Use secure key management
+// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 		// Manage session data here
+// 		next.ServeHTTP(w, r)
+// 	})
+// }
+
+// func HandleIndex(queryRegistry *core.QueryRegistry) http.HandlerFunc {
+// 	return func(w http.ResponseWriter, r *http.Request) {
+// 		// Example: Render index page
+// 		// component := core.IndexPage() // Get component from core/page_index.go
+// 		// layout := core.Layout("Home", component) // Wrap in layout
+// 		// layout.Render(w) // Render component
+// 		fmt.Fprintln(w, "Welcome to {{ .ProjectName }}!") // Placeholder
+// 	}
+// }

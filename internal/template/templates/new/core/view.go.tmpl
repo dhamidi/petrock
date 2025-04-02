@@ -1,0 +1,148 @@
+package core
+
+import (
+	g "github.com/gomponents/gomponents"
+	. "github.com/gomponents/gomponents/components"
+	"github.com/gomponents/gomponents/html"
+)
+
+// --- Basic Elements with Tailwind ---
+
+// Button renders a styled button.
+func Button(text string, attrs ...g.Node) g.Node {
+	return html.Button(
+		// Example Tailwind classes - customize as needed
+		g.Classes{
+			"py-2", "px-4", "bg-blue-500", "text-white", "font-semibold",
+			"rounded-lg", "shadow-md", "hover:bg-blue-700", "focus:outline-none",
+			"focus:ring-2", "focus:ring-blue-400", "focus:ring-opacity-75",
+		},
+		g.Text(text),
+		g.Group(attrs),
+	)
+}
+
+// Input renders a styled input field.
+func Input(inputType, name, value string, attrs ...g.Node) g.Node {
+	return html.Input(
+		html.Type(inputType),
+		html.Name(name),
+		html.Value(value),
+		// Example Tailwind classes
+		g.Classes{
+			"mt-1", "block", "w-full", "rounded-md", "border-gray-300",
+			"shadow-sm", "focus:border-indigo-300", "focus:ring",
+			"focus:ring-indigo-200", "focus:ring-opacity-50",
+		},
+		g.Group(attrs),
+	)
+}
+
+// TextArea renders a styled textarea.
+func TextArea(name, value string, attrs ...g.Node) g.Node {
+	return html.Textarea(
+		html.Name(name),
+		// Example Tailwind classes
+		g.Classes{
+			"mt-1", "block", "w-full", "rounded-md", "border-gray-300",
+			"shadow-sm", "focus:border-indigo-300", "focus:ring",
+			"focus:ring-indigo-200", "focus:ring-opacity-50",
+		},
+		g.Group(attrs),
+		g.Text(value), // Text content for textarea
+	)
+}
+
+// Select renders a styled select dropdown.
+func Select(name string, options map[string]string, selectedValue string, attrs ...g.Node) g.Node {
+	opts := make([]g.Node, 0, len(options))
+	for val, text := range options {
+		opt := html.Option(html.Value(val), g.Text(text))
+		if val == selectedValue {
+			opt = g.Group(opt, html.Selected())
+		}
+		opts = append(opts, opt)
+	}
+
+	return html.Select(
+		html.Name(name),
+		// Example Tailwind classes
+		g.Classes{
+			"mt-1", "block", "w-full", "rounded-md", "border-gray-300",
+			"shadow-sm", "focus:border-indigo-300", "focus:ring",
+			"focus:ring-indigo-200", "focus:ring-opacity-50",
+		},
+		g.Group(attrs),
+		g.Group(opts),
+	)
+}
+
+// --- Form Handling ---
+
+// FormError renders error messages for a specific field from a core.Form instance.
+// Returns nil if there's no error for the field.
+func FormError(form *Form, field string) g.Node {
+	if !form.HasError(field) {
+		return nil
+	}
+	// Example Tailwind classes for error message
+	return html.Span(g.Classes{"text-red-600", "text-sm", "mt-1"}, g.Text(form.GetError(field)))
+}
+
+// CSRFTokenInput renders a hidden input field for CSRF token protection.
+// Assumes you have a way to get the current CSRF token.
+func CSRFTokenInput(token string) g.Node {
+	// The name "csrf_token" is common, adjust if your CSRF library expects differently.
+	return html.Input(html.Type("hidden"), html.Name("csrf_token"), html.Value(token))
+}
+
+// FieldGroup combines a label, input/textarea/select, and error message.
+func FieldGroup(label, fieldName string, inputElement g.Node, form *Form) g.Node {
+	return html.Div(
+		g.Classes{"mb-4"}, // Margin bottom for spacing
+		html.Label(
+			html.For(fieldName),
+			g.Classes{"block", "text-sm", "font-medium", "text-gray-700"},
+			g.Text(label),
+		),
+		inputElement,
+		FormError(form, fieldName), // Display error if present
+	)
+}
+
+// --- Page Structure ---
+
+// Page component (can be used within Layout)
+func Page(title string, children ...g.Node) g.Node {
+	return html.Div(
+		g.Classes{"container", "mx-auto", "p-4"}, // Basic container styling
+		html.H1(g.Classes{"text-2xl", "font-bold", "mb-4"}, g.Text(title)),
+		g.Group(children),
+	)
+}
+
+// --- Asset Handling ---
+
+// StylesheetLink creates a <link> tag for a CSS stylesheet.
+func StylesheetLink(href string) g.Node {
+	return html.Link(html.Rel("stylesheet"), html.Href(href))
+}
+
+// ScriptLink creates a <script> tag for a JavaScript file.
+func ScriptLink(src string, async bool, defer bool) g.Node {
+	attrs := []g.Node{html.Src(src)}
+	if async {
+		attrs = append(attrs, html.Async())
+	}
+	if defer {
+		attrs = append(attrs, Defer()) // Assuming Defer component exists or use g.Attr("defer", "defer")
+	}
+	return html.Script(attrs...)
+}
+
+// --- Helper Components (from gomponents/components) ---
+
+// Defer adds the defer attribute to an element (useful for scripts).
+func Defer() g.Node {
+	return g.Attr("defer")
+}

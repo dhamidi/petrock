@@ -1,0 +1,46 @@
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"{{ .ModuleName }}/core" // Assuming core package exists
+
+	"github.com/spf13/cobra"
+)
+
+var rootCmd = &cobra.Command{
+	Use:   "{{ .ProjectName }}",
+	Short: "The main command for the {{ .ProjectName }} application.",
+	Long:  `{{ .ProjectName }} application entry point.`,
+	// Run: func(cmd *cobra.Command, args []string) { }, // Or remove if subcommands are mandatory
+}
+
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+func Execute() error {
+	// Initialize core components (example)
+	// TODO: Replace with actual initialization logic
+	core.InitLog() // Example
+	core.InitRegistries() // Example
+
+	// Register features
+	// TODO: Replace with actual feature registration logic
+	// RegisterAllFeatures(core.Commands, core.Queries) // Example call
+
+	return rootCmd.Execute()
+}
+
+func init() {
+	// Add subcommands here
+	rootCmd.AddCommand(NewServeCmd())
+	rootCmd.AddCommand(NewBuildCmd())
+	rootCmd.AddCommand(NewDeployCmd())
+}
+
+func main() {
+	if err := Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+}

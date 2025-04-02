@@ -1,0 +1,16 @@
+package main
+
+import (
+	"{{ .ModuleName }}/core"
+	// petrock:import-feature - Do not remove or modify this line
+)
+
+// RegisterAllFeatures registers handlers and types for all compiled-in features.
+func RegisterAllFeatures(
+	commands *core.CommandRegistry,
+	queries *core.QueryRegistry,
+	// messageLog *core.MessageLog, // Uncomment if message type registration is needed
+	// Add other dependencies like state if needed
+) {
+	// petrock:register-feature - Do not remove or modify this line
+}

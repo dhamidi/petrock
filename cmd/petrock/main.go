@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	// Placeholder for utils when created: "petrock/internal/utils"
+	"petrock/internal/utils" // Import the utils package
 )
 
 var rootCmd = &cobra.Command{
@@ -18,10 +18,12 @@ and generate feature modules within existing Petrock projects.`,
 		if cmd.Name() == "new" {
 			return nil
 		}
-		// Placeholder: Call utils.CheckCleanWorkspace() here
-		// if err := utils.CheckCleanWorkspace(); err != nil {
-		// 	return fmt.Errorf("git workspace is not clean, please commit or stash changes: %w", err)
-		// }
+		// Check if the Git workspace is clean before running commands other than 'new'
+		if err := utils.CheckCleanWorkspace(); err != nil {
+			// Return the error directly; CheckCleanWorkspace provides context.
+			// Adding more context here might be redundant unless clarifying *why* it's checked.
+			return err
+		}
 		return nil
 	},
 }
@@ -33,8 +35,9 @@ func Execute() error {
 }
 
 func init() {
-	// Placeholder: Add subcommands here later
-	// rootCmd.AddCommand(newCmd)
+	// Add subcommands here
+	// newCmd is defined in cmd/petrock/new.go
+	// featureCmd will be defined in cmd/petrock/feature.go
 	// rootCmd.AddCommand(featureCmd)
 }
 

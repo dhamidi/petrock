@@ -1,0 +1,74 @@
+package core
+
+import (
+	g "github.com/gomponents/gomponents"
+	"github.com/gomponents/gomponents/html"
+)
+
+// Layout renders the full HTML page structure.
+// It includes common head elements and wraps the body content.
+func Layout(pageTitle string, bodyContent ...g.Node) g.Node {
+	return html.Html(
+		html.Lang("en"),
+		html.Head(
+			html.Meta(html.Charset("utf-8")),
+			html.Meta(html.Name("viewport"), html.Content("width=device-width, initial-scale=1")),
+			html.TitleEl(g.Text(pageTitle)), // Use TitleEl for <title>
+
+			// Link to Tailwind CSS (via CDN for simplicity, replace with local build if needed)
+			// Consider using the project's own asset bundling pipeline
+			StylesheetLink("https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"),
+
+			// Placeholder for other CSS or JS links
+			// StylesheetLink("/assets/core/main.css"), // Example for core assets
+			// ScriptLink("/assets/core/main.js", false, true), // Example core JS (defer)
+
+			// Include Hotwire/Stimulus if used
+			// ScriptLink("https://unpkg.com/@hotwired/turbo@7.1.0/dist/turbo.es2017-umd.js", false, true),
+			// ScriptLink("https://unpkg.com/stimulus/dist/stimulus.umd.js", false, true),
+		),
+		html.Body(
+			// Basic body styling (e.g., background color)
+			g.Classes{"bg-gray-100", "font-sans", "antialiased"},
+
+			// Optional: Add common header/navigation here
+			// Navbar(),
+
+			// Main content area
+			html.Main(
+				g.Group(bodyContent), // Embed the page-specific content
+			),
+
+			// Optional: Add common footer here
+			// Footer(),
+
+			// Placeholder for page-specific scripts or bottom-of-body includes
+		),
+	)
+}
+
+// --- Optional Common Components ---
+
+// Navbar example (customize with actual links and styling)
+// func Navbar() g.Node {
+// 	return html.Nav(
+// 		g.Classes{"bg-gray-800", "p-4", "text-white"},
+// 		html.Div(
+// 			g.Classes{"container", "mx-auto", "flex", "justify-between"},
+// 			html.A(html.Href("/"), g.Text("{{ .ProjectName }}")), // Use template var if needed
+// 			html.Div(
+// 				// Add nav links here
+// 				html.A(html.Href("/"), g.Classes{"px-3"}, g.Text("Home")),
+// 				// html.A(html.Href("/posts"), g.Classes{"px-3"}, g.Text("Posts")), // Example feature link
+// 			),
+// 		),
+// 	)
+// }
+
+// Footer example
+// func Footer() g.Node {
+// 	return html.Footer(
+// 		g.Classes{"bg-gray-200", "text-center", "p-4", "mt-8"},
+// 		g.Textf("© %d {{ .ProjectName }}", time.Now().Year()), // Use template var if needed
+// 	)
+// }
