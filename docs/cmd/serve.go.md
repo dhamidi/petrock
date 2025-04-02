@@ -9,4 +9,4 @@ This file defines the `serve` subcommand, responsible for starting the HTTP serv
 ## Functions
 
 - `NewServeCmd() *cobra.Command`: Creates and configures the `serve` subcommand, including flags (e.g., `--port`, `--host`). Returns the Cobra command object.
-- `runServe(cmd *cobra.Command, args []string) error`: The function executed when the `serve` command is invoked. It parses flags, initializes the core components (like registries, state, log), sets up the HTTP router and handlers, and starts the HTTP server.
+- `runServe(cmd *cobra.Command, args []string) error`: The function executed when the `serve` command is invoked. It parses flags, initializes the core components (like registries, state, log), sets up the HTTP router (`net/http.ServeMux`) and handlers, and starts the HTTP server.

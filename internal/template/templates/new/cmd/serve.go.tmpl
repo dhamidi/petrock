@@ -12,7 +12,7 @@ import (
 
 	"{{ .ModuleName }}/core" // Assuming core package exists
 
-	"github.com/gorilla/mux"
+	// Use standard library for routing
 	"github.com/spf13/cobra"
 )
 
@@ -81,26 +81,29 @@ func runServe(cmd *cobra.Command, args []string) error {
 
 	// --- HTTP Server Setup ---
 	slog.Info("Setting up HTTP server...")
-	router := mux.NewRouter()
+	mux := http.NewServeMux()
 
-	// Example: Setup middleware (logging, CSRF, sessions)
-	// router.Use(loggingMiddleware)
-	// router.Use(csrfMiddleware) // Needs session middleware first
-	// router.Use(sessionMiddleware)
+	// Example: Setup middleware (logging, CSRF)
+	// Note: Standard library middleware is often wrapped around specific handlers or the global mux.
+	// var handler http.Handler = mux
+	// handler = loggingMiddleware(handler)
+	// handler = csrfMiddleware(handler) // CSRF often needs session state, which was removed. Re-evaluate CSRF strategy.
 
 	// Example: Setup static file serving (if using embedded assets)
 	// coreAssetsFS := core.GetAssetsFS() // Assuming core has embedded assets
-	// router.PathPrefix("/assets/core/").Handler(http.StripPrefix("/assets/core/", http.FileServer(http.FS(coreAssetsFS))))
+	// mux.Handle("/assets/core/", http.StripPrefix("/assets/core/", http.FileServer(http.FS(coreAssetsFS))))
 	// TODO: Add similar handlers for feature assets
 
 	// Example: Define HTTP routes/handlers
-	// router.HandleFunc("/", core.HandleIndex(queryRegistry)).Methods("GET") // Pass dependencies
-	// TODO: Add routes for features (e.g., /posts, /posts/{id})
+	// Note: net/http mux uses pattern-based routing. For path parameters like /posts/{id},
+	// you'd typically check r.URL.Path inside the handler or use a small helper/library.
+	mux.HandleFunc("GET /", core.HandleIndex(/* queryRegistry */)) // Pass dependencies
+	// TODO: Add routes for features (e.g., mux.HandleFunc("GET /posts", handleListPosts), mux.HandleFunc("GET /posts/{id}", handleGetPost))
 
 	// --- Server Start and Shutdown ---
 	server := &http.Server{
 		Addr:         addr,
-		Handler:      router, // Use the configured router
+		Handler:      mux, // Use the configured mux (potentially wrapped in middleware)
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
