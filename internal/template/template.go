@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"petrock/internal/utils" // Assuming utils package is at this path
+	"github.com/dhamidi/petrock/internal/utils" // Use correct module path
 )
 
 //go:embed all:templates

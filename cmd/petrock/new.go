@@ -9,8 +9,8 @@ import (
 	"regexp"
 	"strings"
 
-	"petrock/internal/template"
-	"petrock/internal/utils"
+	"github.com/dhamidi/petrock/internal/template"
+	"github.com/dhamidi/petrock/internal/utils"
 
 	"github.com/spf13/cobra"
 )

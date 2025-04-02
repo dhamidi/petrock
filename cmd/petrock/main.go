@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"petrock/internal/utils" // Import the utils package
+	"github.com/dhamidi/petrock/internal/utils" // Import the utils package
 )
 
 var rootCmd = &cobra.Command{
