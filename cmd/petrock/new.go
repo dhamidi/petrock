@@ -116,14 +116,7 @@ func runNew(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Initialize Go module (after go.mod is created)
-	slog.Debug("Initializing Go module", "path", projectName, "module", modulePath)
-	if err := utils.GoModInit(projectName, modulePath); err != nil {
-		// GoModInit already includes modulePath in its error message
-		return fmt.Errorf("failed to initialize go module: %w", err)
-	}
-
-	// Tidy Go module dependencies
+	// Tidy Go module dependencies (after go.mod and source files are created)
 	slog.Debug("Running go mod tidy", "path", projectName)
 	if err := utils.GoModTidy(projectName); err != nil {
 		return fmt.Errorf("failed to run go mod tidy: %w", err)
