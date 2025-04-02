@@ -29,7 +29,7 @@ func Layout(pageTitle string, bodyContent ...g.Node) g.Node {
 		),
 		html.Body(
 			// Basic body styling (e.g., background color)
-			Classes{"bg-gray-100", "font-sans", "antialiased"}, // Use Classes directly
+			Classes{"bg-gray-100": true, "font-sans": true, "antialiased": true}, // Correct map literal syntax
 
 			// Optional: Add common header/navigation here
 			// Navbar(),
@@ -52,23 +52,25 @@ func Layout(pageTitle string, bodyContent ...g.Node) g.Node {
 // Navbar example (customize with actual links and styling)
 // func Navbar() g.Node {
 // 	return html.Nav(
-// 		Classes{"bg-gray-800", "p-4", "text-white"}, // Use Classes directly
+// 		Classes{"bg-gray-800": true, "p-4": true, "text-white": true}, // Correct map literal syntax
 // 		html.Div(
-// 			Classes{"container", "mx-auto", "flex", "justify-between"}, // Use Classes directly
+// 			Classes{"container": true, "mx-auto": true, "flex": true, "justify-between": true}, // Correct map literal syntax
 // 			html.A(html.Href("/"), g.Text("{{ .ProjectName }}")), // Use template var if needed
 // 			html.Div(
 // 				// Add nav links here
-// 				html.A(html.Href("/"), Classes{"px-3"}, g.Text("Home")), // Use Classes directly
-// 				// html.A(html.Href("/posts"), Classes{"px-3"}, g.Text("Posts")), // Example feature link
+// 				html.A(html.Href("/"), Classes{"px-3": true}, g.Text("Home")), // Correct map literal syntax
+// 				// html.A(html.Href("/posts"), Classes{"px-3": true}, g.Text("Posts")), // Example feature link
 // 			),
 // 		),
 // 	)
 // }
 
+import "time" // Add missing import for time.Now()
+
 // Footer example
 // func Footer() g.Node {
 // 	return html.Footer(
-// 		Classes{"bg-gray-200", "text-center", "p-4", "mt-8"}, // Use Classes directly
+// 		Classes{"bg-gray-200": true, "text-center": true, "p-4": true, "mt-8": true}, // Correct map literal syntax
 // 		g.Textf("© %d {{ .ProjectName }}", time.Now().Year()), // Use template var if needed
 // 	)
 // }
