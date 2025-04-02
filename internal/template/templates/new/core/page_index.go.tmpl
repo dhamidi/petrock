@@ -12,12 +12,12 @@ import (
 func IndexPage() g.Node {
 	return Page("Welcome!", // Use the Page component from core/view.go
 		html.P(
-			g.Classes{"text-lg", "mb-4"},
+			Classes{"text-lg", "mb-4"}, // Use Classes directly
 			g.Text("Welcome to your new Petrock-generated application!"),
 		),
 		html.P(
 			g.Text("You can start by adding features using: "),
-			html.Code(g.Classes{"bg-gray-200", "p-1", "rounded"}, g.Text("petrock feature <feature_name>")),
+			html.Code(Classes{"bg-gray-200", "p-1", "rounded"}, g.Text("petrock feature <feature_name>")), // Use Classes directly
 		),
 		// Add more introductory content or links here
 	)

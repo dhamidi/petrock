@@ -29,7 +29,7 @@ func Layout(pageTitle string, bodyContent ...g.Node) g.Node {
 		),
 		html.Body(
 			// Basic body styling (e.g., background color)
-			g.Classes{"bg-gray-100", "font-sans", "antialiased"},
+			Classes{"bg-gray-100", "font-sans", "antialiased"}, // Use Classes directly
 
 			// Optional: Add common header/navigation here
 			// Navbar(),
@@ -52,14 +52,14 @@ func Layout(pageTitle string, bodyContent ...g.Node) g.Node {
 // Navbar example (customize with actual links and styling)
 // func Navbar() g.Node {
 // 	return html.Nav(
-// 		g.Classes{"bg-gray-800", "p-4", "text-white"},
+// 		Classes{"bg-gray-800", "p-4", "text-white"}, // Use Classes directly
 // 		html.Div(
-// 			g.Classes{"container", "mx-auto", "flex", "justify-between"},
+// 			Classes{"container", "mx-auto", "flex", "justify-between"}, // Use Classes directly
 // 			html.A(html.Href("/"), g.Text("{{ .ProjectName }}")), // Use template var if needed
 // 			html.Div(
 // 				// Add nav links here
-// 				html.A(html.Href("/"), g.Classes{"px-3"}, g.Text("Home")),
-// 				// html.A(html.Href("/posts"), g.Classes{"px-3"}, g.Text("Posts")), // Example feature link
+// 				html.A(html.Href("/"), Classes{"px-3"}, g.Text("Home")), // Use Classes directly
+// 				// html.A(html.Href("/posts"), Classes{"px-3"}, g.Text("Posts")), // Example feature link
 // 			),
 // 		),
 // 	)
@@ -68,7 +68,7 @@ func Layout(pageTitle string, bodyContent ...g.Node) g.Node {
 // Footer example
 // func Footer() g.Node {
 // 	return html.Footer(
-// 		g.Classes{"bg-gray-200", "text-center", "p-4", "mt-8"},
+// 		Classes{"bg-gray-200", "text-center", "p-4", "mt-8"}, // Use Classes directly
 // 		g.Textf("© %d {{ .ProjectName }}", time.Now().Year()), // Use template var if needed
 // 	)
 // }
