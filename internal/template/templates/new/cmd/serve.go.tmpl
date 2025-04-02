@@ -158,23 +158,18 @@ func runServe(cmd *cobra.Command, args []string) error {
 // }
 
 // func csrfMiddleware(next http.Handler) http.Handler {
-// 	// TODO: Implement CSRF protection (e.g., using gorilla/csrf)
+// 	// TODO: Implement CSRF protection (e.g., using standard library techniques or other allowed libraries)
+// 	// Re-evaluate CSRF strategy as session state (often used by CSRF libraries) was removed.
 // 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 // 		// Add CSRF token check logic here
 // 		next.ServeHTTP(w, r)
 // 	})
 // }
 
-// func sessionMiddleware(next http.Handler) http.Handler {
-// 	// TODO: Implement session handling (e.g., using gorilla/sessions)
-// 	// var store = sessions.NewCookieStore([]byte("your-secret-key")) // Use secure key management
-// 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 		// Manage session data here
-// 		next.ServeHTTP(w, r)
-// 	})
-// }
+// Session middleware removed as gorilla/sessions is not allowed.
+// Consider alternative session management if needed (e.g., client-side tokens, other libraries).
 
-// func HandleIndex(queryRegistry *core.QueryRegistry) http.HandlerFunc {
+// func HandleIndex(/* queryRegistry *core.QueryRegistry */) http.HandlerFunc {
 // 	return func(w http.ResponseWriter, r *http.Request) {
 // 		// Example: Render index page
 // 		// component := core.IndexPage() // Get component from core/page_index.go
