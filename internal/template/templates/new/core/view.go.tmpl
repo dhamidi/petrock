@@ -129,20 +129,21 @@ func StylesheetLink(href string) g.Node {
 }
 
 // ScriptLink creates a <script> tag for a JavaScript file.
-func ScriptLink(src string, async bool, defer bool) g.Node {
+// useDefer indicates if the 'defer' attribute should be added.
+func ScriptLink(src string, async bool, useDefer bool) g.Node {
 	attrs := []g.Node{html.Src(src)}
 	if async {
 		attrs = append(attrs, html.Async())
 	}
-	if defer {
-		attrs = append(attrs, Defer()) // Assuming Defer component exists or use g.Attr("defer", "defer")
+	if useDefer {
+		attrs = append(attrs, DeferAttr()) // Use renamed helper function
 	}
 	return html.Script(attrs...)
 }
 
 // --- Helper Components (from gomponents/components) ---
 
-// Defer adds the defer attribute to an element (useful for scripts).
-func Defer() g.Node {
+// DeferAttr returns a gomponents node that adds the defer attribute.
+func DeferAttr() g.Node {
 	return g.Attr("defer")
 }
