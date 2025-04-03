@@ -59,7 +59,8 @@ func Select(name string, options map[string]string, selectedValue string, attrs 
 	for val, text := range options {
 		opt := html.Option(html.Value(val), g.Text(text))
 		if val == selectedValue {
-			opt = g.Group(opt, html.Selected())
+			// Correctly pass a slice to g.Group
+			opt = g.Group([]g.Node{opt, html.Selected()})
 		}
 		opts = append(opts, opt)
 	}
