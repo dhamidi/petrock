@@ -19,10 +19,10 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() error {
-	// Initialize core components (example)
-	// TODO: Replace with actual initialization logic
-	core.InitLog() // Example
-	core.InitRegistries() // Example
+	// Initialization of core components like DB, registries, etc.,
+	// is typically done within the specific command that needs them (e.g., 'serve').
+	// core.InitLog() // Example - Removed as global init is discouraged
+	// core.InitRegistries() // Example - Removed as global init is discouraged
 
 	// Register features
 	// TODO: Replace with actual feature registration logic
