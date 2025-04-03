@@ -1,6 +1,6 @@
 module github.com/dhamidi/petrock
 
-go 1.23.2
+go 1.23 // Updated Go version
 
 require github.com/spf13/cobra v1.9.1
 
