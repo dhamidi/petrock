@@ -2,19 +2,20 @@ package core
 
 import (
 	g "github.com/maragudk/gomponents" // Use canonical import path
+	. "github.com/maragudk/gomponents/components" // Dot-import for helpers like Classes
 	"github.com/maragudk/gomponents/html"
-	"time" // Add missing import for time.Now()
+	// "time" // Removed as it's only used in commented code
 )
 
 // Layout renders the full HTML page structure.
 // It includes common head elements and wraps the body content.
 func Layout(pageTitle string, bodyContent ...g.Node) g.Node {
-	return html.Html(
+	return html.HTML( // Corrected casing: html.HTML
 		html.Lang("en"),
-		html.Head(
-			html.Meta(html.Charset("utf-8")),
-			html.Meta(html.Name("viewport"), html.Content("width=device-width, initial-scale=1")),
-			html.TitleEl(g.Text(pageTitle)), // Use TitleEl for <title>
+		html.Head( // Corrected casing: html.Head
+			html.Meta(html.Charset("utf-8")), // Corrected casing: html.Meta
+			html.Meta(html.Name("viewport"), html.Content("width=device-width, initial-scale=1")), // Corrected casing: html.Meta
+			html.TitleEl(g.Text(pageTitle)), // TitleEl is correct
 
 			// Link to Tailwind CSS (via CDN for simplicity, replace with local build if needed)
 			// Consider using the project's own asset bundling pipeline
