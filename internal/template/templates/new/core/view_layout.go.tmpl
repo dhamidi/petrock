@@ -3,6 +3,7 @@ package core
 import (
 	g "github.com/maragudk/gomponents" // Use canonical import path
 	"github.com/maragudk/gomponents/html"
+	"time" // Add missing import for time.Now()
 )
 
 // Layout renders the full HTML page structure.
@@ -64,8 +65,6 @@ func Layout(pageTitle string, bodyContent ...g.Node) g.Node {
 // 		),
 // 	)
 // }
-
-import "time" // Add missing import for time.Now()
 
 // Footer example
 // func Footer() g.Node {
