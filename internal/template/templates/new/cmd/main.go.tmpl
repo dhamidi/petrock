@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"{{ .ModuleName }}/core" // Assuming core package exists
+	// "{{ .ModuleName }}/core" // Removed as it's not directly used in main.go anymore
+	// Core components are initialized/used within specific commands (e.g., serve)
 
 	"github.com/spf13/cobra"
 )
