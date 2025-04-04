@@ -25,10 +25,14 @@ func init() {
 }
 
 func runTest(cmd *cobra.Command, args []string) error {
-	// 1. Create a temporary directory
-	tempDir, err := os.MkdirTemp("", "petrock-test-*")
+	// 1. Ensure the ./tmp directory exists and create the temporary test directory within it
+	tmpBaseDir := "./tmp"
+	if err := os.MkdirAll(tmpBaseDir, 0755); err != nil {
+		return fmt.Errorf("failed to create base temporary directory %s: %w", tmpBaseDir, err)
+	}
+	tempDir, err := os.MkdirTemp(tmpBaseDir, "petrock-test-*")
 	if err != nil {
-		return fmt.Errorf("failed to create temporary directory: %w", err)
+		return fmt.Errorf("failed to create temporary directory in %s: %w", tmpBaseDir, err)
 	}
 	slog.Info("Testing in temporary directory", "path", tempDir)
 
