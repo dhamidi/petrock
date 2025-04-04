@@ -188,10 +188,22 @@ func runFeature(cmd *cobra.Command, args []string) error {
 
 	slog.Info("Feature registration added successfully.", "file", featuresFilePath)
 
+	// --- Step 7: Run Go Mod Tidy ---
+	slog.Debug("Running go mod tidy...")
+	if err := utils.GoModTidy("."); err != nil {
+		// Log the error but don't necessarily fail the whole process,
+		// as the user might need to resolve dependency issues manually.
+		// However, a failure here often indicates a problem with the generated code or go.mod.
+		slog.Error("go mod tidy failed", "error", err)
+		// Optionally return the error to halt the process:
+		// return fmt.Errorf("go mod tidy failed: %w", err)
+	} else {
+		slog.Info("go mod tidy completed successfully.")
+	}
+
 	// --- Placeholder for subsequent steps ---
-	// 7. Run go mod tidy
 	// 8. Git commit
-	// 7. Output success message
+	// 9. Final Output and Cleanup
 	// --- End Placeholder ---
 
 	fmt.Printf("Feature command executed for: %s (Implementation pending)\n", featureName) // Placeholder output
