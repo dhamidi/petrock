@@ -24,7 +24,8 @@ func EnsureDir(path string) error {
 // to a destination directory on the filesystem (dest).
 // It specifically handles renaming a subdirectory named 'cmd/dirPlaceholder'
 // under srcRoot to 'cmd/dirReplacement' under dest.
-func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string) error {
+// It also allows specifying paths within fsys (relative to its root) to exclude from copying.
+func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string, excludePaths []string) error {
 	// Ensure the base destination directory exists
 	if err := EnsureDir(dest); err != nil {
 		return fmt.Errorf("failed to ensure destination directory %s: %w", dest, err)
@@ -33,10 +34,14 @@ func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string) e
 	// Use forward slash for FS paths and placeholder matching
 	placeholderCmdDir := "cmd/" + dirPlaceholder
 	replacementCmdDir := filepath.Join("cmd", dirReplacement) // Use OS separator for dest path
-	slog.Debug("CopyDir starting walk", "srcRoot", srcRoot, "dest", dest, "placeholderCmdDir", placeholderCmdDir, "replacementCmdDir", replacementCmdDir)
+	slog.Debug("CopyDir starting walk", "srcRoot", srcRoot, "dest", dest, "placeholderCmdDir", placeholderCmdDir, "replacementCmdDir", replacementCmdDir, "excludePaths", excludePaths)
 
-	// Define the path to exclude relative to the root of the embedded FS
-	excludeDir := "internal/skeleton/feature_template"
+	// Pre-process exclude paths for efficient lookup (optional, but good for many exclusions)
+	excludeMap := make(map[string]bool)
+	for _, p := range excludePaths {
+		excludeMap[p] = true
+	}
+
 
 	return fs.WalkDir(fsys, srcRoot, func(path string, d fs.DirEntry, err error) error {
 		slog.Debug("WalkDir callback entry", "path", path, "isDir", d.IsDir(), "error", err)
@@ -47,15 +52,21 @@ func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string) e
 		}
 
 		// --- Exclusion Logic ---
-		// Skip the entire feature_template directory
-		if path == excludeDir {
-			slog.Debug("Skipping excluded directory", "path", path)
-			return fs.SkipDir // Tell WalkDir to skip this directory entirely
-		}
-		// Also skip anything *inside* the excluded directory (belt-and-suspenders)
-		if strings.HasPrefix(path, excludeDir+"/") {
-			slog.Debug("Skipping file/dir inside excluded directory", "path", path)
-			return nil // Skip this entry, but continue walking siblings
+		for _, excludePath := range excludePaths {
+			// Check if the current path *is* the excluded path
+			if path == excludePath {
+				slog.Debug("Skipping excluded path", "path", path, "excludePath", excludePath)
+				if d.IsDir() {
+					return fs.SkipDir // Skip the whole directory
+				}
+				return nil // Skip the file
+			}
+			// Check if the current path is *within* an excluded directory
+			if strings.HasPrefix(path, excludePath+"/") {
+				slog.Debug("Skipping path inside excluded directory", "path", path, "excludePath", excludePath)
+				// No need for SkipDir here, just skip this entry
+				return nil
+			}
 		}
 		// --- End Exclusion Logic ---
 

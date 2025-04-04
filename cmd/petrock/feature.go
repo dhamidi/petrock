@@ -98,8 +98,9 @@ func runFeature(cmd *cobra.Command, args []string) error {
 	destinationPath := featureName // Relative path for the new feature dir
 
 	// 3. Copy files using utils.CopyDir from the main SkeletonFS
-	// The last two args are for directory renaming placeholders, not needed here.
-	err = utils.CopyDir(petrock.SkeletonFS, skeletonSourcePath, destinationPath, "", "")
+	// Pass nil for excludePaths as we want to copy everything from the feature template source.
+	// Pass empty strings for placeholder/replacement dirs as feature template doesn't need cmd dir rename.
+	err = utils.CopyDir(petrock.SkeletonFS, skeletonSourcePath, destinationPath, "", "", nil)
 	if err != nil {
 		return fmt.Errorf("failed to copy feature skeleton from embedded FS path %s: %w", skeletonSourcePath, err)
 	}
