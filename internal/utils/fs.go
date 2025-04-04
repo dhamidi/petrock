@@ -87,14 +87,6 @@ func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string) e
 			// Skip the source root itself as EnsureDir(dest) already created it
 			if path != srcRoot {
 				slog.Debug("Creating directory", "path", targetPath)
-				// Use original directory permissions from embedded FS if possible
-				info, statErr := fs.Stat(fsys, path)
-				mode := os.ModeDir | 0755 // Default directory mode
-				if statErr == nil {
-					mode = info.Mode() | os.ModeDir // Ensure it's marked as dir
-				} else {
-					slog.Warn("Could not stat source directory in FS, using default permissions", "path", path, "error", statErr)
-				}
 				// Force standard 0755 permissions instead of replicating source mode
 				const defaultDirMode = 0755
 				slog.Debug("Attempting to create directory", "targetPath", targetPath, "mode", os.FileMode(defaultDirMode).String()) // Log the mode being used
