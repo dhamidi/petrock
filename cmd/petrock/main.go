@@ -37,9 +37,10 @@ func Execute() error {
 }
 
 func init() {
-	// Subcommands are added in their respective files' init() functions (e.g., new.go, test.go).
-	// Placeholder for adding featureCmd later:
-	// rootCmd.AddCommand(featureCmd)
+	// Add subcommands defined in other files
+	rootCmd.AddCommand(newCmd)    // From new.go
+	rootCmd.AddCommand(testCmd)   // From test.go
+	rootCmd.AddCommand(featureCmd) // From feature.go
 
 	// Configure logging level based on environment variable
 	logLevel := slog.LevelInfo // Default level
