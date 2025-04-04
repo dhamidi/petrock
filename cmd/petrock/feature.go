@@ -136,10 +136,61 @@ func runFeature(cmd *cobra.Command, args []string) error {
 
 	slog.Info("Placeholders replaced successfully.", "feature", featureName)
 
+	// --- Step 6: Implement Feature Registration in Project Code ---
+	slog.Debug("Modifying project features.go file...")
+
+	// 1. Determine project name
+	projectName, err := getProjectName(".")
+	if err != nil {
+		return fmt.Errorf("failed to determine project name for features.go path: %w", err)
+	}
+	slog.Debug("Determined project name", "projectName", projectName)
+
+	// 2. Construct path to features.go
+	featuresFilePath := filepath.Join("cmd", projectName, "features.go")
+	slog.Debug("Target features file path", "path", featuresFilePath)
+
+	// 3. Read the content
+	featuresFileContent, err := os.ReadFile(featuresFilePath)
+	if err != nil {
+		// Check if the file doesn't exist, which would be unexpected in a valid project
+		if errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("critical: features file %s not found in project", featuresFilePath)
+		}
+		return fmt.Errorf("failed to read features file %s: %w", featuresFilePath, err)
+	}
+	slog.Debug("Successfully read features file", "path", featuresFilePath)
+
+	// 4 & 5. Insert import and registration lines
+	modifiedContent, err := insertFeatureRegistration(string(featuresFileContent), modulePath, featureName)
+	if err != nil {
+		return fmt.Errorf("failed to insert feature registration into features file content: %w", err)
+	}
+
+	// 6. Write the modified content back
+	// Get original file permissions before writing
+	fileInfo, err := os.Stat(featuresFilePath)
+	if err != nil {
+		slog.Warn("Could not stat features file to get permissions, using default", "path", featuresFilePath, "error", err)
+		// Use default permissions if stat fails
+		fileInfo = nil // Ensure fileInfo is nil so WriteFile uses default
+	}
+
+	var fileMode fs.FileMode = 0644 // Default permission
+	if fileInfo != nil {
+		fileMode = fileInfo.Mode()
+	}
+
+	slog.Debug("Writing modified content back to features file", "path", featuresFilePath, "mode", fileMode)
+	if err := os.WriteFile(featuresFilePath, []byte(modifiedContent), fileMode); err != nil {
+		return fmt.Errorf("failed to write modified features file %s: %w", featuresFilePath, err)
+	}
+
+	slog.Info("Feature registration added successfully.", "file", featuresFilePath)
+
 	// --- Placeholder for subsequent steps ---
-	// 6. Modify features.go
 	// 7. Run go mod tidy
-	// 6. Git commit
+	// 8. Git commit
 	// 7. Output success message
 	// --- End Placeholder ---
 
@@ -186,4 +237,72 @@ func checkIsPetrockProjectRoot(dir string) error {
 	}
 
 	return nil
+}
+
+// getProjectName extracts the project name (last part of the module path) from go.mod.
+func getProjectName(dir string) (string, error) {
+	modulePath, err := utils.GetModuleName(dir)
+	if err != nil {
+		return "", fmt.Errorf("could not get module path: %w", err)
+	}
+	parts := strings.Split(modulePath, "/")
+	if len(parts) == 0 {
+		return "", fmt.Errorf("invalid module path found: %s", modulePath)
+	}
+	projectName := parts[len(parts)-1]
+	return projectName, nil
+}
+
+// insertFeatureRegistration modifies the content of features.go by adding
+// the import and registration call for the new feature based on markers.
+func insertFeatureRegistration(content, modulePath, featureName string) (string, error) {
+	lines := strings.Split(content, "\n")
+	importMarker := "// petrock:import-feature"
+	registerMarker := "// petrock:register-feature"
+
+	importIndex := -1
+	registerIndex := -1
+
+	for i, line := range lines {
+		if strings.Contains(line, importMarker) {
+			importIndex = i
+		}
+		if strings.Contains(line, registerMarker) {
+			registerIndex = i
+		}
+	}
+
+	if importIndex == -1 {
+		return "", fmt.Errorf("import marker %q not found in features.go content", importMarker)
+	}
+	if registerIndex == -1 {
+		return "", fmt.Errorf("registration marker %q not found in features.go content", registerMarker)
+	}
+
+	// Determine indentation from the marker line itself
+	importIndentation := getIndentation(lines[importIndex])
+	registerIndentation := getIndentation(lines[registerIndex])
+
+	// Construct new lines with appropriate indentation
+	// Use featureName as the import alias
+	newImportLine := fmt.Sprintf("%s%s \"%s/%s\"", importIndentation, featureName, modulePath, featureName)
+	// Match the variable names used in the template's RegisterAllFeatures signature
+	newRegisterLine := fmt.Sprintf("%s%s.RegisterFeature(commands, queries /*, messageLog, state... */)", registerIndentation, featureName)
+
+	// Insert lines *before* the markers
+	var resultLines []string
+	resultLines = append(resultLines, lines[:importIndex]...)
+	resultLines = append(resultLines, newImportLine)
+	resultLines = append(resultLines, lines[importIndex:registerIndex]...)
+	resultLines = append(resultLines, newRegisterLine)
+	resultLines = append(resultLines, lines[registerIndex:]...)
+
+	return strings.Join(resultLines, "\n"), nil
+}
+
+// getIndentation returns the leading whitespace from a string.
+func getIndentation(line string) string {
+	trimmed := strings.TrimLeft(line, " \t")
+	indentation := line[:len(line)-len(trimmed)]
+	return indentation
 }
