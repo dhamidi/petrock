@@ -35,6 +35,9 @@ func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string) e
 	replacementCmdDir := filepath.Join("cmd", dirReplacement) // Use OS separator for dest path
 	slog.Debug("CopyDir starting walk", "srcRoot", srcRoot, "dest", dest, "placeholderCmdDir", placeholderCmdDir, "replacementCmdDir", replacementCmdDir)
 
+	// Define the path to exclude relative to the root of the embedded FS
+	excludeDir := "internal/skeleton/feature_template"
+
 	return fs.WalkDir(fsys, srcRoot, func(path string, d fs.DirEntry, err error) error {
 		slog.Debug("WalkDir callback entry", "path", path, "isDir", d.IsDir(), "error", err)
 		if err != nil {
@@ -42,6 +45,20 @@ func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string) e
 			slog.Error("WalkDir error accessing path", "path", path, "error", err)
 			return fmt.Errorf("error accessing path %q within source FS: %w", path, err)
 		}
+
+		// --- Exclusion Logic ---
+		// Skip the entire feature_template directory
+		if path == excludeDir {
+			slog.Debug("Skipping excluded directory", "path", path)
+			return fs.SkipDir // Tell WalkDir to skip this directory entirely
+		}
+		// Also skip anything *inside* the excluded directory (belt-and-suspenders)
+		if strings.HasPrefix(path, excludeDir+"/") {
+			slog.Debug("Skipping file/dir inside excluded directory", "path", path)
+			return nil // Skip this entry, but continue walking siblings
+		}
+		// --- End Exclusion Logic ---
+
 
 		// srcRoot is the starting point in fsys, path is relative to fsys root.
 		// We need the path relative to srcRoot for constructing the destination path.
