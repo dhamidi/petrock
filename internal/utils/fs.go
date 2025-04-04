@@ -60,16 +60,18 @@ func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string) e
 		osRelPath := filepath.FromSlash(relPath)
 
 		// Determine the target path, applying the rename logic
-		targetPath := filepath.Join(dest, osRelPath)
-		// Use forward slash path for matching placeholder prefix
-		if strings.HasPrefix(path, placeholderCmdDir) {
-			// Check if it's the directory itself or a file/subdir within it
-			if path == placeholderCmdDir || strings.HasPrefix(path, placeholderCmdDir+"/") {
-				// Replace using forward slash path, then construct OS-specific target path
-				newRelPath := strings.Replace(path, placeholderCmdDir, replacementCmdDir, 1)
-				targetPath = filepath.Join(dest, filepath.FromSlash(newRelPath)) // Ensure OS-specific separator
-			}
+		targetPath := filepath.Join(dest, osRelPath) // Default target path
+
+		// Check if the *relative path* matches or is inside the placeholder directory
+		// Use forward slashes for comparison as placeholderCmdDir uses them
+		if relPath == placeholderCmdDir || strings.HasPrefix(relPath, placeholderCmdDir+"/") {
+			// Calculate the new relative path with the replacement
+			newRelPath := strings.Replace(relPath, placeholderCmdDir, replacementCmdDir, 1)
+			// Construct the final target path using the destination and the new relative path (OS-specific)
+			targetPath = filepath.Join(dest, filepath.FromSlash(newRelPath))
+			slog.Debug("Applying directory rename", "from_rel", relPath, "to_target", targetPath)
 		}
+
 
 		if d.IsDir() {
 			// Create the directory in the destination
