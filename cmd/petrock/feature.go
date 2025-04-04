@@ -228,12 +228,22 @@ func runFeature(cmd *cobra.Command, args []string) error {
 
 	slog.Info("Git commit created successfully.", "message", commitMessage)
 
-	// --- Placeholder for subsequent steps ---
-	// 9. Final Output and Cleanup
-	// --- End Placeholder ---
+	// --- Step 9: Final Output and Cleanup ---
+	slog.Info("Feature generation process completed successfully", "feature", featureName)
 
-	fmt.Printf("Feature command executed for: %s (Implementation pending)\n", featureName) // Placeholder output
-	slog.Debug("runFeature completed (placeholder)", "featureName", featureName)
+	// Print success messages to the user
+	fmt.Printf("\nSuccess! Generated feature '%s' in ./%s\n", featureName, featureName)
+	fmt.Printf("Feature registered in %s\n", featuresFilePath)
+	fmt.Printf("Changes committed with message: %s\n", commitMessage)
+
+	// Print next steps hints
+	fmt.Println("\nNext steps:")
+	fmt.Printf("  1. Implement your command handlers in ./%s/execute.go\n", featureName)
+	fmt.Printf("  2. Implement your query handlers in ./%s/query.go\n", featureName)
+	fmt.Printf("  3. Define your feature's state logic in ./%s/state.go\n", featureName)
+	fmt.Printf("  4. Create UI components in ./%s/view.go\n", featureName)
+	fmt.Printf("  5. Add HTTP routes and handlers in cmd/%s/serve.go (or similar)\n", projectName)
+
 	return nil // Return nil on success
 }
 
