@@ -95,8 +95,19 @@ func runTest(cmd *cobra.Command, args []string) error {
 	projectAbsDir, _ := filepath.Abs(projectName)
 	slog.Debug("Changed working directory", "path", projectAbsDir)
 
-	// 5. Run `go build ./...`
-	slog.Info("Running 'go build ./...'")
+	// 4a. Run `petrock feature posts` inside the new project
+	featureName := "posts"
+	slog.Info("Running 'petrock feature'", "feature", featureName)
+	featureArgs := []string{featureName}
+	// Ensure featureCmd is accessible (it should be if defined in the same package)
+	if err := runFeature(featureCmd, featureArgs); err != nil {
+		return fmt.Errorf("'petrock feature %s' command failed during test: %w", featureName, err)
+	}
+	slog.Info("'petrock feature' completed successfully")
+
+
+	// 5. Run `go build ./...` to ensure the project still builds after adding the feature
+	slog.Info("Running 'go build ./...' (after adding feature)")
 	buildCmd := exec.Command("go", "build", "./...")
 	buildCmd.Stdout = os.Stdout // Pipe output to user
 	buildCmd.Stderr = os.Stderr // Pipe errors to user
