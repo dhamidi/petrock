@@ -10,7 +10,8 @@ import (
 	"strings"
 
 	// "github.com/dhamidi/petrock/internal/template" // Removed template import
-	"github.com/dhamidi/petrock/internal/skeletonfs" // Added import for embedded FS
+	// "github.com/dhamidi/petrock/internal/skeletonfs" // Removed import for skeletonfs
+	petrock "github.com/dhamidi/petrock" // Import root package for embedded FS
 	"github.com/dhamidi/petrock/internal/utils"
 
 	"github.com/spf13/cobra"
@@ -88,8 +89,8 @@ func runNew(cmd *cobra.Command, args []string) error {
 
 	// Copy skeleton directory structure from embedded FS
 	slog.Debug("Copying skeleton project structure from embedded FS", "to", projectName)
-	// Pass the embedded FS from the skeletonfs package
-	err := utils.CopyDir(skeletonfs.SkeletonFS, ".", projectName, projectNamePlaceholder, projectName)
+	// Pass the embedded FS from the root petrock package
+	err := utils.CopyDir(petrock.SkeletonFS, ".", projectName, projectNamePlaceholder, projectName)
 	if err != nil {
 		return fmt.Errorf("failed to copy skeleton directory from embedded FS: %w", err)
 	}
