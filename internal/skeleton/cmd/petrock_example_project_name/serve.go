@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"{{ .ModuleName }}/core" // Assuming core package exists
+	"github.com/petrock/example_module_path/core" // Assuming core package exists
 
 	// Use standard library for routing
 	"github.com/spf13/cobra"
@@ -175,6 +175,6 @@ func runServe(cmd *cobra.Command, args []string) error {
 // 		// component := core.IndexPage() // Get component from core/page_index.go
 // 		// layout := core.Layout("Home", component) // Wrap in layout
 // 		// layout.Render(w) // Render component
-// 		fmt.Fprintln(w, "Welcome to {{ .ProjectName }}!") // Placeholder
+// 		fmt.Fprintln(w, "Welcome to petrock_example_project_name!") // Placeholder
 // 	}
 // }

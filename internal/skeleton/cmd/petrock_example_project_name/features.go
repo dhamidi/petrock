@@ -1,7 +1,7 @@
 package main
 
 import (
-	"{{ .ModuleName }}/core"
+	"github.com/petrock/example_module_path/core"
 	// petrock:import-feature - Do not remove or modify this line
 )
 

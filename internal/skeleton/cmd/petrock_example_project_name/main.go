@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"os"
 
-	// "{{ .ModuleName }}/core" // Removed as it's not directly used in main.go anymore
+	// "github.com/petrock/example_module_path/core" // Removed as it's not directly used in main.go anymore
 	// Core components are initialized/used within specific commands (e.g., serve)
 
 	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "{{ .ProjectName }}",
-	Short: "The main command for the {{ .ProjectName }} application.",
-	Long:  `{{ .ProjectName }} application entry point.`,
+	Use:   "petrock_example_project_name",
+	Short: "The main command for the petrock_example_project_name application.",
+	Long:  `petrock_example_project_name application entry point.`,
 	// Run: func(cmd *cobra.Command, args []string) { }, // Or remove if subcommands are mandatory
 }
 

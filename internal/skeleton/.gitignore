@@ -22,7 +22,7 @@ go.work
 !.env.example
 
 # Project-specific binary
-/{{ .ProjectName }}
+/petrock_example_project_name
 
 # SQLite database file
 *.db

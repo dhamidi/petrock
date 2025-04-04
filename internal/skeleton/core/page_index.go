@@ -31,7 +31,7 @@ func HandleIndex(/* Pass dependencies like QueryRegistry if needed */) http.Hand
 		// Here you might fetch data using the QueryRegistry if the index page needs dynamic content
 
 		component := IndexPage()
-		layout := Layout("Home - {{ .ProjectName }}", component) // Use project name in title
+		layout := Layout("Home - petrock_example_project_name", component) // Use project name in title
 
 		// Set content type and render
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")

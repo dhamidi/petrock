@@ -1,15 +1,13 @@
-module {{ .ModuleName }}
+module github.com/petrock/example_module_path
 
 go 1.23 // Updated Go version
 
 require (
 	github.com/maragudk/gomponents v0.20.1 // Use canonical import path
-	github.com/google/uuid v1.6.0
 	// github.com/gorilla/mux removed - use net/http
 	// github.com/gorilla/sessions removed
 	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/spf13/cobra v1.8.1
-	golang.org/x/crypto v0.24.0 // Keep for potential future use (e.g., password hashing)
 )
 
 require (
