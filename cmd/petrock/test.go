@@ -58,6 +58,15 @@ func runTest(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to set permissions on temporary directory %s: %w", tempDir, err)
 	}
 
+	// Verify permissions *after* chmod
+	postChmodInfo, err := os.Stat(tempDir)
+	if err != nil {
+		slog.Warn("Could not stat temporary directory after chmod", "path", tempDir, "error", err)
+	} else {
+		slog.Info("Temporary directory permissions *after* chmod", "path", tempDir, "permissions", postChmodInfo.Mode().String())
+	}
+
+
 	// Ensure the temporary directory is cleaned up afterwards
 	defer func() {
 		slog.Debug("Cleaning up temporary directory", "path", tempDir)
