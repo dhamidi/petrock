@@ -2,6 +2,7 @@ package petrock_example_feature_name
 
 import (
 	"embed"
+	"fmt"
 	"io/fs"
 	"net/http"
 )
@@ -36,29 +37,3 @@ func GetAssetsFS() fs.FS {
 func ServeAssets(prefix string) http.Handler {
 	return http.StripPrefix(prefix, http.FileServer(http.FS(Assets)))
 }
-
-// --- Helper (if needed) ---
-// Placeholder for fmt if used elsewhere and init panics
-import "fmt"
-```
-
-**10. Create `internal/skeleton/feature_template/assets/` directory**
-
-This step just involves creating an empty directory. I cannot represent this directly in a *SEARCH/REPLACE* block, but you should ensure this directory exists:
-
-```bash
-mkdir -p internal/skeleton/feature_template/assets
-```
-
-**11. Modify `embeds.go`**
-
-```go
-embeds.go
-<<<<<<< SEARCH
-package petrock
-
-import "embed"
-
-// SkeletonFS holds the embedded filesystem for the project skeleton.
-//go:embed all:internal/skeleton
-var SkeletonFS embed.FS
