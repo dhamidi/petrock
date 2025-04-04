@@ -91,7 +91,8 @@ func runNew(cmd *cobra.Command, args []string) error {
 	// Copy skeleton directory structure from embedded FS
 	slog.Debug("Copying skeleton project structure from embedded FS", "to", projectName)
 	// Pass the embedded FS from the root petrock package
-	err := utils.CopyDir(petrock.SkeletonFS, ".", projectName, projectNamePlaceholder, projectName)
+	// Start copying from the 'internal/skeleton' directory within the embed FS
+	err := utils.CopyDir(petrock.SkeletonFS, "internal/skeleton", projectName, projectNamePlaceholder, projectName)
 	if err != nil {
 		return fmt.Errorf("failed to copy skeleton directory from embedded FS: %w", err)
 	}
