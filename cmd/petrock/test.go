@@ -127,7 +127,7 @@ func runTest(cmd *cobra.Command, args []string) error {
 	// No need to set buildCmd.Dir, as we are already in the correct directory
 
 	if err := buildCmd.Run(); err != nil {
-		return fmt.Errorf("'go build ./...' failed in %s: %w", projectDir, err)
+		return fmt.Errorf("'go build ./...' failed in %s: %w", projectAbsDir, err) // Use projectAbsDir here
 	}
 
 	slog.Info("Self-test completed successfully!")
