@@ -327,15 +327,24 @@ func insertFeatureRegistration(content, modulePath, featureName string) (string,
 	// Construct new lines with appropriate indentation
 	// Use featureName as the import alias
 	newImportLine := fmt.Sprintf("%s%s \"%s/%s\"", importIndentation, featureName, modulePath, featureName)
-	// Match the variable names used in the template's RegisterAllFeatures signature
-	newRegisterLine := fmt.Sprintf("%s%s.RegisterFeature(commands, queries /*, messageLog, state... */)", registerIndentation, featureName)
+
+	// Derive state variable name (e.g., "posts" -> "postsState")
+	// Capitalize first letter for convention if desired, but lowercase is fine for local var.
+	stateVarName := featureName + "State"
+
+	// Line to initialize the state for the feature
+	newStateLine := fmt.Sprintf("%s%s := %s.NewState()", registerIndentation, stateVarName, featureName)
+	// Line to call the feature's registration function
+	// Assumes RegisterAllFeatures receives variables named 'commands', 'queries', 'messageLog'
+	newRegisterLine := fmt.Sprintf("%s%s.RegisterFeature(commands, queries, messageLog, %s)", registerIndentation, featureName, stateVarName)
 
 	// Insert lines *before* the markers
 	var resultLines []string
 	resultLines = append(resultLines, lines[:importIndex]...)
-	resultLines = append(resultLines, newImportLine)
+	resultLines = append(resultLines, newImportLine)                // Add import
 	resultLines = append(resultLines, lines[importIndex:registerIndex]...)
-	resultLines = append(resultLines, newRegisterLine)
+	resultLines = append(resultLines, newStateLine)                 // Add state initialization
+	resultLines = append(resultLines, newRegisterLine)              // Add registration call
 	resultLines = append(resultLines, lines[registerIndex:]...)
 
 	return strings.Join(resultLines, "\n"), nil
