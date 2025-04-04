@@ -8,9 +8,13 @@ Start scripts with `#!/usr/bin/env bash` for portability, ensuring the script us
 
 ```bash
 #!/usr/bin/env bash
-# Good: Uses env to find bash in the user's PATH
+# Good: Uses env to find bash, has main, uses printf.
 
-echo "Hello"
+main() {
+  printf "Hello\n"
+}
+
+main "$@"
 ```
 
 ```bash
@@ -28,7 +32,12 @@ Use a `main()` function as the primary entry point and call it with `main "$@"` 
 #!/usr/bin/env bash
 
 main() {
-  echo "Processing arguments: $@"
+  # Good: Uses local, quotes arguments, uses printf.
+  local arg
+  printf "Processing arguments:\n"
+  for arg in "$@"; do
+    printf " - %s\n" "$arg"
+  done
 }
 
 # Good: Script logic is contained in main, arguments are passed correctly.
@@ -53,21 +62,38 @@ Decompose logic into well-named functions (e.g., `verb_noun` or using prefixes l
 #!/usr/bin/env bash
 
 build_project() {
-  echo "Building..."
+  # Good: Uses printf, includes placeholder error check.
+  printf "Building...\n"
   # build commands
+  # if ! some_build_command; then
+  #   printf "Error: Build failed.\n" >&2
+  #   return 1 # Indicate failure to the caller
+  # fi
+  return 0 # Indicate success
 }
 
 deploy_project() {
-  echo "Deploying..."
+  # Good: Uses printf, includes placeholder error check.
+  printf "Deploying...\n"
   # deploy commands
+  # if ! some_deploy_command; then
+  #   printf "Error: Deploy failed.\n" >&2
+  #   return 1 # Indicate failure to the caller
+  # fi
+  return 0 # Indicate success
 }
 
 main() {
-  build_project
-  deploy_project
+  # Good: Checks return status of functions.
+  if ! build_project; then
+    exit 1
+  fi
+  if ! deploy_project; then
+    exit 1
+  fi
 }
 
-# Good: Logic is broken down into functions.
+# Good: Logic is broken down into functions, main called correctly.
 main "$@"
 ```
 
@@ -95,13 +121,15 @@ Declare variables within functions using `local` to limit their scope. This prev
 
 my_func() {
   local my_var="hello" # Good: Variable scope is limited to my_func.
-  echo "$my_var"
+  # Good: Uses printf.
+  printf "my_func variable: %s\n" "$my_var"
 }
 
 main() {
   local my_var="main_var"
   my_func
-  echo "$my_var" # Output: main_var (not overwritten by my_func)
+  # Good: Uses printf.
+  printf "main variable: %s\n" "$my_var" # Output: main variable: main_var
 }
 
 main "$@"
@@ -133,13 +161,27 @@ Always quote variable expansions (e.g., `"$variable"`, `"$@"`) to prevent unexpe
 
 main() {
   local filename="file with spaces.txt"
+  local arg
+
   # Good: Quoting prevents word splitting.
-  touch "$filename"
-  ls -l "$filename"
+  # Good: Includes error checking.
+  if ! touch "$filename"; then
+    printf "Error: Failed to touch '%s'.\n" "$filename" >&2
+    # Decide whether to exit or continue
+  else
+    # Good: Includes error checking.
+    if ! ls -l "$filename"; then
+       printf "Error: Failed to list '%s'.\n" "$filename" >&2
+       # Decide whether to exit or continue
+    fi
+  fi
+
 
   # Good: "$@" expands each argument as a separate word.
+  # Good: Uses printf.
+  printf "\nArguments:\n"
   for arg in "$@"; do
-    echo "Arg: $arg"
+    printf " - %s\n" "$arg"
   done
 }
 
@@ -173,13 +215,20 @@ Check command exit statuses (`$?` or `if ! command`), exit with a non-zero statu
 #!/usr/bin/env bash
 
 main() {
-  echo "Attempting operation..."
-  if ! mkdir /nonexistent_dir/subdir; then
-    # Good: Checks exit status, reports error to stderr, exits non-zero.
-    echo "Error: Failed to create directory." >&2
+  # Good: Uses printf.
+  printf "Attempting operation...\n"
+  # Example using a directory likely to be writable
+  local target_dir="./temp_test_dir"
+
+  # Good: Checks exit status, reports error using printf to stderr, exits non-zero.
+  if ! mkdir "$target_dir"; then
+    printf "Error: Failed to create directory '%s'.\n" "$target_dir" >&2
     exit 1
   fi
-  echo "Operation successful."
+  printf "Operation successful. Directory '%s' created.\n" "$target_dir"
+
+  # Clean up the created directory (optional, for example purposes)
+  rmdir "$target_dir"
 }
 
 main "$@"
@@ -278,27 +327,42 @@ For command-line tools, structure subcommands clearly, often using a `case` stat
 #!/usr/bin/env bash
 
 cmd_build() {
-  echo "Building..."
+  # Good: Uses printf. Placeholder for actual build logic.
+  printf "Building...\n"
+  # Add build commands and error checking here
+  return 0 # Indicate success
 }
 
 cmd_test() {
-  echo "Testing..."
+  # Good: Uses printf. Placeholder for actual test logic.
+  printf "Testing...\n"
+  # Add test commands and error checking here
+  return 0 # Indicate success
 }
 
 main() {
-  local subcommand="$1"
-  shift # Remove subcommand from argument list
+  local subcommand="${1:-}" # Use parameter expansion for safety
+  shift || true # Shift arguments, ignore error if no arguments
 
   # Good: Clear dispatch based on the first argument.
   case "$subcommand" in
     build)
-      cmd_build "$@"
+      # Good: Calls function and checks status.
+      if ! cmd_build "$@"; then exit 1; fi
       ;;
     test)
-      cmd_test "$@"
+      # Good: Calls function and checks status.
+      if ! cmd_test "$@"; then exit 1; fi
+      ;;
+    "")
+      # Handle empty subcommand case if necessary
+      printf "Error: No subcommand provided.\n" >&2
+      # Potentially show help here
+      exit 1
       ;;
     *)
-      echo "Error: Unknown subcommand '$subcommand'" >&2
+      # Good: Uses printf for error message.
+      printf "Error: Unknown subcommand '%s'\n" "$subcommand" >&2
       exit 1
       ;;
   esac
@@ -333,14 +397,17 @@ Check for the existence of required external commands using `command -v command_
 #!/usr/bin/env bash
 
 main() {
-  # Good: Checks if 'goimports' exists before trying to use it.
-  if ! command -v goimports &> /dev/null; then
-    echo "Error: goimports is not installed. Please install it." >&2
+  local required_cmd="goimports"
+  # Good: Checks if command exists before trying to use it.
+  # Good: Uses printf for error message.
+  if ! command -v "$required_cmd" &> /dev/null; then
+    printf "Error: Required command '%s' is not installed. Please install it.\n" "$required_cmd" >&2
     exit 1
   fi
 
-  echo "Running goimports..."
-  # goimports ...
+  # Good: Uses printf for status message.
+  printf "Running %s...\n" "$required_cmd"
+  # "$required_cmd" ... # Example usage
 }
 
 main "$@"
