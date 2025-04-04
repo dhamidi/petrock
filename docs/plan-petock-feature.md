@@ -77,37 +77,43 @@ Add checks at the beginning of `runFeature` to ensure the command runs in a vali
 
 ## Step 3: Create and Embed Feature Skeleton
 
-Define the file structure and content for a new feature and embed it into the Petrock binary.
+Define the file structure and content for a new feature as a valid Go package and embed it into the Petrock binary.
 
 **Details:**
 
-1.  Create a new directory `internal/skeleton/feature/`.
-2.  Inside `internal/skeleton/feature/`, create the necessary skeleton files based on the example structure in `docs/high-level.md` and the detailed plans in `docs/feature/*.md`. Use `.skel` extension for files needing placeholder replacement. Use `petrock_example_feature_name` as the placeholder for the feature name and `petrock_example_module_path` for the module path.
-    *   `register.go.skel` (Based on `docs/feature/register.go.md`)
-    *   `messages.go.skel` (Based on `docs/feature/messages.go.md`)
-    *   `execute.go.skel` (Based on `docs/feature/execute.go.md`)
-    *   `query.go.skel` (Based on `docs/feature/query.go.md`)
-    *   `state.go.skel` (Based on `docs/feature/state.go.md`)
-    *   `jobs.go.skel` (Based on `docs/feature/jobs.go.md`, can be minimal initially)
-    *   `view.go.skel` (Based on `docs/feature/view.go.md`)
-    *   `assets.go.skel` (Based on `docs/feature/assets.go.md`)
-    *   Create an empty directory `assets/` within `internal/skeleton/feature/`.
-3.  In `embeds.go` (or a similar central place, maybe `petrock.go`), add an `//go:embed` directive for `internal/skeleton/feature`.
-    *   `//go:embed all:internal/skeleton/feature`
-    *   Expose this embedded FS, perhaps by adding it to the existing `SkeletonFS` or creating a new variable. For simplicity, assume it's accessible alongside the main skeleton.
+1.  Create a new directory `internal/skeleton/feature_template/`. This directory will contain a minimal, compilable Go package representing a feature.
+2.  Inside `internal/skeleton/feature_template/`, create the necessary Go files based on the example structure in `docs/high-level.md` and the detailed plans in `docs/feature/*.md`.
+    *   Use the placeholder `petrock_example_feature_name` consistently within these files where the actual feature name should appear (e.g., package name, function names, struct names, comments, file content).
+    *   Use the placeholder `petrock_example_module_path` where the target project's Go module path is needed (e.g., in import paths within the feature or potentially in generated code/comments).
+    *   Example files:
+        *   `register.go` (package `petrock_example_feature_name`, defines `RegisterFeature`)
+        *   `messages.go` (package `petrock_example_feature_name`, defines command/query structs like `CreatePostCommand`)
+        *   `execute.go` (package `petrock_example_feature_name`, defines `Executor` and handlers like `HandleCreatePostCommand`)
+        *   `query.go` (package `petrock_example_feature_name`, defines `Querier` and handlers)
+        *   `state.go` (package `petrock_example_feature_name`, defines `State`)
+        *   `jobs.go` (package `petrock_example_feature_name`)
+        *   `view.go` (package `petrock_example_feature_name`)
+        *   `assets.go` (package `petrock_example_feature_name`, embeds `assets/`)
+    *   Create an empty directory `assets/` within `internal/skeleton/feature_template/`.
+    *   Add a minimal `go.mod` file inside `internal/skeleton/feature_template/` declaring its own dummy module path (e.g., `module petrock_internal/feature_template`) and any direct dependencies the template needs (likely just the main project's `core` package placeholder: `require petrock_example_module_path/core v0.0.0`). This helps with validation but will be replaced/ignored during generation.
+3.  In `embeds.go` (or `petrock.go`), add an `//go:embed` directive for `internal/skeleton/feature_template`.
+    *   `//go:embed all:internal/skeleton/feature_template`
+    *   Ensure this embedded FS is accessible, potentially alongside the main `SkeletonFS`.
 
 **Done when:**
 
--   The `internal/skeleton/feature/` directory exists with all `.skel` files and the `assets/` subdirectory.
--   The skeleton files contain basic structures derived from the `docs/feature/*.md` plans, using placeholders `petrock_example_feature_name` and `petrock_example_module_path`.
+-   The `internal/skeleton/feature_template/` directory exists with valid Go files (`.go`), an `assets/` subdirectory, and a minimal `go.mod`.
+-   The Go files contain basic structures derived from the `docs/feature/*.md` plans, using placeholders `petrock_example_feature_name` and `petrock_example_module_path` where appropriate.
+-   The code within `internal/skeleton/feature_template/` is syntactically valid Go.
 -   The feature skeleton is embedded into the binary via `//go:embed` and accessible via a variable (e.g., `petrock.SkeletonFS`).
 
 **Files and references:**
 
--   `internal/skeleton/feature/` (New directory and files)
+-   `internal/skeleton/feature_template/` (New directory and files)
 -   `docs/feature/*.md` (Source for skeleton content)
 -   `embeds.go` (Or `petrock.go` - for embedding)
 -   `docs/high-level.md` (Feature file structure)
+-   `cmd/petrock/new.go` (Example of using placeholders in valid Go files)
 
 ## Step 4: Implement Skeleton Copying and Renaming
 
