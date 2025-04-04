@@ -25,9 +25,14 @@ func init() {
 }
 
 func runTest(cmd *cobra.Command, args []string) error {
+	// Log the current umask
+	originalUmask := syscall.Umask(0) // Get current umask
+	syscall.Umask(originalUmask)      // Set it back immediately
+	slog.Info("Current umask", "mask", fmt.Sprintf("%04o", originalUmask))
+
 	// 1. Ensure the ./tmp directory exists and create the temporary test directory within it
 	tmpBaseDir := "./tmp"
-	if err := os.MkdirAll(tmpBaseDir, 0755); err != nil {
+	if err := os.MkdirAll(tmpBaseDir, 0755); err != nil { // Use explicit 0755 permission
 		return fmt.Errorf("failed to create base temporary directory %s: %w", tmpBaseDir, err)
 	}
 	tempDir, err := os.MkdirTemp(tmpBaseDir, "petrock-test-*")
@@ -35,6 +40,14 @@ func runTest(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create temporary directory in %s: %w", tmpBaseDir, err)
 	}
 	slog.Info("Testing in temporary directory", "path", tempDir)
+
+	// Log permissions of the created temp directory
+	fileInfo, err := os.Stat(tempDir)
+	if err != nil {
+		slog.Warn("Could not stat temporary directory to check permissions", "path", tempDir, "error", err)
+	} else {
+		slog.Info("Temporary directory permissions", "path", tempDir, "permissions", fileInfo.Mode().String())
+	}
 
 	// Ensure the temporary directory is cleaned up afterwards
 	defer func() {
