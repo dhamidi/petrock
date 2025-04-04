@@ -114,9 +114,11 @@ func runFeature(cmd *cobra.Command, args []string) error {
 	slog.Debug("Replacing placeholders in feature files...")
 
 	// 1. Define placeholder map
+	// Use the same placeholder string as defined in the skeleton files
+	modulePathPlaceholder := "github.com/petrock/example_module_path" // Define the placeholder string
 	replacements := map[string]string{
 		"petrock_example_feature_name": featureName,
-		"petrock_example_module_path":  modulePath,
+		modulePathPlaceholder:          modulePath, // Add the module path replacement
 	}
 	slog.Debug("Placeholders defined", "map", replacements) // Be cautious logging potentially sensitive module paths
 
