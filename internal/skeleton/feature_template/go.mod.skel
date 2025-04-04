@@ -11,16 +11,9 @@ require (
 	petrock_example_module_path/core v0.0.0
 
 	// Add other direct dependencies the template itself needs for compilation, if any.
-	// Example: maragu.dev/gomponents v0.20.1
+	// Example: maragu.dev/gomponents v1.0.0
 )
 
 // Replace directive to satisfy the core dependency locally within the skeleton context.
 // This assumes the main skeleton has a core package.
 replace petrock_example_module_path/core => ../core
-```
-
-**2. Create `internal/skeleton/feature_template/register.go`**
-
-```go
-internal/skeleton/feature_template/register.go
-<<<<<<< SEARCH
