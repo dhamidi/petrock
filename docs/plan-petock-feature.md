@@ -115,30 +115,30 @@ Define the file structure and content for a new feature as a valid Go package an
 -   `docs/high-level.md` (Feature file structure)
 -   `cmd/petrock/new.go` (Example of using placeholders in valid Go files)
 
-## Step 4: Implement Skeleton Copying and Renaming
+## Step 4: Implement Skeleton Copying
 
 Add logic to `runFeature` to copy the embedded feature skeleton into the target project directory.
 
 **Details:**
 
 1.  Get the target project's module path using `utils.GetModuleName(".")`.
-2.  Define the source path within the embedded FS (e.g., `internal/skeleton/feature`).
+2.  Define the source path within the embedded FS (e.g., `internal/skeleton/feature_template`).
 3.  Define the destination path (e.g., `./<featureName>`).
 4.  Use `utils.CopyDir` (or similar logic) to copy files from the embedded FS source path to the destination path.
     *   Ensure `CopyDir` handles embedded FS correctly.
-5.  After copying, iterate through the newly created files in the destination directory:
-    *   Rename files ending in `.skel` by removing the extension (e.g., `register.go.skel` -> `register.go`).
+    *   The `CopyDir` function should *not* copy the `go.mod` file from the `feature_template` directory, as it's only for template validation. Alternatively, delete `./<featureName>/go.mod` immediately after copying.
+5.  The copying process directly creates the `.go` files and the `assets/` directory in the destination. No renaming step is needed.
 
 **Done when:**
 
 -   Running `petrock feature myfeature` in a valid project creates a `./myfeature` directory.
--   The `./myfeature` directory contains all the files from `internal/skeleton/feature`, but without the `.skel` extension.
--   The `./myfeature/assets` directory exists and is empty.
+-   The `./myfeature` directory contains all the `.go` files and the `assets/` subdirectory from `internal/skeleton/feature_template`.
+-   The `./myfeature` directory does *not* contain a `go.mod` file copied from the template.
 
 **Files and references:**
 
 -   `cmd/petrock/feature.go` (`runFeature` function)
--   `internal/utils/fs.go` (`CopyDir`, potentially needs modification or a new function for renaming)
+-   `internal/utils/fs.go` (`CopyDir`, potentially needs modification to exclude `go.mod` or add a delete step after copy)
 -   `internal/utils/gomod.go` (`GetModuleName`)
 -   `embeds.go` (Or `petrock.go` - provides the embedded FS)
 
@@ -192,7 +192,7 @@ Modify the target project's `cmd/<project_name>/features.go` file to import and 
 
 -   `cmd/petrock/feature.go` (`runFeature` function)
 -   `internal/skeleton/cmd/petrock_example_project_name/features.go` (Shows the target structure and markers)
--   `internal/skeleton/feature/register.go.skel` (Defines the function signature to be called)
+-   `internal/skeleton/feature_template/register.go` (Defines the function signature to be called)
 -   Go `os` package (for file reading/writing)
 -   Go `strings` package (for manipulation)
 -   (Optional) Go `go/parser` and `go/ast` packages for more robust code modification.
