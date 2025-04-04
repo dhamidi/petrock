@@ -1,12 +1,13 @@
 package petrock_example_feature_name
 
 import (
-	"fmt" // Import fmt package
+	"fmt"     // Import fmt package
 	"strings" // Import strings package
 
-	g "maragu.dev/gomponents"                 // Alias for gomponents
-	"maragu.dev/gomponents/html"              // HTML specific components
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
+	g "maragu.dev/gomponents"                     // Alias for gomponents
+	. "maragu.dev/gomponents/components"
+	"maragu.dev/gomponents/html" // HTML specific components
 )
 
 // ItemView renders the HTML representation of a single item.
@@ -26,15 +27,15 @@ func ItemView(item Result) g.Node {
 		),
 		// Add Edit/Delete buttons if applicable
 		html.Button(
-			core.Classes{"ml-2": true, "text-blue-500": true, "hover:underline": true}, // Example styling
-			g.Attr("hx-get", fmt.Sprintf("/feature-path/%s/edit", item.ID)),           // Placeholder URL
-			g.Attr("hx-target", "#feature-content"),                                   // Placeholder target
+			Classes{"ml-2": true, "text-blue-500": true, "hover:underline": true}, // Example styling
+			g.Attr("hx-get", fmt.Sprintf("/feature-path/%s/edit", item.ID)),       // Placeholder URL
+			g.Attr("hx-target", "#feature-content"),                               // Placeholder target
 			g.Text("Edit"),
 		),
 		html.Button(
-			core.Classes{"ml-2": true, "text-red-500": true, "hover:underline": true}, // Example styling
-			g.Attr("hx-delete", fmt.Sprintf("/feature-path/%s", item.ID)),             // Placeholder URL
-			g.Attr("hx-target", "#feature-content"),                                   // Placeholder target
+			Classes{"ml-2": true, "text-red-500": true, "hover:underline": true}, // Example styling
+			g.Attr("hx-delete", fmt.Sprintf("/feature-path/%s", item.ID)),        // Placeholder URL
+			g.Attr("hx-target", "#feature-content"),                              // Placeholder target
 			g.Attr("hx-confirm", "Are you sure you want to delete this item?"),
 			g.Text("Delete"),
 		),
@@ -74,15 +75,15 @@ func ItemForm(form *core.Form, item *Result, csrfToken string) g.Node {
 
 		// Form Fields using core components
 		html.Div(
-			core.Classes{"mb-4": true},
-			html.Label(html.For("name"), core.Classes{"block": true, "text-sm": true, "font-medium": true, "text-gray-700": true}, g.Text("Name")),
-			core.Input("text", "name", nameValue, html.ID("name"), core.Classes{"border-red-500": form.HasError("name")}), // Add error class conditionally
+			Classes{"mb-4": true},
+			html.Label(html.For("name"), Classes{"block": true, "text-sm": true, "font-medium": true, "text-gray-700": true}, g.Text("Name")),
+			core.Input("text", "name", nameValue, html.ID("name"), Classes{"border-red-500": form.HasError("name")}), // Add error class conditionally
 			core.FormError(form, "name"),
 		),
 		html.Div(
-			core.Classes{"mb-4": true},
-			html.Label(html.For("description"), core.Classes{"block": true, "text-sm": true, "font-medium": true, "text-gray-700": true}, g.Text("Description")),
-			core.TextArea("description", descriptionValue, html.ID("description"), core.Classes{"border-red-500": form.HasError("description")}), // Add error class conditionally
+			Classes{"mb-4": true},
+			html.Label(html.For("description"), Classes{"block": true, "text-sm": true, "font-medium": true, "text-gray-700": true}, g.Text("Description")),
+			core.TextArea("description", descriptionValue, html.ID("description"), Classes{"border-red-500": form.HasError("description")}), // Add error class conditionally
 			core.FormError(form, "description"),
 		),
 
@@ -104,15 +105,15 @@ func ItemsListView(result ListResult) g.Node {
 	}
 
 	return html.Div(
-		html.H2(core.Classes{"text-xl": true, "font-semibold": true, "mb-4": true}, g.Text("Items")),
+		html.H2(Classes{"text-xl": true, "font-semibold": true, "mb-4": true}, g.Text("Items")),
 		NewItemButton(), // Add button to create new item
 		html.Ul(
-			core.Classes{"space-y-4": true}, // Example list styling
+			Classes{"space-y-4": true}, // Example list styling
 			g.Group(itemNodes),
 		),
 		// Basic Pagination Example (implement proper logic based on result)
 		html.Div(
-			core.Classes{"mt-4": true, "flex": true, "justify-between": true, "items-center": true},
+			Classes{"mt-4": true, "flex": true, "justify-between": true, "items-center": true},
 			html.Span(g.Textf("Total: %d", result.TotalCount)),
 			html.Span(g.Textf("Page %d/%d", result.Page, (result.TotalCount+result.PageSize-1)/result.PageSize)), // Calculate total pages
 			// Add Previous/Next buttons with HTMX if needed
@@ -124,7 +125,7 @@ func ItemsListView(result ListResult) g.Node {
 func NewItemButton() g.Node {
 	return core.Button(
 		"Create New Item",
-		g.Attr("hx-get", "/feature-path/new"), // Placeholder URL for the form
+		g.Attr("hx-get", "/feature-path/new"),   // Placeholder URL for the form
 		g.Attr("hx-target", "#feature-content"), // Placeholder target where the form should load
 		// Add other attributes as needed
 	)
