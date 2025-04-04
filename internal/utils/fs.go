@@ -33,10 +33,13 @@ func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string) e
 	// Use forward slash for FS paths and placeholder matching
 	placeholderCmdDir := "cmd/" + dirPlaceholder
 	replacementCmdDir := filepath.Join("cmd", dirReplacement) // Use OS separator for dest path
+	slog.Debug("CopyDir starting walk", "srcRoot", srcRoot, "dest", dest, "placeholderCmdDir", placeholderCmdDir, "replacementCmdDir", replacementCmdDir)
 
 	return fs.WalkDir(fsys, srcRoot, func(path string, d fs.DirEntry, err error) error {
+		slog.Debug("WalkDir callback entry", "path", path, "isDir", d.IsDir(), "error", err)
 		if err != nil {
 			// Handle potential errors during walk (e.g., permission issues if reading from OS FS)
+			slog.Error("WalkDir error accessing path", "path", path, "error", err)
 			return fmt.Errorf("error accessing path %q within source FS: %w", path, err)
 		}
 
@@ -52,21 +55,26 @@ func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string) e
 			}
 			relPath, err = filepath.Rel(srcRoot, path) // Use filepath for potential OS differences if srcRoot had separators
 			if err != nil {
+				slog.Error("Failed to calculate relative path", "path", path, "srcRoot", srcRoot, "error", err)
 				return fmt.Errorf("failed to get relative path for %q from %q: %w", path, srcRoot, err)
 			}
 		}
+		slog.Debug("Calculated relative path", "path", path, "srcRoot", srcRoot, "relPath", relPath)
 
 		// Convert relPath to use OS-specific separators for joining with dest
 		osRelPath := filepath.FromSlash(relPath)
 
 		// Determine the target path, applying the rename logic
 		targetPath := filepath.Join(dest, osRelPath) // Default target path
+		slog.Debug("Calculated initial target path", "dest", dest, "osRelPath", osRelPath, "targetPath", targetPath)
 
 		// Check if the *relative path* matches or is inside the placeholder directory
 		// Use forward slashes for comparison as placeholderCmdDir uses them
 		if relPath == placeholderCmdDir || strings.HasPrefix(relPath, placeholderCmdDir+"/") {
+			slog.Debug("Rename condition met", "relPath", relPath, "placeholderCmdDir", placeholderCmdDir)
 			// Calculate the new relative path with the replacement
 			newRelPath := strings.Replace(relPath, placeholderCmdDir, replacementCmdDir, 1)
+			slog.Debug("Calculated new relative path for rename", "oldRelPath", relPath, "newRelPath", newRelPath)
 			// Construct the final target path using the destination and the new relative path (OS-specific)
 			targetPath = filepath.Join(dest, filepath.FromSlash(newRelPath))
 			slog.Debug("Applying directory rename", "from_rel", relPath, "to_target", targetPath)
@@ -74,6 +82,7 @@ func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string) e
 
 
 		if d.IsDir() {
+			slog.Debug("Processing as directory", "path", path, "targetPath", targetPath)
 			// Create the directory in the destination
 			// Skip the source root itself as EnsureDir(dest) already created it
 			if path != srcRoot {
@@ -86,16 +95,24 @@ func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string) e
 				} else {
 					slog.Warn("Could not stat source directory in FS, using default permissions", "path", path, "error", statErr)
 				}
+				slog.Debug("Attempting to create directory", "targetPath", targetPath, "mode", mode)
 				if err := os.MkdirAll(targetPath, mode); err != nil { // Use MkdirAll with mode
+					slog.Error("Failed to create target directory", "targetPath", targetPath, "mode", mode, "error", err)
 					return fmt.Errorf("failed to create target directory %s: %w", targetPath, err)
 				}
+				slog.Debug("Successfully created directory", "targetPath", targetPath)
+			} else {
+				slog.Debug("Skipping directory creation for source root", "path", path)
 			}
 		} else {
 			// Copy the file
-			slog.Debug("Copying file", "from", path, "to", targetPath)
+			slog.Debug("Processing as file", "path", path, "targetPath", targetPath)
+			slog.Debug("Attempting to copy file", "from", path, "to", targetPath)
 			if err := copyFileFromFS(fsys, path, targetPath); err != nil {
+				slog.Error("Failed to copy file", "from", path, "to", targetPath, "error", err)
 				return fmt.Errorf("failed to copy file from FS path %q to %q: %w", path, targetPath, err)
 			}
+			slog.Debug("Successfully copied file", "from", path, "to", targetPath)
 		}
 		return nil
 	})
@@ -103,41 +120,56 @@ func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string) e
 
 // copyFileFromFS copies a single file from an fs.FS to a destination path.
 func copyFileFromFS(fsys fs.FS, srcPath, destPath string) error {
+	slog.Debug("copyFileFromFS started", "srcPath", srcPath, "destPath", destPath)
 	sourceFile, err := fsys.Open(srcPath)
 	if err != nil {
+		slog.Error("copyFileFromFS: failed to open source file", "srcPath", srcPath, "error", err)
 		return fmt.Errorf("failed to open source file %q in FS: %w", srcPath, err)
 	}
 	defer sourceFile.Close()
+	slog.Debug("copyFileFromFS: opened source file", "srcPath", srcPath)
 
 	// Get source file info for permissions
 	srcInfo, err := fs.Stat(fsys, srcPath)
 	if err != nil {
+		slog.Error("copyFileFromFS: failed to stat source file", "srcPath", srcPath, "error", err)
 		return fmt.Errorf("failed to stat source file %q in FS: %w", srcPath, err)
 	}
 	mode := srcInfo.Mode()
+	slog.Debug("copyFileFromFS: got source file mode", "srcPath", srcPath, "mode", mode)
 
 	// Ensure destination directory exists before creating file
 	destDir := filepath.Dir(destPath)
+	slog.Debug("copyFileFromFS: ensuring destination directory exists", "destDir", destDir)
 	if err := EnsureDir(destDir); err != nil {
+		slog.Error("copyFileFromFS: failed to ensure destination directory", "destDir", destDir, "error", err)
 		return fmt.Errorf("failed to ensure destination directory %q for file %q: %w", destDir, destPath, err)
 	}
+	slog.Debug("copyFileFromFS: destination directory ensured", "destDir", destDir)
 
 
 	// Create destination file with source permissions
+	slog.Debug("copyFileFromFS: opening destination file", "destPath", destPath, "mode", mode)
 	destFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
 	if err != nil {
+		slog.Error("copyFileFromFS: failed to open destination file", "destPath", destPath, "mode", mode, "error", err)
 		return fmt.Errorf("failed to create destination file %q: %w", destPath, err)
 	}
 	defer destFile.Close()
+	slog.Debug("copyFileFromFS: opened destination file", "destPath", destPath)
 
-	_, err = io.Copy(destFile, sourceFile)
+	slog.Debug("copyFileFromFS: starting content copy", "srcPath", srcPath, "destPath", destPath)
+	bytesCopied, err := io.Copy(destFile, sourceFile)
 	if err != nil {
+		slog.Error("copyFileFromFS: failed to copy content", "destPath", destPath, "error", err)
 		return fmt.Errorf("failed to copy content for %q: %w", destPath, err)
 	}
+	slog.Debug("copyFileFromFS: finished content copy", "destPath", destPath, "bytesCopied", bytesCopied)
 
 	// Chmod might be redundant if OpenFile worked correctly, but can be a safeguard
 	// if umask affected the creation mode.
 	// return os.Chmod(destPath, mode)
+	slog.Debug("copyFileFromFS finished successfully", "srcPath", srcPath, "destPath", destPath)
 	return nil // Permissions set by OpenFile
 }
 
