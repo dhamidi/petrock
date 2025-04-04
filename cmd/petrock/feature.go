@@ -92,14 +92,15 @@ func runFeature(cmd *cobra.Command, args []string) error {
 	slog.Debug("Determined project module path", "modulePath", modulePath)
 
 	// 2. Define source and destination paths
-	skeletonSourcePath := "internal/skeleton/feature_template" // Path within embedded FS
-	destinationPath := featureName                             // Relative path for the new feature dir
+	// Source path is now relative to the root of SkeletonFS
+	skeletonSourcePath := "internal/skeleton/feature_template"
+	destinationPath := featureName // Relative path for the new feature dir
 
-	// 3. Copy files using utils.CopyDir
+	// 3. Copy files using utils.CopyDir from the main SkeletonFS
 	// The last two args are for directory renaming placeholders, not needed here.
-	err = utils.CopyDir(petrock.FeatureTemplateFS, skeletonSourcePath, destinationPath, "", "")
+	err = utils.CopyDir(petrock.SkeletonFS, skeletonSourcePath, destinationPath, "", "")
 	if err != nil {
-		return fmt.Errorf("failed to copy feature skeleton from embedded FS: %w", err)
+		return fmt.Errorf("failed to copy feature skeleton from embedded FS path %s: %w", skeletonSourcePath, err)
 	}
 	slog.Debug("Successfully copied skeleton files", "from", skeletonSourcePath, "to", destinationPath)
 
