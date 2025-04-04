@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"syscall" // Import for umask
 
 	"github.com/spf13/cobra"
 )
@@ -95,7 +94,6 @@ func runTest(cmd *cobra.Command, args []string) error {
 	// Get the absolute path for logging clarity
 	projectAbsDir, _ := filepath.Abs(projectName)
 	slog.Debug("Changed working directory", "path", projectAbsDir)
-
 
 	// 5. Run `go build ./...`
 	slog.Info("Running 'go build ./...'")
