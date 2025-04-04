@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -102,7 +101,6 @@ func runNew(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to replace placeholders in project files: %w", err)
 	}
 	// --- End Copy & Replace ---
-
 
 	// Tidy Go module dependencies (after go.mod and source files are created)
 	slog.Debug("Running go mod tidy", "path", projectName)
