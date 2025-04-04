@@ -1,7 +1,7 @@
 package main
 
 import (
-	"embed" // Added for embedding skeleton
+	// "embed" // Removed embed import here
 	"errors"
 	"fmt"
 	"log/slog"
@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	// "github.com/dhamidi/petrock/internal/template" // Removed template import
+	"github.com/dhamidi/petrock/internal/skeletonfs" // Added import for embedded FS
 	"github.com/dhamidi/petrock/internal/utils"
 
 	"github.com/spf13/cobra"
@@ -24,8 +25,8 @@ var (
 	dirNameRegex = regexp.MustCompile(`^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$`)
 )
 
-//go:embed all:../../internal/skeleton
-var skeletonFS embed.FS
+// //go:embed all:../../internal/skeleton // Removed embed directive here
+// var skeletonFS embed.FS // Removed local embed FS variable
 
 // newCmd represents the new command
 var newCmd = &cobra.Command{
@@ -87,8 +88,8 @@ func runNew(cmd *cobra.Command, args []string) error {
 
 	// Copy skeleton directory structure from embedded FS
 	slog.Debug("Copying skeleton project structure from embedded FS", "to", projectName)
-	// Pass the embedded FS and use "." as the source root within the FS
-	err := utils.CopyDir(skeletonFS, ".", projectName, projectNamePlaceholder, projectName)
+	// Pass the embedded FS from the skeletonfs package
+	err := utils.CopyDir(skeletonfs.SkeletonFS, ".", projectName, projectNamePlaceholder, projectName)
 	if err != nil {
 		return fmt.Errorf("failed to copy skeleton directory from embedded FS: %w", err)
 	}
