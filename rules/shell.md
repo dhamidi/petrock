@@ -17,6 +17,69 @@ main() {
 main "$@"
 ```
 
+# Rule 11: Define small helper functions
+
+Define small, focused helper functions to encapsulate common patterns like error reporting or prerequisite checks. This improves readability, reduces repetition, and helps keep other functions concise (ideally under 20 lines).
+
+```bash
+#!/usr/bin/env bash
+
+# Good: Helper function for reporting errors and exiting.
+error_exit() {
+  local message="$1"
+  printf "Error: %s\n" "$message" >&2
+  exit 1
+}
+
+# Good: Helper function to check for required commands.
+require_command() {
+  local cmd="$1"
+  if ! command -v "$cmd" &>/dev/null; then
+    error_exit "Required command '$cmd' is not installed."
+  fi
+}
+
+main() {
+  require_command "git"
+  require_command "go"
+
+  printf "Running main logic...\n"
+  if ! git status --porcelain; then
+    error_exit "git status failed."
+  fi
+  # ... main logic ...
+  printf "Done.\n"
+}
+
+main "$@"
+```
+
+```bash
+#!/usr/bin/env bash
+
+# Bad: Repetitive error checking and reporting logic.
+main() {
+  if ! command -v "git" &>/dev/null; then
+    printf "Error: Required command 'git' is not installed.\n" >&2
+    exit 1
+  fi
+  if ! command -v "go" &>/dev/null; then
+    printf "Error: Required command 'go' is not installed.\n" >&2
+    exit 1
+  fi
+
+  printf "Running main logic...\n"
+  if ! git status --porcelain; then
+    printf "Error: git status failed.\n" >&2
+    exit 1
+  fi
+  # ... main logic ...
+  printf "Done.\n"
+}
+
+main "$@"
+```
+
 ```bash
 #!/bin/bash
 # Bad: Hardcodes the path to bash, which might not exist at /bin/bash
