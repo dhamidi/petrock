@@ -95,6 +95,19 @@ func runNew(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to copy skeleton directory from embedded FS: %w", err)
 	}
 
+	// Rename go.mod.skel to go.mod after copying
+	slog.Debug("Renaming go.mod.skel to go.mod", "path", projectName)
+	skelModPath := filepath.Join(projectName, "go.mod.skel")
+	targetModPath := filepath.Join(projectName, "go.mod")
+	if err := os.Rename(skelModPath, targetModPath); err != nil {
+		// Check if the source file exists, maybe CopyDir failed silently?
+		if _, statErr := os.Stat(skelModPath); os.IsNotExist(statErr) {
+			return fmt.Errorf("failed to rename go.mod.skel: source file %s not found after copy", skelModPath)
+		}
+		return fmt.Errorf("failed to rename %s to %s: %w", skelModPath, targetModPath, err)
+	}
+
+
 	// Define replacements
 	replacements := map[string]string{
 		projectNamePlaceholder: projectName,
