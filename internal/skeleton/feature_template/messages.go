@@ -79,10 +79,3 @@ var _ core.Command = (*DeleteCommand)(nil)
 // Ensure queries implement the marker interface (optional)
 var _ core.Query = (*GetQuery)(nil)
 var _ core.Query = (*ListQuery)(nil)
-```
-
-**4. Create `internal/skeleton/feature_template/execute.go`**
-
-```go
-internal/skeleton/feature_template/execute.go
-<<<<<<< SEARCH

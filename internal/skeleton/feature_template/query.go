@@ -112,10 +112,3 @@ func (q *Querier) HandleList(ctx context.Context, query core.Query) (core.QueryR
 }
 
 // Add more query handlers here...
-```
-
-**6. Create `internal/skeleton/feature_template/state.go`**
-
-```go
-internal/skeleton/feature_template/state.go
-<<<<<<< SEARCH

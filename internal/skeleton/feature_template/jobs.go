@@ -96,10 +96,3 @@ func (j *Jobs) runScheduledTaskLogic(ctx context.Context) {
 // func (j *Jobs) processItem(ctx context.Context, item *Item) error { ... }
 // func (j *Jobs) generateReport(ctx context.Context) (string, error) { ... }
 // func (j *Jobs) sendReport(ctx context.Context, report string) error { ... }
-```
-
-**8. Create `internal/skeleton/feature_template/view.go`**
-
-```go
-internal/skeleton/feature_template/view.go
-<<<<<<< SEARCH
