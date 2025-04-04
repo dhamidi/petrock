@@ -3,7 +3,7 @@ package core
 import (
 	"net/http" // Added for http.ResponseWriter, http.Request
 
-	g "github.com/maragudk/gomponents" // Use canonical import path
+	g "github.com/maragudk/gomponents"            // Use canonical import path
 	. "github.com/maragudk/gomponents/components" // Dot-import for helpers like Classes
 	"github.com/maragudk/gomponents/html"
 )
@@ -26,7 +26,7 @@ func IndexPage() g.Node {
 
 // HandleIndex creates an http.HandlerFunc for the index page.
 // It renders the IndexPage component wrapped in the main Layout.
-func HandleIndex(/* Pass dependencies like QueryRegistry if needed */) http.HandlerFunc {
+func HandleIndex( /* Pass dependencies like QueryRegistry if needed */ ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Here you might fetch data using the QueryRegistry if the index page needs dynamic content
 

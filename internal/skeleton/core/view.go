@@ -49,7 +49,7 @@ func TextArea(name, value string, attrs ...g.Node) g.Node {
 			"focus:ring-indigo-200": true, "focus:ring-opacity-50": true,
 		},
 		g.Group(attrs), // g.Group is correct here as attrs is already a slice
-		g.Text(value), // Text content for textarea
+		g.Text(value),  // Text content for textarea
 	)
 }
 
@@ -116,7 +116,7 @@ func FieldGroup(label, fieldName string, inputElement g.Node, form *Form) g.Node
 // Page component (can be used within Layout)
 func Page(title string, children ...g.Node) g.Node {
 	return html.Div(
-		Classes{"container": true, "mx-auto": true, "p-4": true}, // Correct map literal syntax
+		Classes{"container": true, "mx-auto": true, "p-4": true},                           // Correct map literal syntax
 		html.H1(Classes{"text-2xl": true, "font-bold": true, "mb-4": true}, g.Text(title)), // Correct map literal syntax
 		g.Group(children), // g.Group is correct here as children is already a slice
 	)
