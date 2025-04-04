@@ -27,6 +27,7 @@ build_petrock() {
 }
 
 test_petrock() {
+  export PETROCK_LOG_LEVEL=debug
   ./petrock test
 }
 

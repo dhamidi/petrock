@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log/slog" // Import slog
 	"os"
+	"strings" // Import strings
 
 	"github.com/dhamidi/petrock/internal/utils" // Import the utils package
 	"github.com/spf13/cobra"
@@ -38,6 +40,25 @@ func init() {
 	// Subcommands are added in their respective files' init() functions (e.g., new.go, test.go).
 	// Placeholder for adding featureCmd later:
 	// rootCmd.AddCommand(featureCmd)
+
+	// Configure logging level based on environment variable
+	logLevel := slog.LevelInfo // Default level
+	levelStr := strings.ToLower(os.Getenv("PETROCK_LOG_LEVEL"))
+	switch levelStr {
+	case "debug":
+		logLevel = slog.LevelDebug
+	case "warn":
+		logLevel = slog.LevelWarn
+	case "error":
+		logLevel = slog.LevelError
+	}
+
+	opts := &slog.HandlerOptions{
+		Level:     logLevel,
+		AddSource: logLevel <= slog.LevelDebug, // Add source only for debug or lower
+	}
+	handler := slog.NewTextHandler(os.Stderr, opts)
+	slog.SetDefault(slog.New(handler))
 }
 
 func main() {
