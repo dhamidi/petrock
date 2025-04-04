@@ -1,0 +1,16 @@
+# This file ensures the assets directory is included by go:embed.
+# It can be safely removed after adding real assets.
+```
+
+**2. Update `cmd/petrock/feature.go` to Modify Feature's `go.mod`**
+
+We'll add a step after renaming `go.mod.skel` to read, modify, and write the `go.mod` file in the new feature directory.
+
+```go
+cmd/petrock/feature.go
+<<<<<<< SEARCH
+	slog.Debug("Successfully renamed go.mod.skel to go.mod")
+
+	slog.Info("Feature skeleton copied and prepared successfully.", "feature", featureName)
+
+	// --- Step 5: Implement Placeholder Replacement ---
