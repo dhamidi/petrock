@@ -1,13 +1,24 @@
 #!/usr/bin/env bash
 
 main() {
-  build_skeleton
-  build_petrock
-  test_petrock
+  step build_skeleton
+  step build_petrock
+  step test_petrock
+}
+
+step() {
+  local name="$1"
+  printf "START %s\n" "$name"
+  if ! $name; then
+    printf "FAIL %s\n" "$name"
+    exit 1
+  else
+    printf "OK   %s\n" "$name"
+  fi
 }
 
 build_skeleton() {
-  cp internal/skeleton/go.mod{.skel,} && go build internal/skeleton
+  cp internal/skeleton/go.mod{.skel,} && go build ./internal/...
 }
 
 build_petrock() {
