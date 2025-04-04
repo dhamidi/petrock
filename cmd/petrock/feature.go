@@ -342,8 +342,8 @@ func insertFeatureRegistration(content, modulePath, featureName string) (string,
 // getIndentation returns the leading whitespace from a string.
 func getIndentation(line string) string {
 	trimmed := strings.TrimLeft(line, " \t")
-	indentation := line[:len(line)-len(trimmed)]
-	indentation := line[:len(line)-len(trimmed)]
+	indentation := line[:len(line)-len(trimmed)] // Keep first declaration
+	// indentation = line[:len(line)-len(trimmed)] // This line seems redundant, removing it.
 	return indentation
 }
 
