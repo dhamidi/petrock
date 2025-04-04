@@ -104,29 +104,39 @@ func runFeature(cmd *cobra.Command, args []string) error {
 	}
 	slog.Debug("Successfully copied skeleton files", "from", skeletonSourcePath, "to", destinationPath)
 
-	// 4. Remove the template's go.mod file from the destination
-	templateGoModPath := filepath.Join(destinationPath, "go.mod")
-	slog.Debug("Removing template go.mod from destination", "path", templateGoModPath)
-	if err := os.Remove(templateGoModPath); err != nil {
-		// Log warning if removal fails, but don't necessarily fail the whole command,
-		// as go mod tidy might fix things later. However, it indicates CopyDir might
-		// not have copied it, or permissions are wrong.
-		// If the file doesn't exist, that's okay.
-		if !errors.Is(err, os.ErrNotExist) {
-			slog.Warn("Failed to remove template go.mod from destination", "path", templateGoModPath, "error", err)
-			// Optionally return error here if strict cleanup is required:
-			// return fmt.Errorf("failed to remove template go.mod from %s: %w", destinationPath, err)
-		} else {
-			slog.Debug("Template go.mod was not found in destination (already removed or not copied)", "path", templateGoModPath)
+	// 4. Rename go.mod.skel to go.mod in the destination
+	skelModPath := filepath.Join(destinationPath, "go.mod.skel")
+	targetModPath := filepath.Join(destinationPath, "go.mod")
+	slog.Debug("Renaming template go.mod.skel to go.mod", "from", skelModPath, "to", targetModPath)
+	if err := os.Rename(skelModPath, targetModPath); err != nil {
+		// Check if the source file exists, maybe CopyDir failed silently?
+		if _, statErr := os.Stat(skelModPath); os.IsNotExist(statErr) {
+			return fmt.Errorf("failed to rename go.mod.skel: source file %s not found after copy", skelModPath)
 		}
-	} else {
-		slog.Debug("Successfully removed template go.mod", "path", templateGoModPath)
+		return fmt.Errorf("failed to rename %s to %s: %w", skelModPath, targetModPath, err)
+	}
+	slog.Debug("Successfully renamed go.mod.skel to go.mod")
+
+	slog.Info("Feature skeleton copied and prepared successfully.", "feature", featureName)
+
+	// --- Step 5: Implement Placeholder Replacement ---
+	slog.Debug("Replacing placeholders in feature files...")
+
+	// 1. Define placeholder map
+	replacements := map[string]string{
+		"petrock_example_feature_name": featureName,
+		"petrock_example_module_path":  modulePath,
+	}
+	slog.Debug("Placeholders defined", "map", replacements) // Be cautious logging potentially sensitive module paths
+
+	// 2. Use utils.ReplaceInFiles
+	if err := utils.ReplaceInFiles(destinationPath, replacements); err != nil {
+		return fmt.Errorf("failed to replace placeholders in feature directory %s: %w", destinationPath, err)
 	}
 
-	slog.Info("Feature skeleton copied successfully.", "feature", featureName)
+	slog.Info("Placeholders replaced successfully.", "feature", featureName)
 
 	// --- Placeholder for subsequent steps ---
-	// 5. Replace placeholders
 	// 6. Modify features.go
 	// 7. Run go mod tidy
 	// 6. Git commit
