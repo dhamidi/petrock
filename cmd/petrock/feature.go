@@ -106,20 +106,9 @@ func runFeature(cmd *cobra.Command, args []string) error {
 	}
 	slog.Debug("Successfully copied skeleton files", "from", skeletonSourcePath, "to", destinationPath)
 
-	// 4. Rename go.mod.skel to go.mod in the destination
-	skelModPath := filepath.Join(destinationPath, "go.mod.skel")
-	targetModPath := filepath.Join(destinationPath, "go.mod")
-	slog.Debug("Renaming template go.mod.skel to go.mod", "from", skelModPath, "to", targetModPath)
-	if err := os.Rename(skelModPath, targetModPath); err != nil {
-		// Check if the source file exists, maybe CopyDir failed silently?
-		if _, statErr := os.Stat(skelModPath); os.IsNotExist(statErr) {
-			return fmt.Errorf("failed to rename go.mod.skel: source file %s not found after copy", skelModPath)
-		}
-		return fmt.Errorf("failed to rename %s to %s: %w", skelModPath, targetModPath, err)
-	}
-	slog.Debug("Successfully renamed go.mod.skel to go.mod")
+	// Note: No need to rename or modify a nested go.mod file anymore.
 
-	slog.Info("Feature skeleton copied and prepared successfully.", "feature", featureName)
+	slog.Info("Feature skeleton copied successfully.", "feature", featureName)
 
 	// --- Step 5: Implement Placeholder Replacement ---
 	slog.Debug("Replacing placeholders in feature files...")
