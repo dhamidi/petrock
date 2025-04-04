@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 
 main() {
+  # Determine log level: use $1 if provided, default to 'info'
+  local log_level="${1:-info}"
+  export PETROCK_LOG_LEVEL="$log_level"
+  echo "Using log level: $log_level" # Optional: inform the user
+
   step build_skeleton
   step build_petrock
   step test_petrock
@@ -27,7 +32,7 @@ build_petrock() {
 }
 
 test_petrock() {
-  export PETROCK_LOG_LEVEL=debug
+  # PETROCK_LOG_LEVEL is now set globally in main()
   ./petrock test
 }
 
