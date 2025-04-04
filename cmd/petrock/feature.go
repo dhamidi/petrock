@@ -3,6 +3,7 @@ package main
 import (
 	"errors" // Import errors package
 	"fmt"
+	"io/fs" // Import io/fs package
 	"log/slog"
 	"os" // Import os package
 	"path/filepath" // Import filepath package
