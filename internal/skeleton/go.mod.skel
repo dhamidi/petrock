@@ -3,10 +3,10 @@ module github.com/petrock/example_module_path
 go 1.23 // Updated Go version
 
 require (
-	github.com/maragudk/gomponents v0.20.1 // Use canonical import path
+	maragu.dev/gomponents v0.20.1 // Use canonical import path
 	// github.com/gorilla/mux removed - use net/http
 	// github.com/gorilla/sessions removed
-	github.com/mattn/go-sqlite3 v1.14.22
+	github.com/mattn/go-sqlite3 v1.14.27 // Updated version from go mod tidy output
 	github.com/spf13/cobra v1.8.1
 )
 

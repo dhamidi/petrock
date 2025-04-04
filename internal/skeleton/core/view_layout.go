@@ -1,9 +1,9 @@
 package core
 
 import (
-	g "github.com/maragudk/gomponents"            // Use canonical import path
-	. "github.com/maragudk/gomponents/components" // Dot-import for helpers like Classes
-	"github.com/maragudk/gomponents/html"
+	g "maragu.dev/gomponents"            // Use canonical import path
+	. "maragu.dev/gomponents/components" // Dot-import for helpers like Classes
+	"maragu.dev/gomponents/html"
 	// "time" // Removed as it's only used in commented code
 )
 

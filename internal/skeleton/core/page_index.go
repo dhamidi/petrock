@@ -3,9 +3,9 @@ package core
 import (
 	"net/http" // Added for http.ResponseWriter, http.Request
 
-	g "github.com/maragudk/gomponents"            // Use canonical import path
-	. "github.com/maragudk/gomponents/components" // Dot-import for helpers like Classes
-	"github.com/maragudk/gomponents/html"
+	g "maragu.dev/gomponents"            // Use canonical import path
+	. "maragu.dev/gomponents/components" // Dot-import for helpers like Classes
+	"maragu.dev/gomponents/html"
 )
 
 // IndexPage renders the main content for the home page.

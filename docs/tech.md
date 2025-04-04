@@ -6,7 +6,7 @@
 - net/http.ServeMux for routing
 - mattn/go-sqlite3 for sqlite3 access
 - slog for logging
-- github.com/maragudk/gomponents for frontend components
+- maragu.dev/gomponents for frontend components
 - golang.org/x/crypto for password hashing and other crypto functions
 - github.com/google/uuid for UUID generation
 
@@ -16,6 +16,6 @@
 - net/http.ServeMux for routing
 - mattn/go-sqlite3 for sqlite3 access
 - slog for logging
-- github.com/maragudk/gomponents for frontend components
+- maragu.dev/gomponents for frontend components
 - golang.org/x/crypto for password hashing and other crypto functions
 - github.com/google/uuid for UUID generation
