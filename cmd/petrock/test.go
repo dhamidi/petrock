@@ -107,19 +107,24 @@ func runTest(cmd *cobra.Command, args []string) error {
 	}
 	slog.Info("'petrock new' completed successfully")
 
-	// 4. Change into `./selftest`
-	projectDir := filepath.Join(tempDir, projectName)
-	if err := os.Chdir(projectDir); err != nil {
-		return fmt.Errorf("failed to change directory to %s: %w", projectDir, err)
+	// 4. Change into the newly created project directory (`./selftest`)
+	// Since the current working directory is tempDir, we just need to chdir into projectName.
+	if err := os.Chdir(projectName); err != nil {
+		// Get current WD for better error message
+		currentWd, _ := os.Getwd()
+		return fmt.Errorf("failed to change directory from %s to %s: %w", currentWd, projectName, err)
 	}
-	slog.Debug("Changed working directory", "path", projectDir)
+	// Get the absolute path for logging clarity
+	projectAbsDir, _ := filepath.Abs(projectName)
+	slog.Debug("Changed working directory", "path", projectAbsDir)
+
 
 	// 5. Run `go build ./...`
 	slog.Info("Running 'go build ./...'")
 	buildCmd := exec.Command("go", "build", "./...")
 	buildCmd.Stdout = os.Stdout // Pipe output to user
 	buildCmd.Stderr = os.Stderr // Pipe errors to user
-	buildCmd.Dir = projectDir   // Ensure command runs in the project directory
+	// No need to set buildCmd.Dir, as we are already in the correct directory
 
 	if err := buildCmd.Run(); err != nil {
 		return fmt.Errorf("'go build ./...' failed in %s: %w", projectDir, err)
