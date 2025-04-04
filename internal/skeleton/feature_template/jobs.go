@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"petrock_example_module_path/core" // Placeholder for target project's core package
+	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 )
 
 // Jobs holds dependencies for background tasks related to the feature.

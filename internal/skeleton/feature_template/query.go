@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	// "time" // Removed unused import
 
-	"petrock_example_module_path/core" // Placeholder for target project's core package
+	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 )
 
 // Querier handles query processing for the feature.
