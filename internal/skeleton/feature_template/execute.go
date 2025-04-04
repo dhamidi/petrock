@@ -52,7 +52,7 @@ func (e *Executor) HandleCreate(ctx context.Context, command core.Command) error
 	// --- 2. Generate ID (if not provided by client or command) ---
 	// Assuming ID is generated server-side for new items.
 	// If the command should specify the ID, use cmd.ID and validate uniqueness.
-	newItemID := uuid.NewString()
+	// newItemID := uuid.NewString() // Removed unused variable
 	// We need to update the command *if* the state's Apply method relies on the ID being present
 	// in the logged command. Alternatively, the state's Apply could generate the ID if missing.
 	// For simplicity here, let's assume the ID is primarily managed by the state upon creation.
