@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"fmt"
 	"io"
 	"io/fs"
 	"log/slog"
