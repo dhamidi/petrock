@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed" // Added for embedding skeleton
 	"errors"
 	"fmt"
 	"log/slog"
@@ -22,6 +23,9 @@ var (
 	// Regex to validate a simple directory name (no slashes).
 	dirNameRegex = regexp.MustCompile(`^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$`)
 )
+
+//go:embed all:../../internal/skeleton
+var skeletonFS embed.FS
 
 // newCmd represents the new command
 var newCmd = &cobra.Command{
@@ -78,15 +82,15 @@ func runNew(cmd *cobra.Command, args []string) error {
 	}
 
 	// --- Copy Skeleton and Replace Placeholders ---
-	skeletonSourcePath := "internal/skeleton" // Relative path to skeleton dir
 	projectNamePlaceholder := "petrock_example_project_name"
 	modulePathPlaceholder := "github.com/petrock/example_module_path"
 
-	// Copy skeleton directory structure
-	slog.Debug("Copying skeleton project structure", "from", skeletonSourcePath, "to", projectName)
-	err := utils.CopyDir(skeletonSourcePath, projectName, projectNamePlaceholder, projectName)
+	// Copy skeleton directory structure from embedded FS
+	slog.Debug("Copying skeleton project structure from embedded FS", "to", projectName)
+	// Pass the embedded FS and use "." as the source root within the FS
+	err := utils.CopyDir(skeletonFS, ".", projectName, projectNamePlaceholder, projectName)
 	if err != nil {
-		return fmt.Errorf("failed to copy skeleton directory: %w", err)
+		return fmt.Errorf("failed to copy skeleton directory from embedded FS: %w", err)
 	}
 
 	// Define replacements
