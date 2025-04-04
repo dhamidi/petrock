@@ -1,5 +1,18 @@
 #!/usr/bin/env bash
 
+# Helper function for reporting fatal errors and exiting.
+error_exit() {
+  local message="$1"
+  printf "Error: %s\n" "$message" >&2
+  exit 1
+}
+
+# Helper function for reporting non-fatal errors.
+report_error() {
+  local message="$1"
+  printf "Error: %s\n" "$message" >&2
+}
+
 # Function to lint Go files
 lint_go() {
   local file="$1"
@@ -15,8 +28,7 @@ main() {
 
   # Check if goimports is installed
   if ! command -v goimports &>/dev/null; then
-    echo "Error: goimports is not installed. Please install it (go install golang.org/x/tools/cmd/goimports@latest)" >&2
-    exit 1
+    error_exit "goimports is not installed. Please install it (go install golang.org/x/tools/cmd/goimports@latest)"
   fi
 
   for file in "$@"; do
@@ -39,8 +51,9 @@ main() {
 
     # Capture the exit code of the linter function
     local current_exit_code=$?
-    if [ $current_exit_code -ne 0 ]; then
-      echo "Error linting file: $file (Exit code: $current_exit_code)" >&2
+    # Good: Quotes variables, uses helper for error reporting.
+    if [ "$current_exit_code" -ne 0 ]; then
+      report_error "linting file: '$file' (Exit code: $current_exit_code)"
       exit_code=1 # Set the overall exit code to non-zero if any linter fails
     fi
   done
