@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/dhamidi/petrock/internal/template"
+	// "github.com/dhamidi/petrock/internal/template" // Removed template import
 	"github.com/dhamidi/petrock/internal/utils"
 
 	"github.com/spf13/cobra"
@@ -78,43 +78,31 @@ func runNew(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to initialize git repository: %w", err)
 	}
 
-	// Prepare template data
-	templateData := map[string]string{
-		"ProjectName": projectName,
-		"ModuleName":  modulePath,
+	// --- Copy Skeleton and Replace Placeholders ---
+	skeletonSourcePath := "internal/skeleton" // Relative path to skeleton dir
+	projectNamePlaceholder := "petrock_example_project_name"
+	modulePathPlaceholder := "github.com/petrock/example_module_path"
+
+	// Copy skeleton directory structure
+	slog.Debug("Copying skeleton project structure", "from", skeletonSourcePath, "to", projectName)
+	err := utils.CopyDir(skeletonSourcePath, projectName, projectNamePlaceholder, projectName)
+	if err != nil {
+		return fmt.Errorf("failed to copy skeleton directory: %w", err)
 	}
 
-	// List of templates to render (source path relative to embed FS root -> target path relative to project dir)
-	// Using filepath.Join for target paths ensures OS compatibility.
-	// Using forward slashes for template names ensures embed.FS compatibility.
-	templatesToRender := map[string]string{
-		"new/.gitignore.tmpl":                                ".gitignore",
-		"new/go.mod.tmpl":                                    "go.mod",
-		"new/cmd/main.go.tmpl":                               filepath.Join("cmd", projectName, "main.go"),
-		"new/cmd/serve.go.tmpl":                              filepath.Join("cmd", projectName, "serve.go"),
-		"new/cmd/build.go.tmpl":                              filepath.Join("cmd", projectName, "build.go"),
-		"new/cmd/deploy.go.tmpl":                             filepath.Join("cmd", projectName, "deploy.go"),
-		"new/cmd/features.go.tmpl":                           filepath.Join("cmd", projectName, "features.go"),
-		"new/core/commands.go.tmpl":                          filepath.Join("core", "commands.go"),
-		"new/core/queries.go.tmpl":                           filepath.Join("core", "queries.go"),
-		"new/core/form.go.tmpl":                              filepath.Join("core", "form.go"),
-		"new/core/log.go.tmpl":                               filepath.Join("core", "log.go"),
-		"new/core/view.go.tmpl":                              filepath.Join("core", "view.go"),
-		"new/core/view_layout.go.tmpl":                       filepath.Join("core", "view_layout.go"),
-		"new/core/page_index.go.tmpl":                        filepath.Join("core", "page_index.go"),
-		// Add other core files here if needed
+	// Define replacements
+	replacements := map[string]string{
+		projectNamePlaceholder: projectName,
+		modulePathPlaceholder:  modulePath,
 	}
 
-	// Render templates
-	slog.Debug("Rendering project templates...")
-	for tmplName, targetRelPath := range templatesToRender {
-		targetAbsPath := filepath.Join(projectName, targetRelPath)
-		slog.Debug("Rendering template", "template", tmplName, "target", targetAbsPath)
-		err := template.RenderTemplate(template.Templates, targetAbsPath, tmplName, templateData)
-		if err != nil {
-			return fmt.Errorf("failed to render template %s to %s: %w", tmplName, targetAbsPath, err)
-		}
+	// Replace placeholders in copied files
+	slog.Debug("Replacing placeholders in project files", "path", projectName)
+	if err := utils.ReplaceInFiles(projectName, replacements); err != nil {
+		return fmt.Errorf("failed to replace placeholders in project files: %w", err)
 	}
+	// --- End Copy & Replace ---
+
 
 	// Tidy Go module dependencies (after go.mod and source files are created)
 	slog.Debug("Running go mod tidy", "path", projectName)
