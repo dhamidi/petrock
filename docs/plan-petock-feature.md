@@ -95,14 +95,14 @@ Define the file structure and content for a new feature as a valid Go package an
         *   `view.go` (package `petrock_example_feature_name`)
         *   `assets.go` (package `petrock_example_feature_name`, embeds `assets/`)
     *   Create an empty directory `assets/` within `internal/skeleton/feature_template/`.
-    *   Add a minimal `go.mod` file inside `internal/skeleton/feature_template/` declaring its own dummy module path (e.g., `module petrock_internal/feature_template`) and any direct dependencies the template needs (likely just the main project's `core` package placeholder: `require petrock_example_module_path/core v0.0.0`). This helps with validation but will be replaced/ignored during generation.
-3.  In `embeds.go` (or `petrock.go`), add an `//go:embed` directive for `internal/skeleton/feature_template`.
-    *   `//go:embed all:internal/skeleton/feature_template`
-    *   Ensure this embedded FS is accessible, potentially alongside the main `SkeletonFS`.
+    *   *Note: The feature template directory does NOT contain its own go.mod file.*
+3.  In `embeds.go` (or `petrock.go`), ensure the `internal/skeleton` directory (which contains `feature_template`) is embedded.
+    *   `//go:embed all:internal/skeleton`
+    *   Ensure the main `SkeletonFS` variable is accessible.
 
 **Done when:**
 
--   The `internal/skeleton/feature_template/` directory exists with valid Go files (`.go`), an `assets/` subdirectory, and a minimal `go.mod`.
+-   The `internal/skeleton/feature_template/` directory exists with valid Go files (`.go`) and an `assets/` subdirectory.
 -   The Go files contain basic structures derived from the `docs/feature/*.md` plans, using placeholders `petrock_example_feature_name` and `petrock_example_module_path` where appropriate.
 -   The code within `internal/skeleton/feature_template/` is syntactically valid Go.
 -   The feature skeleton is embedded into the binary via `//go:embed` and accessible via a variable (e.g., `petrock.SkeletonFS`).
@@ -124,15 +124,15 @@ Add logic to `runFeature` to copy the embedded feature skeleton into the target 
 1.  Get the target project's module path using `utils.GetModuleName(".")`.
 2.  Define the source path within the embedded FS (e.g., `internal/skeleton/feature_template`).
 3.  Define the destination path (e.g., `./<featureName>`).
-4.  Use `utils.CopyDir` (or similar logic) to copy files from the embedded FS source path to the destination path.
+4.  Use `utils.CopyDir` (or similar logic) to copy files from the embedded FS source path (`internal/skeleton/feature_template`) to the destination path (`./<featureName>`).
     *   Ensure `CopyDir` handles embedded FS correctly.
-    *   `CopyDir` will copy `go.mod.skel` from the template.
-5.  After copying, rename the `go.mod.skel` file in the destination directory (`./<featureName>/go.mod.skel`) to `go.mod`.
+    *   No special handling for `go.mod` is needed within the feature directory itself.
+5.  The copying process directly creates the `.go` files and the `assets/` directory in the destination.
 
 **Done when:**
 
 -   Running `petrock feature myfeature` in a valid project creates a `./myfeature` directory.
--   The `./myfeature` directory contains all the `.go` files, the `assets/` subdirectory, and a `go.mod` file (renamed from `go.mod.skel`).
+-   The `./myfeature` directory contains all the `.go` files and the `assets/` subdirectory from `internal/skeleton/feature_template`.
 
 **Files and references:**
 

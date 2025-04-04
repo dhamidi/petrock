@@ -354,37 +354,8 @@ func insertFeatureRegistration(content, modulePath, featureName string) (string,
 func getIndentation(line string) string {
 	trimmed := strings.TrimLeft(line, " \t")
 	indentation := line[:len(line)-len(trimmed)]
+	indentation := line[:len(line)-len(trimmed)]
 	return indentation
 }
 
-// modifyFeatureGoMod reads the go.mod file at the given path, replaces the
-// placeholder module path with the actual module path, and writes it back.
-func modifyFeatureGoMod(modFilePath, actualModulePath string) error {
-	content, err := os.ReadFile(modFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to read feature go.mod file %s: %w", modFilePath, err)
-	}
-
-	originalContent := string(content)
-	// Replace the placeholder in require and replace directives
-	modifiedContent := strings.ReplaceAll(originalContent, "petrock_example_module_path/core", actualModulePath+"/core")
-
-	// Only write back if content actually changed
-	if modifiedContent != originalContent {
-		slog.Debug("Writing modified content to feature go.mod", "path", modFilePath)
-		// Get original file permissions
-		info, err := os.Stat(modFilePath)
-		if err != nil {
-			return fmt.Errorf("failed to get file info for %s: %w", modFilePath, err)
-		}
-		// Write back with original permissions
-		err = os.WriteFile(modFilePath, []byte(modifiedContent), info.Mode())
-		if err != nil {
-			return fmt.Errorf("failed to write modified feature go.mod file %s: %w", modFilePath, err)
-		}
-	} else {
-		slog.Debug("No changes needed for feature go.mod file", "path", modFilePath)
-	}
-
-	return nil
-}
+// modifyFeatureGoMod function removed as it's no longer needed.
