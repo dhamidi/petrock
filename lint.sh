@@ -3,7 +3,7 @@
 # Function to lint Go files
 lint_go() {
     local file="$1"
-    echo "Linting Go file: $file"
+    # echo "Linting Go file: $file" # Removed for less verbosity
     goimports -w "$file"
     # Add other Go linting commands here if needed
     # e.g., golangci-lint run "$file"
@@ -20,7 +20,7 @@ main() {
     fi
 
     for file in "$@"; do
-        echo "Processing file: $file"
+        # echo "Processing file: $file" # Removed for less verbosity
         local extension="${file##*.}"
 
         case "$extension" in
@@ -32,7 +32,7 @@ main() {
             #    lint_sh "$file"
             #    ;;
             *)
-                echo "Skipping file with unknown or unhandled extension: $file"
+                # echo "Skipping file with unknown or unhandled extension: $file" # Removed for less verbosity
                 # No action needed, implicitly exits with 0 for this file
                 ;;
         esac
