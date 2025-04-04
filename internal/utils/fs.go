@@ -95,9 +95,11 @@ func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string) e
 				} else {
 					slog.Warn("Could not stat source directory in FS, using default permissions", "path", path, "error", statErr)
 				}
-				slog.Debug("Attempting to create directory", "targetPath", targetPath, "mode", mode)
-				if err := os.MkdirAll(targetPath, mode); err != nil { // Use MkdirAll with mode
-					slog.Error("Failed to create target directory", "targetPath", targetPath, "mode", mode, "error", err)
+				// Force standard 0755 permissions instead of replicating source mode
+				const defaultDirMode = 0755
+				slog.Debug("Attempting to create directory", "targetPath", targetPath, "mode", os.FileMode(defaultDirMode).String()) // Log the mode being used
+				if err := os.MkdirAll(targetPath, defaultDirMode); err != nil { // Use MkdirAll with fixed 0755 mode
+					slog.Error("Failed to create target directory", "targetPath", targetPath, "mode", os.FileMode(defaultDirMode).String(), "error", err)
 					return fmt.Errorf("failed to create target directory %s: %w", targetPath, err)
 				}
 				slog.Debug("Successfully created directory", "targetPath", targetPath)
