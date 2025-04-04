@@ -50,6 +50,14 @@ func runTest(cmd *cobra.Command, args []string) error {
 		slog.Info("Temporary directory permissions", "path", tempDir, "permissions", fileInfo.Mode().String())
 	}
 
+	// Explicitly set permissions to 0755 as MkdirTemp defaults to 0700
+	slog.Debug("Setting temporary directory permissions to 0755", "path", tempDir)
+	if err := os.Chmod(tempDir, 0755); err != nil {
+		// Attempt cleanup even if chmod fails
+		_ = os.RemoveAll(tempDir)
+		return fmt.Errorf("failed to set permissions on temporary directory %s: %w", tempDir, err)
+	}
+
 	// Ensure the temporary directory is cleaned up afterwards
 	defer func() {
 		slog.Debug("Cleaning up temporary directory", "path", tempDir)
