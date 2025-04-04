@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings" // Import strings package
 
+	petrock "github.com/dhamidi/petrock"         // Import root package for embedded FS
 	"github.com/dhamidi/petrock/internal/utils" // Import utils
 	"github.com/spf13/cobra"
 )
@@ -78,11 +79,55 @@ func runFeature(cmd *cobra.Command, args []string) error {
 
 	slog.Info("Pre-run checks passed.")
 
+	// --- Step 4: Implement Skeleton Copying ---
+	slog.Debug("Copying feature skeleton...")
+
+	// 1. Get module path (needed for replacements later, good to have now)
+	modulePath, err := utils.GetModuleName(".")
+	if err != nil {
+		// This error should ideally not happen if checkIsPetrockProjectRoot passed,
+		// but handle it defensively.
+		return fmt.Errorf("failed to get module path after passing checks: %w", err)
+	}
+	slog.Debug("Determined project module path", "modulePath", modulePath)
+
+	// 2. Define source and destination paths
+	skeletonSourcePath := "internal/skeleton/feature_template" // Path within embedded FS
+	destinationPath := featureName                             // Relative path for the new feature dir
+
+	// 3. Copy files using utils.CopyDir
+	// The last two args are for directory renaming placeholders, not needed here.
+	err = utils.CopyDir(petrock.FeatureTemplateFS, skeletonSourcePath, destinationPath, "", "")
+	if err != nil {
+		return fmt.Errorf("failed to copy feature skeleton from embedded FS: %w", err)
+	}
+	slog.Debug("Successfully copied skeleton files", "from", skeletonSourcePath, "to", destinationPath)
+
+	// 4. Remove the template's go.mod file from the destination
+	templateGoModPath := filepath.Join(destinationPath, "go.mod")
+	slog.Debug("Removing template go.mod from destination", "path", templateGoModPath)
+	if err := os.Remove(templateGoModPath); err != nil {
+		// Log warning if removal fails, but don't necessarily fail the whole command,
+		// as go mod tidy might fix things later. However, it indicates CopyDir might
+		// not have copied it, or permissions are wrong.
+		// If the file doesn't exist, that's okay.
+		if !errors.Is(err, os.ErrNotExist) {
+			slog.Warn("Failed to remove template go.mod from destination", "path", templateGoModPath, "error", err)
+			// Optionally return error here if strict cleanup is required:
+			// return fmt.Errorf("failed to remove template go.mod from %s: %w", destinationPath, err)
+		} else {
+			slog.Debug("Template go.mod was not found in destination (already removed or not copied)", "path", templateGoModPath)
+		}
+	} else {
+		slog.Debug("Successfully removed template go.mod", "path", templateGoModPath)
+	}
+
+	slog.Info("Feature skeleton copied successfully.", "feature", featureName)
+
 	// --- Placeholder for subsequent steps ---
-	// 2. Copy skeleton
-	// 3. Replace placeholders
-	// 4. Modify features.go
-	// 5. Run go mod tidy
+	// 5. Replace placeholders
+	// 6. Modify features.go
+	// 7. Run go mod tidy
 	// 6. Git commit
 	// 7. Output success message
 	// --- End Placeholder ---
