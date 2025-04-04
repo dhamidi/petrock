@@ -142,11 +142,12 @@ func copyFileFromFS(fsys fs.FS, srcPath, destPath string) error {
 	slog.Debug("copyFileFromFS: destination directory ensured", "destDir", destDir)
 
 
-	// Create destination file with source permissions
-	slog.Debug("copyFileFromFS: opening destination file", "destPath", destPath, "mode", mode)
-	destFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
+	// Create destination file with standard write permissions (0644), ignore source mode
+	const defaultFileMode = 0644
+	slog.Debug("copyFileFromFS: opening destination file", "destPath", destPath, "mode", os.FileMode(defaultFileMode).String()) // Log the mode being used
+	destFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, defaultFileMode)
 	if err != nil {
-		slog.Error("copyFileFromFS: failed to open destination file", "destPath", destPath, "mode", mode, "error", err)
+		slog.Error("copyFileFromFS: failed to open destination file", "destPath", destPath, "mode", os.FileMode(defaultFileMode).String(), "error", err)
 		return fmt.Errorf("failed to create destination file %q: %w", destPath, err)
 	}
 	defer destFile.Close()
