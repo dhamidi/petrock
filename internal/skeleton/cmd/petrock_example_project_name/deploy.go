@@ -48,7 +48,7 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 	if binaryPath == "" {
 		slog.Info("Binary path not provided, running build step first...")
 		// Determine default binary name based on OS
-		outputName := "{{ .ProjectName }}"
+		outputName := "petrock_example_project_name"
 		if runtime.GOOS == "windows" {
 			outputName += ".exe" // Although deploying windows binary via ssh is less common
 		}
@@ -101,7 +101,7 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 	// Example: ssh -p <port> -i <key_path> <user@host> "sudo systemctl restart myapp.service"
 	// sshArgs := []string{}
 	// ... add port, key, host ...
-	// sshArgs = append(sshArgs, "your remote command here") // e.g., "sudo systemctl restart {{ .ProjectName }}"
+	// sshArgs = append(sshArgs, "your remote command here") // e.g., "sudo systemctl restart petrock_example_project_name"
 	// sshCmd := exec.Command("ssh", sshArgs...)
 	// ... run command ...
 	slog.Warn("Remote command execution (e.g., service restart) not implemented yet.")

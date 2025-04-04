@@ -5,3 +5,4 @@
 # Ignore petrock binary itself if built in the root
 /petrock
 /tmp/
+internal/skeleton/go.mod

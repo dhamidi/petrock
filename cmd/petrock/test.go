@@ -25,12 +25,24 @@ func init() {
 }
 
 func runTest(cmd *cobra.Command, args []string) error {
-	// 1. Create a temporary directory
-	tempDir, err := os.MkdirTemp("", "petrock-test-*")
+	// 1. Ensure the ./tmp directory exists and create the temporary test directory within it
+	tmpBaseDir := "./tmp"
+	if err := os.MkdirAll(tmpBaseDir, 0755); err != nil { // Use explicit 0755 permission
+		return fmt.Errorf("failed to create base temporary directory %s: %w", tmpBaseDir, err)
+	}
+	tempDir, err := os.MkdirTemp(tmpBaseDir, "petrock-test-*")
 	if err != nil {
-		return fmt.Errorf("failed to create temporary directory: %w", err)
+		return fmt.Errorf("failed to create temporary directory in %s: %w", tmpBaseDir, err)
 	}
 	slog.Info("Testing in temporary directory", "path", tempDir)
+
+	// Explicitly set permissions to 0755 as MkdirTemp defaults to 0700
+	slog.Debug("Setting temporary directory permissions to 0755", "path", tempDir) // Keep this debug log for now
+	if err := os.Chmod(tempDir, 0755); err != nil {
+		// Attempt cleanup even if chmod fails
+		_ = os.RemoveAll(tempDir)
+		return fmt.Errorf("failed to set permissions on temporary directory %s: %w", tempDir, err)
+	}
 
 	// Ensure the temporary directory is cleaned up afterwards
 	defer func() {
@@ -72,22 +84,26 @@ func runTest(cmd *cobra.Command, args []string) error {
 	}
 	slog.Info("'petrock new' completed successfully")
 
-	// 4. Change into `./selftest`
-	projectDir := filepath.Join(tempDir, projectName)
-	if err := os.Chdir(projectDir); err != nil {
-		return fmt.Errorf("failed to change directory to %s: %w", projectDir, err)
+	// 4. Change into the newly created project directory (`./selftest`)
+	// Since the current working directory is tempDir, we just need to chdir into projectName.
+	if err := os.Chdir(projectName); err != nil {
+		// Get current WD for better error message
+		currentWd, _ := os.Getwd()
+		return fmt.Errorf("failed to change directory from %s to %s: %w", currentWd, projectName, err)
 	}
-	slog.Debug("Changed working directory", "path", projectDir)
+	// Get the absolute path for logging clarity
+	projectAbsDir, _ := filepath.Abs(projectName)
+	slog.Debug("Changed working directory", "path", projectAbsDir)
 
 	// 5. Run `go build ./...`
 	slog.Info("Running 'go build ./...'")
 	buildCmd := exec.Command("go", "build", "./...")
 	buildCmd.Stdout = os.Stdout // Pipe output to user
 	buildCmd.Stderr = os.Stderr // Pipe errors to user
-	buildCmd.Dir = projectDir   // Ensure command runs in the project directory
+	// No need to set buildCmd.Dir, as we are already in the correct directory
 
 	if err := buildCmd.Run(); err != nil {
-		return fmt.Errorf("'go build ./...' failed in %s: %w", projectDir, err)
+		return fmt.Errorf("'go build ./...' failed in %s: %w", projectAbsDir, err) // Use projectAbsDir here
 	}
 
 	slog.Info("Self-test completed successfully!")

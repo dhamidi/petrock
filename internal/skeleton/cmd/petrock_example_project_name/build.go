@@ -20,7 +20,7 @@ func NewBuildCmd() *cobra.Command {
 		RunE:  runBuild,
 	}
 
-	outputName := "{{ .ProjectName }}"
+	outputName := "petrock_example_project_name"
 	if runtime.GOOS == "windows" {
 		outputName += ".exe"
 	}
@@ -58,7 +58,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		"build",
 		"-ldflags=" + ldflags,
 		"-o", output,
-		"./cmd/{{ .ProjectName }}", // Target the main package
+		"./cmd/petrock_example_project_name", // Target the main package
 	}
 
 	buildCmd := exec.Command("go", buildArgs...)

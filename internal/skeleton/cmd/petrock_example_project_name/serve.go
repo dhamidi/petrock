@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"{{ .ModuleName }}/core" // Assuming core package exists
+	"github.com/petrock/example_module_path/core" // Assuming core package exists
 
 	// Use standard library for routing
 	"github.com/spf13/cobra"
@@ -97,7 +97,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// Example: Define HTTP routes/handlers
 	// Note: net/http mux uses pattern-based routing. For path parameters like /posts/{id},
 	// you'd typically check r.URL.Path inside the handler or use a small helper/library.
-	mux.HandleFunc("GET /", core.HandleIndex(/* queryRegistry */)) // Pass dependencies - Use core.HandleIndex
+	mux.HandleFunc("GET /", core.HandleIndex( /* queryRegistry */ )) // Pass dependencies - Use core.HandleIndex
 	// TODO: Add routes for features (e.g., mux.HandleFunc("GET /posts", handleListPosts), mux.HandleFunc("GET /posts/{id}", handleGetPost))
 
 	// --- Server Start and Shutdown ---
@@ -175,6 +175,6 @@ func runServe(cmd *cobra.Command, args []string) error {
 // 		// component := core.IndexPage() // Get component from core/page_index.go
 // 		// layout := core.Layout("Home", component) // Wrap in layout
 // 		// layout.Render(w) // Render component
-// 		fmt.Fprintln(w, "Welcome to {{ .ProjectName }}!") // Placeholder
+// 		fmt.Fprintln(w, "Welcome to petrock_example_project_name!") // Placeholder
 // 	}
 // }

@@ -1,7 +1,7 @@
 package core
 
 import (
-	g "github.com/maragudk/gomponents" // Use canonical import path
+	g "github.com/maragudk/gomponents"            // Use canonical import path
 	. "github.com/maragudk/gomponents/components" // Dot-import for helpers like Classes
 	"github.com/maragudk/gomponents/html"
 	// "time" // Removed as it's only used in commented code
@@ -57,7 +57,7 @@ func Layout(pageTitle string, bodyContent ...g.Node) g.Node {
 // 		Classes{"bg-gray-800": true, "p-4": true, "text-white": true}, // Correct map literal syntax
 // 		html.Div(
 // 			Classes{"container": true, "mx-auto": true, "flex": true, "justify-between": true}, // Correct map literal syntax
-// 			html.A(html.Href("/"), g.Text("{{ .ProjectName }}")), // Use template var if needed
+// 			html.A(html.Href("/"), g.Text("petrock_example_project_name")), // Use template var if needed
 // 			html.Div(
 // 				// Add nav links here
 // 				html.A(html.Href("/"), Classes{"px-3": true}, g.Text("Home")), // Correct map literal syntax
@@ -71,6 +71,6 @@ func Layout(pageTitle string, bodyContent ...g.Node) g.Node {
 // func Footer() g.Node {
 // 	return html.Footer(
 // 		Classes{"bg-gray-200": true, "text-center": true, "p-4": true, "mt-8": true}, // Correct map literal syntax
-// 		g.Textf("© %d {{ .ProjectName }}", time.Now().Year()), // Use template var if needed
+// 		g.Textf("© %d petrock_example_project_name", time.Now().Year()), // Use template var if needed
 // 	)
 // }

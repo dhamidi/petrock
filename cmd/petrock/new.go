@@ -1,15 +1,18 @@
 package main
 
 import (
+	// "embed" // Removed embed import here
 	"errors"
 	"fmt"
 	"log/slog"
 	"os"
-	"path/filepath"
+	"path/filepath" // Added import for filepath.Join
 	"regexp"
 	"strings"
 
-	"github.com/dhamidi/petrock/internal/template"
+	// "github.com/dhamidi/petrock/internal/template" // Removed template import
+	// "github.com/dhamidi/petrock/internal/skeletonfs" // Removed import for skeletonfs
+	petrock "github.com/dhamidi/petrock" // Import root package for embedded FS
 	"github.com/dhamidi/petrock/internal/utils"
 
 	"github.com/spf13/cobra"
@@ -23,6 +26,9 @@ var (
 	// Regex to validate a simple directory name (no slashes).
 	dirNameRegex = regexp.MustCompile(`^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?$`)
 )
+
+// //go:embed all:../../internal/skeleton // Removed embed directive here
+// var skeletonFS embed.FS // Removed local embed FS variable
 
 // newCmd represents the new command
 var newCmd = &cobra.Command{
@@ -47,7 +53,7 @@ func runNew(cmd *cobra.Command, args []string) error {
 	projectName := args[0]
 	modulePath := args[1]
 
-	slog.Info("Starting new project creation", "project", projectName, "module", modulePath)
+	slog.Debug("Starting new project creation", "project", projectName, "module", modulePath) // Changed to Debug
 
 	// Validate inputs
 	if !dirNameRegex.MatchString(projectName) {
@@ -78,43 +84,44 @@ func runNew(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to initialize git repository: %w", err)
 	}
 
-	// Prepare template data
-	templateData := map[string]string{
-		"ProjectName": projectName,
-		"ModuleName":  modulePath,
+	// --- Copy Skeleton and Replace Placeholders ---
+	projectNamePlaceholder := "petrock_example_project_name"
+	modulePathPlaceholder := "github.com/petrock/example_module_path"
+
+	// Copy skeleton directory structure from embedded FS
+	slog.Debug("Copying skeleton project structure from embedded FS", "to", projectName)
+	// Pass the embedded FS from the root petrock package
+	// Start copying from the 'internal/skeleton' directory within the embed FS
+	err := utils.CopyDir(petrock.SkeletonFS, "internal/skeleton", projectName, projectNamePlaceholder, projectName)
+	if err != nil {
+		return fmt.Errorf("failed to copy skeleton directory from embedded FS: %w", err)
 	}
 
-	// List of templates to render (source path relative to embed FS root -> target path relative to project dir)
-	// Using filepath.Join for target paths ensures OS compatibility.
-	// Using forward slashes for template names ensures embed.FS compatibility.
-	templatesToRender := map[string]string{
-		"new/.gitignore.tmpl":                                ".gitignore",
-		"new/go.mod.tmpl":                                    "go.mod",
-		"new/cmd/main.go.tmpl":                               filepath.Join("cmd", projectName, "main.go"),
-		"new/cmd/serve.go.tmpl":                              filepath.Join("cmd", projectName, "serve.go"),
-		"new/cmd/build.go.tmpl":                              filepath.Join("cmd", projectName, "build.go"),
-		"new/cmd/deploy.go.tmpl":                             filepath.Join("cmd", projectName, "deploy.go"),
-		"new/cmd/features.go.tmpl":                           filepath.Join("cmd", projectName, "features.go"),
-		"new/core/commands.go.tmpl":                          filepath.Join("core", "commands.go"),
-		"new/core/queries.go.tmpl":                           filepath.Join("core", "queries.go"),
-		"new/core/form.go.tmpl":                              filepath.Join("core", "form.go"),
-		"new/core/log.go.tmpl":                               filepath.Join("core", "log.go"),
-		"new/core/view.go.tmpl":                              filepath.Join("core", "view.go"),
-		"new/core/view_layout.go.tmpl":                       filepath.Join("core", "view_layout.go"),
-		"new/core/page_index.go.tmpl":                        filepath.Join("core", "page_index.go"),
-		// Add other core files here if needed
-	}
-
-	// Render templates
-	slog.Debug("Rendering project templates...")
-	for tmplName, targetRelPath := range templatesToRender {
-		targetAbsPath := filepath.Join(projectName, targetRelPath)
-		slog.Debug("Rendering template", "template", tmplName, "target", targetAbsPath)
-		err := template.RenderTemplate(template.Templates, targetAbsPath, tmplName, templateData)
-		if err != nil {
-			return fmt.Errorf("failed to render template %s to %s: %w", tmplName, targetAbsPath, err)
+	// Rename go.mod.skel to go.mod after copying
+	slog.Debug("Renaming go.mod.skel to go.mod", "path", projectName)
+	skelModPath := filepath.Join(projectName, "go.mod.skel")
+	targetModPath := filepath.Join(projectName, "go.mod")
+	if err := os.Rename(skelModPath, targetModPath); err != nil {
+		// Check if the source file exists, maybe CopyDir failed silently?
+		if _, statErr := os.Stat(skelModPath); os.IsNotExist(statErr) {
+			return fmt.Errorf("failed to rename go.mod.skel: source file %s not found after copy", skelModPath)
 		}
+		return fmt.Errorf("failed to rename %s to %s: %w", skelModPath, targetModPath, err)
 	}
+
+
+	// Define replacements
+	replacements := map[string]string{
+		projectNamePlaceholder: projectName,
+		modulePathPlaceholder:  modulePath,
+	}
+
+	// Replace placeholders in copied files
+	slog.Debug("Replacing placeholders in project files", "path", projectName)
+	if err := utils.ReplaceInFiles(projectName, replacements); err != nil {
+		return fmt.Errorf("failed to replace placeholders in project files: %w", err)
+	}
+	// --- End Copy & Replace ---
 
 	// Tidy Go module dependencies (after go.mod and source files are created)
 	slog.Debug("Running go mod tidy", "path", projectName)
@@ -132,7 +139,7 @@ func runNew(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create initial git commit: %w", err)
 	}
 
-	slog.Info("Project created successfully!", "path", projectName)
+	slog.Debug("Project created successfully!", "path", projectName) // Changed to Debug
 	fmt.Printf("\nSuccess! Created project %s at ./%s\n", projectName, projectName)
 	fmt.Printf("Module path: %s\n", modulePath)
 	fmt.Println("\nNext steps:")
