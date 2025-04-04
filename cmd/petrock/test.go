@@ -26,11 +26,6 @@ func init() {
 }
 
 func runTest(cmd *cobra.Command, args []string) error {
-	// Log the current umask
-	originalUmask := syscall.Umask(0) // Get current umask
-	syscall.Umask(originalUmask)      // Set it back immediately
-	slog.Info("Current umask", "mask", fmt.Sprintf("%04o", originalUmask))
-
 	// 1. Ensure the ./tmp directory exists and create the temporary test directory within it
 	tmpBaseDir := "./tmp"
 	if err := os.MkdirAll(tmpBaseDir, 0755); err != nil { // Use explicit 0755 permission
@@ -42,30 +37,13 @@ func runTest(cmd *cobra.Command, args []string) error {
 	}
 	slog.Info("Testing in temporary directory", "path", tempDir)
 
-	// Log permissions of the created temp directory
-	fileInfo, err := os.Stat(tempDir)
-	if err != nil {
-		slog.Warn("Could not stat temporary directory to check permissions", "path", tempDir, "error", err)
-	} else {
-		slog.Info("Temporary directory permissions", "path", tempDir, "permissions", fileInfo.Mode().String())
-	}
-
 	// Explicitly set permissions to 0755 as MkdirTemp defaults to 0700
-	slog.Debug("Setting temporary directory permissions to 0755", "path", tempDir)
+	slog.Debug("Setting temporary directory permissions to 0755", "path", tempDir) // Keep this debug log for now
 	if err := os.Chmod(tempDir, 0755); err != nil {
 		// Attempt cleanup even if chmod fails
 		_ = os.RemoveAll(tempDir)
 		return fmt.Errorf("failed to set permissions on temporary directory %s: %w", tempDir, err)
 	}
-
-	// Verify permissions *after* chmod
-	postChmodInfo, err := os.Stat(tempDir)
-	if err != nil {
-		slog.Warn("Could not stat temporary directory after chmod", "path", tempDir, "error", err)
-	} else {
-		slog.Info("Temporary directory permissions *after* chmod", "path", tempDir, "permissions", postChmodInfo.Mode().String())
-	}
-
 
 	// Ensure the temporary directory is cleaned up afterwards
 	defer func() {

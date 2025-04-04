@@ -53,7 +53,7 @@ func runNew(cmd *cobra.Command, args []string) error {
 	projectName := args[0]
 	modulePath := args[1]
 
-	slog.Info("Starting new project creation", "project", projectName, "module", modulePath)
+	slog.Debug("Starting new project creation", "project", projectName, "module", modulePath) // Changed to Debug
 
 	// Validate inputs
 	if !dirNameRegex.MatchString(projectName) {
@@ -139,7 +139,7 @@ func runNew(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create initial git commit: %w", err)
 	}
 
-	slog.Info("Project created successfully!", "path", projectName)
+	slog.Debug("Project created successfully!", "path", projectName) // Changed to Debug
 	fmt.Printf("\nSuccess! Created project %s at ./%s\n", projectName, projectName)
 	fmt.Printf("Module path: %s\n", modulePath)
 	fmt.Println("\nNext steps:")
