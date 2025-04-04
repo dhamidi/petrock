@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"syscall" // Import for umask
 
 	"github.com/spf13/cobra"
 )
