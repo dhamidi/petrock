@@ -14,13 +14,13 @@ main() {
   # Parse arguments
   for arg in "$@"; do
     case "$arg" in
-      --debug)
-        log_level="debug"
-        ;;
-      *)
-        # Collect non-flag arguments
-        remaining_args+=("$arg")
-        ;;
+    --debug)
+      log_level="debug"
+      ;;
+    *)
+      # Collect non-flag arguments
+      remaining_args+=("$arg")
+      ;;
     esac
   done
 
@@ -33,12 +33,11 @@ main() {
 
   # Set log level environment variable
   export PETROCK_LOG_LEVEL="$log_level"
-  printf "Log level set to: %s\n" "$log_level" # Inform user
 
   # Execute steps
   if [[ -n "$target_step" ]]; then
     # Check if the target step function exists
-    if declare -F "$target_step" > /dev/null; then
+    if declare -F "$target_step" >/dev/null; then
       step "$target_step"
     else
       error_exit "Unknown step: '$target_step'"
@@ -72,7 +71,6 @@ build_petrock() {
 }
 
 test_petrock() {
-  # PETROCK_LOG_LEVEL is now set globally in main()
   ./petrock test
 }
 
