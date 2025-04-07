@@ -1,8 +1,8 @@
 package petrock_example_feature_name
 
 import (
-	"fmt"     // Import fmt package
-	"strings" // Import strings package
+	"fmt" // Import fmt package
+	// "strings" // Removed unused import
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 	g "maragu.dev/gomponents"                     // Alias for gomponents
