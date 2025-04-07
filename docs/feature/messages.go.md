@@ -4,7 +4,7 @@ This file defines the specific command and query message structures, as well as 
 
 ## Types
 
-*Command and Query structs in the template implement `CommandName()` and `QueryName()` respectively. These methods return the kebab-case name (e.g., `petrock_example_feature_name/create-command`) which is updated with the actual feature name during placeholder replacement.*
+*Command and Query structs in the template implement `CommandName()` and `QueryName()` respectively. These methods return the kebab-case name (e.g., `petrock_example_feature_name/create`) which is updated with the actual feature name during placeholder replacement.*
 
 ### Commands (Implement `core.Command`)
 - `CreatePostCommand`: (Implements `CommandName() string`)

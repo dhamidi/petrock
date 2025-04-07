@@ -19,5 +19,5 @@ This file defines the registry for commands and their associated handlers, formi
 - `NewCommandRegistry()`: Constructor.
 - `(r *CommandRegistry) Register(cmd Command, handler CommandHandler)`: Registers a handler using the name returned by `cmd.CommandName()`. Stores the handler and `reflect.Type`. Panics if the name is already registered.
 - `(r *CommandRegistry) Dispatch(ctx context.Context, cmd Command) error`: Looks up the handler using `cmd.CommandName()` and executes it.
-- `(r *CommandRegistry) RegisteredCommandNames() []string`: Returns a slice containing the full registered kebab-case names (e.g., "posts/create-command") of all commands.
-- `(r *CommandRegistry) GetCommandType(name string) (reflect.Type, bool)`: Looks up and returns the `reflect.Type` for a command based on its full registered kebab-case name (e.g., "posts/create-command").
+- `(r *CommandRegistry) RegisteredCommandNames() []string`: Returns a slice containing the full registered kebab-case names (e.g., "posts/create") of all commands.
+- `(r *CommandRegistry) GetCommandType(name string) (reflect.Type, bool)`: Looks up and returns the `reflect.Type` for a command based on its full registered kebab-case name (e.g., "posts/create").

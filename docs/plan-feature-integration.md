@@ -21,12 +21,12 @@ go run ./cmd/blog serve
 1.  The `posts` feature's commands, queries, and message types are registered with the core registries and message log upon startup.
 2.  The application serves HTTP requests on `localhost:8080` (by default).
 3.  The following API endpoints are functional:
-    *   `GET /commands`: Returns a JSON list of registered command names (e.g., `posts/create-command`).
-    *   `POST /commands`: Accepts a JSON payload (`{"type": "feature/command-name", "payload": {...}}`), executes the command via the registry, logs it, updates state, and returns success/error.
-    *   `GET /queries`: Returns a JSON list of registered query names (e.g., `posts/list-query`).
+    *   `GET /commands`: Returns a JSON list of registered command names (e.g., `posts/create`).
+    *   `POST /commands`: Accepts a JSON payload (`{"type": "feature/create", "payload": {...}}`), executes the command via the registry, logs it, updates state, and returns success/error.
+    *   `GET /queries`: Returns a JSON list of registered query names (e.g., `posts/list`).
     *   `GET /queries/{feature}/{query-name}`: Accepts query parameters, executes the named query via the registry using the parameters, and returns the JSON result.
 4.  Executing commands via `POST /commands` correctly updates the application's in-memory state via the event log replay mechanism.
-5.  Visiting the root `/` displays a simple HTML page listing the registered command and query names (e.g., `posts/create-command`).
+5.  Visiting the root `/` displays a simple HTML page listing the registered command and query names (e.g., `posts/create`).
 
 ---
 

@@ -19,7 +19,7 @@ type CreateCommand struct {
 
 // CommandName returns the unique kebab-case name for this command type.
 func (c CreateCommand) CommandName() string {
-	return "petrock_example_feature_name/create-command"
+	return "petrock_example_feature_name/create" // Removed suffix
 }
 
 // UpdateCommand holds data needed to update an existing entity.
@@ -32,7 +32,7 @@ type UpdateCommand struct {
 
 // CommandName returns the unique kebab-case name for this command type.
 func (c UpdateCommand) CommandName() string {
-	return "petrock_example_feature_name/update-command"
+	return "petrock_example_feature_name/update" // Removed suffix
 }
 
 // DeleteCommand holds data needed to delete an entity.
@@ -43,7 +43,7 @@ type DeleteCommand struct {
 
 // CommandName returns the unique kebab-case name for this command type.
 func (c DeleteCommand) CommandName() string {
-	return "petrock_example_feature_name/delete-command"
+	return "petrock_example_feature_name/delete" // Removed suffix
 }
 
 // --- Queries (Implement core.Query) ---
@@ -56,7 +56,7 @@ type GetQuery struct {
 
 // QueryName returns the unique kebab-case name for this query type.
 func (q GetQuery) QueryName() string {
-	return "petrock_example_feature_name/get-query"
+	return "petrock_example_feature_name/get" // Removed suffix
 }
 
 // ListQuery holds data needed to retrieve a list of entities, possibly filtered or paginated.
@@ -68,7 +68,7 @@ type ListQuery struct {
 
 // QueryName returns the unique kebab-case name for this query type.
 func (q ListQuery) QueryName() string {
-	return "petrock_example_feature_name/list-query"
+	return "petrock_example_feature_name/list" // Removed suffix
 }
 
 // --- Query Results (Implement core.QueryResult) ---

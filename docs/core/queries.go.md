@@ -21,5 +21,5 @@ This file defines the registry for queries and their associated handlers, enabli
 - `NewQueryRegistry()`: Constructor.
 - `(r *QueryRegistry) Register(query Query, handler QueryHandler)`: Registers a handler using the name returned by `query.QueryName()`. Stores the handler and `reflect.Type`. Panics if the name is already registered.
 - `(r *QueryRegistry) Dispatch(ctx context.Context, query Query) (QueryResult, error)`: Looks up the handler using `query.QueryName()` and executes it.
-- `(r *QueryRegistry) RegisteredQueryNames() []string`: Returns a slice containing the full registered kebab-case names (e.g., "posts/list-query") of all queries.
-- `(r *QueryRegistry) GetQueryType(name string) (reflect.Type, bool)`: Looks up and returns the `reflect.Type` for a query based on its full registered kebab-case name (e.g., "posts/list-query").
+- `(r *QueryRegistry) RegisteredQueryNames() []string`: Returns a slice containing the full registered kebab-case names (e.g., "posts/list") of all queries.
+- `(r *QueryRegistry) GetQueryType(name string) (reflect.Type, bool)`: Looks up and returns the `reflect.Type` for a query based on its full registered kebab-case name (e.g., "posts/list").
