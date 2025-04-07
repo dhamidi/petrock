@@ -9,8 +9,9 @@ import (
 func RegisterAllFeatures(
 	commands *core.CommandRegistry,
 	queries *core.QueryRegistry,
-	messageLog *core.MessageLog, // Uncommented: Needed by generated feature registration
-	// Add other dependencies like state if needed
+	messageLog *core.MessageLog,
+	appState *AppState, // Add AppState dependency
+	// Add other shared dependencies like config if needed
 ) {
 	// petrock:register-feature - Do not remove or modify this line
 }

@@ -132,8 +132,10 @@ func runServe(cmd *cobra.Command, args []string) error {
 		slog.Warn("Some messages failed to apply during state replay. State might be incomplete.")
 	}
 
-	// 7. Register Feature Handlers (will be called here in Chunk 2)
-	// RegisterAllFeatures(commandRegistry, queryRegistry, messageLog, appState) // Pass initialized components
+	// 7. Register Feature Handlers
+	slog.Debug("Registering features...")
+	RegisterAllFeatures(commandRegistry, queryRegistry, messageLog, appState) // Pass initialized components
+	slog.Info("Features registered")
 
 	// --- HTTP Server Setup ---
 	slog.Info("Setting up HTTP server...")

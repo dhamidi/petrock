@@ -335,8 +335,13 @@ func insertFeatureRegistration(content, modulePath, featureName string) (string,
 	// Line to initialize the state for the feature
 	newStateLine := fmt.Sprintf("%s%s := %s.NewState()", registerIndentation, stateVarName, featureName)
 	// Line to call the feature's registration function
-	// Assumes RegisterAllFeatures receives variables named 'commands', 'queries', 'messageLog'
+	// Assumes RegisterAllFeatures receives variables named 'commands', 'queries', 'messageLog', 'appState'
+	// Note: The feature's RegisterFeature expects its *own* state, not the global AppState placeholder.
+	// We initialize the feature's state here and pass it.
 	newRegisterLine := fmt.Sprintf("%s%s.RegisterFeature(commands, queries, messageLog, %s)", registerIndentation, featureName, stateVarName)
+	// TODO: If features need access to the *global* AppState or other shared state,
+	// the RegisterAllFeatures signature and the feature's RegisterFeature signature
+	// would need to be adjusted accordingly. For now, we pass the feature-specific state.
 
 	// Insert lines *before* the markers
 	var resultLines []string
