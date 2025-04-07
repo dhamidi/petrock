@@ -41,7 +41,7 @@ func (q *Querier) HandleGet(ctx context.Context, query core.Query) (core.QueryRe
 	item, found := q.state.GetItem(getQuery.ID)
 	if !found {
 		// Return a specific "not found" error if defined, otherwise a generic one
-		return nil, fmt.Errorf("item with ID %s not found", getQuery.ID) // TODO: Use a typed error e.g., ErrNotFound
+		return nil, fmt.Errorf("item with ID %s not found", getQuery.ID)
 	}
 
 	// 2. Map internal state representation to the QueryResult struct

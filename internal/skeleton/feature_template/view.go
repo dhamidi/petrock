@@ -25,18 +25,15 @@ func ItemView(item Result) g.Node {
 				item.Version,
 			),
 		),
-		// Add Edit/Delete buttons if applicable
+		// Add Edit/Delete buttons if applicable (link to API or separate pages)
 		html.Button(
 			Classes{"ml-2": true, "text-blue-500": true, "hover:underline": true}, // Example styling
-			g.Attr("hx-get", fmt.Sprintf("/feature-path/%s/edit", item.ID)),       // Placeholder URL
-			g.Attr("hx-target", "#feature-content"),                               // Placeholder target
+			// Consider linking to an edit page or using JS to call the API
 			g.Text("Edit"),
 		),
 		html.Button(
 			Classes{"ml-2": true, "text-red-500": true, "hover:underline": true}, // Example styling
-			g.Attr("hx-delete", fmt.Sprintf("/feature-path/%s", item.ID)),        // Placeholder URL
-			g.Attr("hx-target", "#feature-content"),                              // Placeholder target
-			g.Attr("hx-confirm", "Are you sure you want to delete this item?"),
+			// Consider using JS to call the API with confirmation
 			g.Text("Delete"),
 		),
 	)
@@ -65,10 +62,9 @@ func ItemForm(form *core.Form, item *Result, csrfToken string) g.Node {
 	}
 
 	return html.Form(
-		// HTMX attributes for form submission
-		g.Attr("hx-"+strings.ToLower(method), actionURL),
-		g.Attr("hx-target", "#feature-content"), // Placeholder target
-		g.Attr("hx-swap", "outerHTML"),          // Example swap strategy
+		// Standard form attributes - submission would likely be handled by JS calling the API
+		html.Action(actionURL), // Action might point to the page itself or an API endpoint
+		html.Method(method),    // Use POST for create/update via API typically
 
 		// CSRF Token
 		core.CSRFTokenInput(csrfToken), // Assumes core.CSRFTokenInput exists
@@ -121,12 +117,13 @@ func ItemsListView(result ListResult) g.Node {
 	)
 }
 
-// NewItemButton renders a button or link to trigger loading the ItemForm for creation.
+// NewItemButton renders a button or link to navigate to the item creation page/view.
 func NewItemButton() g.Node {
+	// This button would typically link to a page containing the ItemForm,
+	// or trigger JavaScript to display the form and handle API submission.
 	return core.Button(
 		"Create New Item",
-		g.Attr("hx-get", "/feature-path/new"),   // Placeholder URL for the form
-		g.Attr("hx-target", "#feature-content"), // Placeholder target where the form should load
-		// Add other attributes as needed
+		// Example: Link to a separate page (adjust URL as needed)
+		// g.Attr("onclick", "window.location.href='/feature-path/new'"),
 	)
 }

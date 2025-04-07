@@ -55,7 +55,6 @@ func (r *CommandRegistry) Dispatch(ctx context.Context, cmd Command) error {
 	}
 
 	slog.Debug("Dispatching command", "type", cmdType)
-	// TODO: Add instrumentation/tracing here if needed
 	return handler(ctx, cmd)
 }
 

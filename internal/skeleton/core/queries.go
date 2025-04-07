@@ -58,7 +58,6 @@ func (r *QueryRegistry) Dispatch(ctx context.Context, query Query) (QueryResult,
 	}
 
 	slog.Debug("Dispatching query", "type", queryType)
-	// TODO: Add instrumentation/tracing here if needed
 	return handler(ctx, query)
 }
 
