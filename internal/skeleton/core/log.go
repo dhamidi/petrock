@@ -87,30 +87,76 @@ func (l *MessageLog) setupSchema(ctx context.Context) error {
 
 // RegisterType registers a Go type (by passing an instance) so the log
 // can decode messages of this type later during Load.
-// It uses the type's name as the string identifier.
+// It uses the name returned by the CommandName() or QueryName() method as the identifier.
 func (l *MessageLog) RegisterType(instance interface{}) {
-	instanceType := reflect.TypeOf(instance)
-	// If it's a pointer, get the element type
+	var typeName string
+	var instanceType reflect.Type
+
+	// Check if it's a Command
+	if cmd, ok := instance.(Command); ok {
+		typeName = cmd.CommandName()
+		instanceType = reflect.TypeOf(cmd)
+	} else if query, ok := instance.(Query); ok {
+		// Check if it's a Query
+		typeName = query.QueryName()
+		instanceType = reflect.TypeOf(query)
+	} else {
+		// Fallback or error for types that don't implement Command/Query?
+		// For now, let's log a warning and use the reflect name, although
+		// ideally only Commands/Queries should be registered if they are the
+		// only things expected to be logged and replayed.
+		instanceType = reflect.TypeOf(instance)
+		typeName = instanceType.Name() // Fallback to struct name
+		slog.Warn("Registering type that is not core.Command or core.Query", "type", typeName)
+		// Alternatively, return an error:
+		// slog.Error("Attempted to register type that is not core.Command or core.Query", "type", reflect.TypeOf(instance).String())
+		// return // Or return error
+	}
+
+
+	// If it's a pointer, get the element type for storage
 	if instanceType.Kind() == reflect.Ptr {
 		instanceType = instanceType.Elem()
 	}
-	typeName := instanceType.Name() // Use simple name, ensure uniqueness across features
+
+	if typeName == "" {
+		slog.Error("Attempted to register type with empty name", "type", instanceType.String())
+		return // Cannot register with an empty name
+	}
+
+
 	if _, exists := l.typeRegistry[typeName]; exists {
-		slog.Warn("Attempted to register already registered type", "type", typeName)
+		slog.Warn("Attempted to register already registered type", "name", typeName)
 		return
 	}
 	l.typeRegistry[typeName] = instanceType
-	slog.Debug("Registered message type for decoding", "type", typeName)
+	slog.Debug("Registered message type for decoding", "name", typeName, "type", instanceType)
 }
 
-// Append encodes the given message, determines its type string,
+// Append encodes the given message, determines its registered name string,
 // and inserts it as a new row into the 'messages' table.
 func (l *MessageLog) Append(ctx context.Context, msg interface{}) error {
-	msgType := reflect.TypeOf(msg)
-	if msgType.Kind() == reflect.Ptr {
-		msgType = msgType.Elem() // Get the underlying type if it's a pointer
+	var typeName string
+
+	// Get the registered name from the message
+	if cmd, ok := msg.(Command); ok {
+		typeName = cmd.CommandName()
+	} else if query, ok := msg.(Query); ok {
+		// Should queries be logged? Typically only commands/events are.
+		// If queries *can* be logged, use their name.
+		typeName = query.QueryName()
+		slog.Warn("Appending a Query to the message log", "name", typeName)
+	} else {
+		// Fallback or error? Only log known types.
+		typeName = reflect.TypeOf(msg).Name() // Fallback to struct name
+		slog.Error("Attempted to append message without CommandName/QueryName", "type", typeName)
+		// Return an error because we likely cannot decode this later if not registered correctly.
+		return fmt.Errorf("message type %T does not implement core.Command or core.Query", msg)
 	}
-	typeName := msgType.Name()
+
+	if typeName == "" {
+		return fmt.Errorf("cannot append message with empty registered name (type %T)", msg)
+	}
 
 	data, err := l.encoder.Encode(msg)
 	if err != nil {
@@ -123,7 +169,7 @@ func (l *MessageLog) Append(ctx context.Context, msg interface{}) error {
 		return fmt.Errorf("failed to insert message type %s into log: %w", typeName, err)
 	}
 
-	slog.Debug("Appended message to log", "type", typeName)
+	slog.Debug("Appended message to log", "name", typeName)
 	return nil
 }
 
