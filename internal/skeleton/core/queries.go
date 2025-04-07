@@ -62,5 +62,20 @@ func (r *QueryRegistry) Dispatch(ctx context.Context, query Query) (QueryResult,
 	return handler(ctx, query)
 }
 
+// RegisteredQueryNames returns a slice of strings containing the names
+// of all registered query types.
+func (r *QueryRegistry) RegisteredQueryNames() []string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	names := make([]string, 0, len(r.handlers))
+	for queryType := range r.handlers {
+		names = append(names, queryType.Name()) // Use the simple type name
+	}
+	// Sort for predictable output order
+	// sort.Strings(names) // Optional: uncomment if consistent order is desired
+	return names
+}
+
 // --- Global Registry (Optional - consider dependency injection instead) ---
 // var Queries = NewQueryRegistry()

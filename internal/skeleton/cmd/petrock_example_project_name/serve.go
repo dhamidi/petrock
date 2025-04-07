@@ -158,9 +158,10 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// you'd typically check r.URL.Path inside the handler or use a small helper/library.
 	mux.HandleFunc("GET /", core.HandleIndex( /* queryRegistry */ )) // Pass dependencies - Use core.HandleIndex
 	mux.HandleFunc("GET /commands", handleListCommands(commandRegistry))
-	mux.HandleFunc("POST /commands", handleExecuteCommand(commandRegistry)) // Added route for executing commands
+	mux.HandleFunc("POST /commands", handleExecuteCommand(commandRegistry))
+	mux.HandleFunc("GET /queries", handleListQueries(queryRegistry)) // Added route for listing queries
 	// TODO: Add routes for features (e.g., mux.HandleFunc("GET /posts", handleListPosts), mux.HandleFunc("GET /posts/{id}", handleGetPost))
-	// TODO: Add routes for other API endpoints (/queries, GET /queries/{name})
+	// TODO: Add routes for other API endpoints (GET /queries/{name})
 
 	// --- Server Start and Shutdown ---
 	server := &http.Server{
@@ -305,6 +306,25 @@ func handleExecuteCommand(registry *core.CommandRegistry) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK) // Or http.StatusAccepted (202) if processing is async
 		// Optionally return a success body
 		json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+	}
+}
+
+// handleListQueries creates an http.HandlerFunc that lists registered query types.
+func handleListQueries(registry *core.QueryRegistry) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		queryNames := registry.RegisteredQueryNames()
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(queryNames); err != nil {
+			slog.Error("Failed to encode query names list", "error", err)
+			// Hard to send error to client if header already written, but log it.
+		}
 	}
 }
 
