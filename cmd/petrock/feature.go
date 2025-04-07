@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"io/fs" // Import io/fs package
 	"log/slog"
-	"os" // Import os package
+	"os"            // Import os package
 	"path/filepath" // Import filepath package
 	"regexp"
 	"strings" // Import strings package
-	"unicode" // Import unicode package
 
-	petrock "github.com/dhamidi/petrock"         // Import root package for embedded FS
+	petrock "github.com/dhamidi/petrock"        // Import root package for embedded FS
 	"github.com/dhamidi/petrock/internal/utils" // Import utils
 	"github.com/spf13/cobra"
 )
@@ -347,10 +346,10 @@ func insertFeatureRegistration(content, modulePath, featureName string) (string,
 	// Insert lines *before* the markers
 	var resultLines []string
 	resultLines = append(resultLines, lines[:importIndex]...)
-	resultLines = append(resultLines, newImportLine)                // Add import
+	resultLines = append(resultLines, newImportLine) // Add import
 	resultLines = append(resultLines, lines[importIndex:registerIndex]...)
-	resultLines = append(resultLines, newStateLine)                 // Add state initialization
-	resultLines = append(resultLines, newRegisterLine)              // Add registration call
+	resultLines = append(resultLines, newStateLine)    // Add state initialization
+	resultLines = append(resultLines, newRegisterLine) // Add registration call
 	resultLines = append(resultLines, lines[registerIndex:]...)
 
 	return strings.Join(resultLines, "\n"), nil
