@@ -160,7 +160,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// Example: Define HTTP routes/handlers
 	// Note: net/http mux uses pattern-based routing. For path parameters like /posts/{id},
 	// you'd typically check r.URL.Path inside the handler or use a small helper/library.
-	mux.HandleFunc("GET /", core.HandleIndex( /* queryRegistry */ )) // Pass dependencies - Use core.HandleIndex
+	mux.HandleFunc("GET /", core.HandleIndex(commandRegistry, queryRegistry)) // Pass registries to index handler
 	mux.HandleFunc("GET /commands", handleListCommands(commandRegistry))
 	mux.HandleFunc("POST /commands", handleExecuteCommand(commandRegistry))
 	mux.HandleFunc("GET /queries", handleListQueries(queryRegistry))

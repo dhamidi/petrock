@@ -8,29 +8,57 @@ import (
 	"maragu.dev/gomponents/html"
 )
 
-// IndexPage renders the main content for the home page.
+// IndexPage renders the main content for the home page, displaying registered commands and queries.
 // This component is intended to be passed to the Layout function.
-func IndexPage() g.Node {
+func IndexPage(commandNames, queryNames []string) g.Node {
+	commandListItems := make([]g.Node, len(commandNames))
+	for i, name := range commandNames {
+		commandListItems[i] = html.Li(html.Code(g.Text(name)))
+	}
+
+	queryListItems := make([]g.Node, len(queryNames))
+	for i, name := range queryNames {
+		queryListItems[i] = html.Li(html.Code(g.Text(name)))
+	}
+
 	return Page("Welcome!", // Use the Page component from core/view.go
 		html.P(
-			Classes{"text-lg": true, "mb-4": true}, // Correct map literal syntax
-			g.Text("Welcome to your new Petrock-generated application!"),
+			Classes{"text-lg": true, "mb-4": true},
+			g.Text("Welcome to your Petrock-generated application!"),
+		),
+		html.H2(Classes{"text-xl": true, "font-semibold": true, "mt-6": true, "mb-2": true}, g.Text("Available Commands")),
+		html.Ul(
+			Classes{"list-disc": true, "list-inside": true, "space-y-1": true, "mb-4": true},
+			g.Group(commandListItems),
 		),
 		html.P(
-			g.Text("You can start by adding features using: "),
-			html.Code(Classes{"bg-gray-200": true, "p-1": true, "rounded": true}, g.Text("petrock feature <feature_name>")), // Correct map literal syntax
+			g.Text("Execute commands via: "),
+			html.Code(Classes{"bg-gray-200": true, "p-1": true, "rounded": true}, g.Text("POST /commands")),
+			g.Text(" with JSON payload: "),
+			html.Code(Classes{"bg-gray-200": true, "p-1": true, "rounded": true}, g.Text(`{"type": "CommandName", "payload": {...}}`)),
 		),
-		// Add more introductory content or links here
+
+		html.H2(Classes{"text-xl": true, "font-semibold": true, "mt-6": true, "mb-2": true}, g.Text("Available Queries")),
+		html.Ul(
+			Classes{"list-disc": true, "list-inside": true, "space-y-1": true, "mb-4": true},
+			g.Group(queryListItems),
+		),
+		html.P(
+			g.Text("Execute queries via: "),
+			html.Code(Classes{"bg-gray-200": true, "p-1": true, "rounded": true}, g.Text("GET /queries/{QueryName}?param1=value1&...")),
+		),
 	)
 }
 
 // HandleIndex creates an http.HandlerFunc for the index page.
-// It renders the IndexPage component wrapped in the main Layout.
-func HandleIndex( /* Pass dependencies like QueryRegistry if needed */ ) http.HandlerFunc {
+// It fetches registered command/query names and renders the IndexPage component wrapped in the main Layout.
+func HandleIndex(commandRegistry *CommandRegistry, queryRegistry *QueryRegistry) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Here you might fetch data using the QueryRegistry if the index page needs dynamic content
+		// Fetch registered names
+		commandNames := commandRegistry.RegisteredCommandNames()
+		queryNames := queryRegistry.RegisteredQueryNames()
 
-		component := IndexPage()
+		component := IndexPage(commandNames, queryNames)
 		layout := Layout("Home - petrock_example_project_name", component) // Use project name in title
 
 		// Set content type and render
