@@ -159,9 +159,9 @@ func runServe(cmd *cobra.Command, args []string) error {
 	mux.HandleFunc("GET /", core.HandleIndex( /* queryRegistry */ )) // Pass dependencies - Use core.HandleIndex
 	mux.HandleFunc("GET /commands", handleListCommands(commandRegistry))
 	mux.HandleFunc("POST /commands", handleExecuteCommand(commandRegistry))
-	mux.HandleFunc("GET /queries", handleListQueries(queryRegistry)) // Added route for listing queries
+	mux.HandleFunc("GET /queries", handleListQueries(queryRegistry))
+	mux.HandleFunc("GET /queries/{name}", handleExecuteQuery(queryRegistry)) // Added route for executing named queries
 	// TODO: Add routes for features (e.g., mux.HandleFunc("GET /posts", handleListPosts), mux.HandleFunc("GET /posts/{id}", handleGetPost))
-	// TODO: Add routes for other API endpoints (GET /queries/{name})
 
 	// --- Server Start and Shutdown ---
 	server := &http.Server{
@@ -326,6 +326,133 @@ func handleListQueries(registry *core.QueryRegistry) http.HandlerFunc {
 			// Hard to send error to client if header already written, but log it.
 		}
 	}
+}
+
+// handleExecuteQuery creates an http.HandlerFunc that executes queries based on URL path and parameters.
+func handleExecuteQuery(registry *core.QueryRegistry) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Extract query name from path (requires Go 1.22+)
+		queryName := r.PathValue("name")
+		if queryName == "" {
+			http.Error(w, "Bad Request: Missing query name in path (e.g., /queries/QueryName)", http.StatusBadRequest)
+			return
+		}
+		slog.Debug("Handling query request via API", "name", queryName)
+
+		// Look up the query type in the registry
+		queryType, found := registry.GetQueryType(queryName)
+		if !found {
+			slog.Warn("Received request for unknown query type", "name", queryName)
+			http.Error(w, fmt.Sprintf("Not Found: unknown query type %q", queryName), http.StatusNotFound)
+			return
+		}
+
+		// Create a new instance of the query struct (must be a pointer for reflection)
+		queryInstancePtr := reflect.New(queryType) // Returns a pointer Value
+		queryInstance := queryInstancePtr.Elem()   // Get the struct Value
+
+		// Populate the query struct fields from URL query parameters
+		urlParams := r.URL.Query()
+		if err := populateStructFromURLParams(queryInstance, urlParams); err != nil {
+			slog.Error("Failed to populate query struct from URL parameters", "name", queryName, "error", err)
+			http.Error(w, fmt.Sprintf("Bad Request: %s", err.Error()), http.StatusBadRequest)
+			return
+		}
+
+		// Get the actual query value (non-pointer) to pass to Dispatch
+		queryValue := queryInstance.Interface()
+
+		// Dispatch the query
+		slog.Debug("Dispatching query via API", "name", queryName)
+		result, dispatchErr := registry.Dispatch(r.Context(), queryValue)
+
+		if dispatchErr != nil {
+			slog.Error("Error dispatching query", "name", queryName, "error", dispatchErr)
+			// TODO: Implement more specific error handling (e.g., ErrNotFound -> 404)
+			// if errors.Is(dispatchErr, core.ErrNotFound) {
+			// 	http.Error(w, "Not Found", http.StatusNotFound)
+			// 	return
+			// }
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		// Query successful
+		slog.Info("Query executed successfully via API", "name", queryName)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(result); err != nil {
+			slog.Error("Failed to encode query result", "name", queryName, "error", err)
+			// Hard to send error to client if header already written, but log it.
+		}
+	}
+}
+
+// populateStructFromURLParams uses reflection to set fields of a struct
+// based on values found in URL query parameters.
+// It supports string, int, and bool field types.
+func populateStructFromURLParams(structVal reflect.Value, params url.Values) error {
+	if structVal.Kind() != reflect.Struct {
+		return fmt.Errorf("internal error: expected a struct value, got %s", structVal.Kind())
+	}
+	structType := structVal.Type()
+
+	for i := 0; i < structVal.NumField(); i++ {
+		fieldVal := structVal.Field(i)
+		fieldType := structType.Field(i)
+		fieldName := fieldType.Name // Use struct field name directly
+
+		// Check if field is settable (exported)
+		if !fieldVal.CanSet() {
+			continue
+		}
+
+		// Get parameter value (case-sensitive match with field name)
+		paramValueStr, exists := params[fieldName]
+		if !exists || len(paramValueStr) == 0 {
+			// Also check lowercase version for convenience? Optional.
+			lowerFieldName := strings.ToLower(fieldName)
+			paramValueStr, exists = params[lowerFieldName]
+			if !exists || len(paramValueStr) == 0 {
+				continue // No parameter found for this field
+			}
+		}
+		valueStr := paramValueStr[0] // Use the first value if multiple are provided
+
+		// Set field value based on its type
+		switch fieldVal.Kind() {
+		case reflect.String:
+			fieldVal.SetString(valueStr)
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			intValue, err := strconv.ParseInt(valueStr, 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid integer value %q for field %q: %w", valueStr, fieldName, err)
+			}
+			if fieldVal.OverflowInt(intValue) {
+				return fmt.Errorf("integer value %q overflows field %q", valueStr, fieldName)
+			}
+			fieldVal.SetInt(intValue)
+		case reflect.Bool:
+			// Handle common boolean representations: "true", "false", "1", "0"
+			boolValue, err := strconv.ParseBool(strings.ToLower(valueStr))
+			if err != nil && valueStr != "1" && valueStr != "0" { // Allow 1/0 as bool
+				return fmt.Errorf("invalid boolean value %q for field %q", valueStr, fieldName)
+			}
+			if valueStr == "1" { // Handle "1" explicitly if ParseBool fails
+				boolValue = true
+			}
+			fieldVal.SetBool(boolValue)
+		// Add cases for other supported types (float, etc.) if needed
+		default:
+			slog.Warn("Unsupported field type for URL parameter population", "field", fieldName, "type", fieldVal.Kind())
+		}
+	}
+	return nil
 }
 
 // --- Placeholder Middleware/Handlers (Replace with actual implementations) ---

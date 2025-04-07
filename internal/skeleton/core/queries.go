@@ -77,5 +77,20 @@ func (r *QueryRegistry) RegisteredQueryNames() []string {
 	return names
 }
 
+// GetQueryType retrieves the reflect.Type for a registered query by its name.
+// This is useful for decoding/constructing queries from external sources like API requests.
+func (r *QueryRegistry) GetQueryType(name string) (reflect.Type, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for queryType := range r.handlers {
+		// Compare the simple name of the registered type
+		if queryType.Name() == name {
+			return queryType, true
+		}
+	}
+	return nil, false
+}
+
 // --- Global Registry (Optional - consider dependency injection instead) ---
 // var Queries = NewQueryRegistry()
