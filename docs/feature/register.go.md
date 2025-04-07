@@ -8,10 +8,10 @@ This file acts as the entry point for the feature module. Its primary role is to
 
 ## Functions
 
-- `RegisterFeature(commands *core.CommandRegistry, queries *core.QueryRegistry, state *PostState)`: This function initializes the feature's handlers and registers them.
-    - It creates instances of the feature's executor (e.g., `NewPostExecutor(state)`) and querier (e.g., `NewPostQuerier(state)`).
-    - It calls `commands.Register` for each command type defined in `posts/messages.go`, passing the corresponding handler method (e.g., `executor.HandleCreatePost`).
-    - It calls `queries.Register` for each query type defined in `posts/messages.go`, passing the corresponding handler method (e.g., `querier.HandleGetPost`).
+- `RegisterFeature(commands *core.CommandRegistry, queries *core.QueryRegistry, messageLog *core.MessageLog, state *State)`: This function initializes the feature's handlers and registers them.
+    - It creates instances of the feature's executor (e.g., `NewExecutor(state, messageLog)`) and querier (e.g., `NewQuerier(state)`).
+    - It calls `commands.Register` for each command type (e.g., `commands.Register(CreateCommand{}, executor.HandleCreate)`). The registry uses the command's `RegisteredName()` method internally.
+    - It calls `queries.Register` for each query type (e.g., `queries.Register(GetQuery{}, querier.HandleGet)`). The registry uses the query's `RegisteredName()` method internally.
     - It calls the feature's `RegisterTypes` function (defined in `state.go`) to register command/event types with the `core.MessageLog` for decoding during replay.
     - It might initialize and register background jobs/workers if defined in `jobs.go`.
 

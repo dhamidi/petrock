@@ -14,7 +14,12 @@ This file defines the registry for queries and their associated handlers, enabli
 ## Functions
 
 - `NewQueryRegistry() *QueryRegistry`: Constructor function to create and initialize a new `QueryRegistry`.
-- `(r *QueryRegistry) Register(query Query, handler QueryHandler)`: Registers a query handler for a specific query type. It uses reflection (`reflect.TypeOf(query)`) to get the type key. Panics if a handler for the type is already registered.
-- `(r *QueryRegistry) Dispatch(ctx context.Context, query Query) (QueryResult, error)`: Looks up the handler for the given query's type and executes it. Returns the result and an error if no handler is registered or if the handler itself returns an error.
-- `(r *QueryRegistry) RegisteredQueryNames() []string`: Returns a slice containing the string names (e.g., "ListQuery") of all registered query types. Useful for discoverability (e.g., `GET /queries` API).
-- `(r *QueryRegistry) GetQueryType(name string) (reflect.Type, bool)`: Looks up and returns the `reflect.Type` for a registered query based on its string name. Returns the type and `true` if found, otherwise `nil` and `false`. Useful for constructing queries from external sources like the `GET /queries/{name}` API.
+- `Query`: Interface that query structs must implement. Embeds `NamedMessage`.
+- `QueryResult`: Marker interface for query results.
+- `QueryHandler`: Function type for query handlers.
+- `QueryRegistry`: Maps query names (`feature/Type`) to handlers and `reflect.Type`.
+- `NewQueryRegistry()`: Constructor.
+- `(r *QueryRegistry) Register(query Query, handler QueryHandler)`: Registers a handler using the name returned by `query.RegisteredName()`. Stores the handler and `reflect.Type`. Panics if the name is already registered.
+- `(r *QueryRegistry) Dispatch(ctx context.Context, query Query) (QueryResult, error)`: Looks up the handler using `query.RegisteredName()` and executes it.
+- `(r *QueryRegistry) RegisteredQueryNames() []string`: Returns a slice containing the full registered names (e.g., "posts/ListQuery") of all queries.
+- `(r *QueryRegistry) GetQueryType(name string) (reflect.Type, bool)`: Looks up and returns the `reflect.Type` for a query based on its full registered name (e.g., "posts/ListQuery").

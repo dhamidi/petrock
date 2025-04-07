@@ -4,8 +4,10 @@ This file defines the specific command and query message structures, as well as 
 
 ## Types
 
+*All Command and Query structs must implement the `core.NamedMessage` interface by providing a `RegisteredName() string` method that returns `"featureName/TypeName"`.*
+
 ### Commands (Implement `core.Command`)
-- `CreatePostCommand`:
+- `CreatePostCommand`: Implements `RegisteredName() string { return "posts/CreateCommand" }`
     - `Title string`
     - `Content string`
     - `AuthorID string` // Or appropriate user identifier type
@@ -13,13 +15,13 @@ This file defines the specific command and query message structures, as well as 
     - `PostID string` // Identifier for the post to update
     - `Title string`
     - `Content string`
-- `DeletePostCommand`:
+- `DeletePostCommand`: Implements `RegisteredName() string { return "posts/DeleteCommand" }`
     - `PostID string` // Identifier for the post to delete
 
 ### Queries (Implement `core.Query`)
-- `GetPostQuery`:
+- `GetPostQuery`: Implements `RegisteredName() string { return "posts/GetPostQuery" }`
     - `PostID string` // Identifier for the post to retrieve
-- `ListPostsQuery`:
+- `ListPostsQuery`: Implements `RegisteredName() string { return "posts/ListPostsQuery" }`
     - `Page int` // For pagination
     - `PageSize int` // For pagination
     - `AuthorIDFilter string` // Optional filter criteria

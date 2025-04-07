@@ -23,10 +23,10 @@ go run ./cmd/blog serve
 3.  The following API endpoints are functional:
     *   `GET /commands`: Returns a JSON list of registered command type names.
     *   `POST /commands`: Accepts a JSON payload (`{"type": "CmdName", "payload": {...}}`), executes the command via the registry, logs it, updates state, and returns success/error.
-    *   `GET /queries`: Returns a JSON list of registered query type names.
-    *   `GET /queries/{name}`: Accepts query parameters, executes the named query via the registry using the parameters, and returns the JSON result.
+    *   `GET /queries`: Returns a JSON list of registered query names (e.g., `posts/ListQuery`).
+    *   `GET /queries/{feature}/{QueryName}`: Accepts query parameters, executes the named query via the registry using the parameters, and returns the JSON result.
 4.  Executing commands via `POST /commands` correctly updates the application's in-memory state via the event log replay mechanism.
-5.  Visiting the root `/` displays a simple HTML page listing the registered command and query names.
+5.  Visiting the root `/` displays a simple HTML page listing the registered command and query names (e.g., `posts/CreateCommand`).
 
 ---
 
@@ -202,23 +202,24 @@ This plan breaks down the work into iterative chunks. Each step builds upon the 
 
 *   **Goal:** Create an HTTP handler that executes a named query, populating its fields from URL query parameters, and returns the result.
 *   **Tasks:**
-    1.  **Query Naming Convention:** Use the query struct's type name (e.g., "ListQuery") as the `{name}` in the URL path.
+    1.  **Query Naming Convention:** Use the full `feature/QueryName` string. The URL path will be `/queries/{feature}/{QueryName}`.
     2.  **Enhance QueryRegistry:** In `internal/skeleton/core/queries.go`:
-        *   Add `GetQueryType(name string) (reflect.Type, bool)` similar to the command registry. Thread-safe (read lock).
+        *   Ensure `GetQueryType(name string) (reflect.Type, bool)` accepts the full name (e.g., "posts/ListQuery") and looks up the type correctly from the registry's internal storage.
     3.  **Create Handler:** In `internal/skeleton/cmd/petrock_example_project_name/serve.go`:
         *   Create `handleExecuteQuery(registry *core.QueryRegistry) http.HandlerFunc`.
     4.  **Implement Handler Logic:**
-        *   Extract the query name from the URL path using `r.PathValue("name")` (requires Go 1.22+). Handle cases where it's missing.
-        *   Use `registry.GetQueryType(queryName)` to find the `reflect.Type`. If not found, return HTTP 404.
+        *   Extract the `feature` and `queryName` parts from the URL path using `r.PathValue()`. Construct the full name `feature + "/" + queryName`. Handle errors if parts are missing.
+        *   Use `registry.GetQueryType(fullQueryName)` to find the `reflect.Type`. If not found, return HTTP 404.
         *   Create a new zero-value instance (pointer) of the query struct using `reflect.New(queryType).Interface()`.
-        *   **Populate Query Struct from URL Params:**
+        *   **Populate Query Struct from URL Params:** (Logic remains the same)
             *   Get URL query parameters using `r.URL.Query()`.
             *   Iterate through the fields of the query struct instance (using reflection on the pointer: `reflect.ValueOf(queryInstance).Elem()`).
             *   For each field, check if a corresponding key exists in the URL parameters.
             *   If found, get the string value(s) from the `url.Values`.
             *   Convert the string value to the field's type (e.g., `string`, `int`, `bool`). Use `strconv` for conversions. Handle potential conversion errors (return HTTP 400).
             *   Set the field's value using reflection (`field.SetString()`, `field.SetInt()`, etc.). Handle potential errors during setting (return HTTP 400).
-        *   Dispatch the populated query: `result, err := registry.Dispatch(r.Context(), reflect.ValueOf(queryInstance).Elem().Interface())`. Pass the value type.
+        *   Get the query value and ensure it implements `core.Query`: `queryValue, ok := queryInstance.Interface().(core.Query)`. Handle `!ok`.
+        *   Dispatch the populated query: `result, err := registry.Dispatch(r.Context(), queryValue)`.
         *   Handle errors from `Dispatch`:
             *   If it's a "not found" error from the handler (needs defining, maybe a standard `ErrNotFound` in `core`), return HTTP 404.
             *   For other errors, return HTTP 500. Log the error.
@@ -226,7 +227,7 @@ This plan breaks down the work into iterative chunks. Each step builds upon the 
             *   Set `Content-Type: application/json`.
             *   Marshal the `result` (which implements `core.QueryResult`) to the response body. Handle marshaling errors (HTTP 500).
             *   Return HTTP 200 OK.
-    5.  **Register Route:** In `runServe`, register `mux.HandleFunc("GET /queries/{name}", handleExecuteQuery(queryRegistry))`.
+    5.  **Register Route:** In `runServe`, register `mux.HandleFunc("GET /queries/{feature}/{queryName}", handleExecuteQuery(queryRegistry))`.
 *   **References:**
     *   `internal/skeleton/core/queries.go`
     *   `internal/skeleton/cmd/petrock_example_project_name/serve.go`

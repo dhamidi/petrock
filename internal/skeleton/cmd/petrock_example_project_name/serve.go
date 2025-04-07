@@ -164,7 +164,8 @@ func runServe(cmd *cobra.Command, args []string) error {
 	mux.HandleFunc("GET /commands", handleListCommands(commandRegistry))
 	mux.HandleFunc("POST /commands", handleExecuteCommand(commandRegistry))
 	mux.HandleFunc("GET /queries", handleListQueries(queryRegistry))
-	mux.HandleFunc("GET /queries/{name}", handleExecuteQuery(queryRegistry)) // Added route for executing named queries
+	// Route pattern updated to capture feature/QueryName structure
+	mux.HandleFunc("GET /queries/{feature}/{queryName}", handleExecuteQuery(queryRegistry))
 	// TODO: Add routes for features (e.g., mux.HandleFunc("GET /posts", handleListPosts), mux.HandleFunc("GET /posts/{id}", handleGetPost))
 
 	// --- Server Start and Shutdown ---
@@ -270,11 +271,11 @@ func handleExecuteCommand(registry *core.CommandRegistry) http.HandlerFunc {
 			return
 		}
 
-		// Look up the command type in the registry
-		cmdType, found := registry.GetCommandType(req.Type)
+		// Look up the command type in the registry using the full name
+		cmdType, found := registry.GetCommandType(req.Type) // req.Type should be "feature/CommandName"
 		if !found {
-			slog.Warn("Received request for unknown command type", "type", req.Type)
-			http.Error(w, fmt.Sprintf("Bad Request: unknown command type %q", req.Type), http.StatusBadRequest) // Or 404? 400 seems better for unknown type name.
+			slog.Warn("Received request for unknown command type", "name", req.Type)
+			http.Error(w, fmt.Sprintf("Bad Request: unknown command type %q", req.Type), http.StatusBadRequest) // Use 400 for unknown type name
 			return
 		}
 
@@ -289,14 +290,23 @@ func handleExecuteCommand(registry *core.CommandRegistry) http.HandlerFunc {
 		}
 
 		// Get the actual command value (dereferenced) to pass to Dispatch
-		cmdValue := reflect.ValueOf(cmdInstancePtr).Elem().Interface()
+		// Ensure the command instance implements core.Command (which includes RegisteredName)
+		cmdValue, ok := reflect.ValueOf(cmdInstancePtr).Elem().Interface().(core.Command)
+		if !ok {
+			// This should not happen if GetCommandType returned a valid type that corresponds
+			// to a struct implementing the interface, but check defensively.
+			slog.Error("Internal error: command instance does not implement core.Command", "name", req.Type, "type", reflect.TypeOf(cmdInstancePtr).Elem())
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
 
 		// Dispatch the command
-		slog.Debug("Dispatching command via API", "type", req.Type)
+		slog.Debug("Dispatching command via API", "name", req.Type) // Log the full name
 		dispatchErr := registry.Dispatch(r.Context(), cmdValue)
 
 		if dispatchErr != nil {
-			slog.Error("Error dispatching command", "type", req.Type, "error", dispatchErr)
+			slog.Error("Error dispatching command", "name", req.Type, "error", dispatchErr)
 			// TODO: Implement more specific error handling (e.g., validation errors -> 400)
 			// For now, treat all dispatch errors as internal server errors.
 			// If dispatchErr is a validation error type: http.Error(w, dispatchErr.Error(), http.StatusBadRequest); return
@@ -305,7 +315,7 @@ func handleExecuteCommand(registry *core.CommandRegistry) http.HandlerFunc {
 		}
 
 		// Command successful
-		slog.Info("Command executed successfully via API", "type", req.Type)
+		slog.Info("Command executed successfully via API", "name", req.Type) // Log the full name
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK) // Or http.StatusAccepted (202) if processing is async
 		// Optionally return a success body
@@ -340,19 +350,21 @@ func handleExecuteQuery(registry *core.QueryRegistry) http.HandlerFunc {
 			return
 		}
 
-		// Extract query name from path (requires Go 1.22+)
-		queryName := r.PathValue("name")
-		if queryName == "" {
-			http.Error(w, "Bad Request: Missing query name in path (e.g., /queries/QueryName)", http.StatusBadRequest)
+		// Extract feature and query type name from path (requires Go 1.22+)
+		featurePart := r.PathValue("feature")
+		queryTypePart := r.PathValue("queryName")
+		if featurePart == "" || queryTypePart == "" {
+			http.Error(w, "Bad Request: URL path must be /queries/{feature}/{QueryName}", http.StatusBadRequest)
 			return
 		}
-		slog.Debug("Handling query request via API", "name", queryName)
+		fullQueryName := fmt.Sprintf("%s/%s", featurePart, queryTypePart)
+		slog.Debug("Handling query request via API", "name", fullQueryName)
 
-		// Look up the query type in the registry
-		queryType, found := registry.GetQueryType(queryName)
+		// Look up the query type in the registry using the full name
+		queryType, found := registry.GetQueryType(fullQueryName)
 		if !found {
-			slog.Warn("Received request for unknown query type", "name", queryName)
-			http.Error(w, fmt.Sprintf("Not Found: unknown query type %q", queryName), http.StatusNotFound)
+			slog.Warn("Received request for unknown query type", "name", fullQueryName)
+			http.Error(w, fmt.Sprintf("Not Found: unknown query type %q", fullQueryName), http.StatusNotFound)
 			return
 		}
 
@@ -369,14 +381,21 @@ func handleExecuteQuery(registry *core.QueryRegistry) http.HandlerFunc {
 		}
 
 		// Get the actual query value (non-pointer) to pass to Dispatch
-		queryValue := queryInstance.Interface()
+		// Ensure the query instance implements core.Query (which includes RegisteredName)
+		queryValue, ok := queryInstance.Interface().(core.Query)
+		if !ok {
+			// Defensive check
+			slog.Error("Internal error: query instance does not implement core.Query", "name", fullQueryName, "type", queryInstance.Type())
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 
 		// Dispatch the query
-		slog.Debug("Dispatching query via API", "name", queryName)
+		slog.Debug("Dispatching query via API", "name", fullQueryName)
 		result, dispatchErr := registry.Dispatch(r.Context(), queryValue)
 
 		if dispatchErr != nil {
-			slog.Error("Error dispatching query", "name", queryName, "error", dispatchErr)
+			slog.Error("Error dispatching query", "name", fullQueryName, "error", dispatchErr)
 			// TODO: Implement more specific error handling (e.g., ErrNotFound -> 404)
 			// if errors.Is(dispatchErr, core.ErrNotFound) {
 			// 	http.Error(w, "Not Found", http.StatusNotFound)
@@ -387,11 +406,11 @@ func handleExecuteQuery(registry *core.QueryRegistry) http.HandlerFunc {
 		}
 
 		// Query successful
-		slog.Info("Query executed successfully via API", "name", queryName)
+		slog.Info("Query executed successfully via API", "name", fullQueryName)
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(result); err != nil {
-			slog.Error("Failed to encode query result", "name", queryName, "error", err)
+			slog.Error("Failed to encode query result", "name", fullQueryName, "error", err)
 			// Hard to send error to client if header already written, but log it.
 		}
 	}

@@ -13,7 +13,12 @@ This file defines the registry for commands and their associated handlers, formi
 ## Functions
 
 - `NewCommandRegistry() *CommandRegistry`: Constructor function to create and initialize a new `CommandRegistry`.
-- `(r *CommandRegistry) Register(cmd Command, handler CommandHandler)`: Registers a command handler for a specific command type. It uses reflection (`reflect.TypeOf(cmd)`) to get the type key. Panics if a handler for the type is already registered.
-- `(r *CommandRegistry) Dispatch(ctx context.Context, cmd Command) error`: Looks up the handler for the given command's type and executes it. Returns an error if no handler is registered or if the handler itself returns an error.
-- `(r *CommandRegistry) RegisteredCommandNames() []string`: Returns a slice containing the string names (e.g., "CreateCommand") of all registered command types. Useful for discoverability (e.g., `GET /commands` API).
-- `(r *CommandRegistry) GetCommandType(name string) (reflect.Type, bool)`: Looks up and returns the `reflect.Type` for a registered command based on its string name. Returns the type and `true` if found, otherwise `nil` and `false`. Useful for decoding commands from external sources like the `POST /commands` API.
+- `Command`: Interface that command structs must implement. Embeds `NamedMessage`.
+- `NamedMessage`: Interface with `RegisteredName() string` method.
+- `CommandHandler`: Function type for command handlers.
+- `CommandRegistry`: Maps command names (`feature/Type`) to handlers and `reflect.Type`.
+- `NewCommandRegistry()`: Constructor.
+- `(r *CommandRegistry) Register(cmd Command, handler CommandHandler)`: Registers a handler using the name returned by `cmd.RegisteredName()`. Stores the handler and `reflect.Type`. Panics if the name is already registered.
+- `(r *CommandRegistry) Dispatch(ctx context.Context, cmd Command) error`: Looks up the handler using `cmd.RegisteredName()` and executes it.
+- `(r *CommandRegistry) RegisteredCommandNames() []string`: Returns a slice containing the full registered names (e.g., "posts/CreateCommand") of all commands.
+- `(r *CommandRegistry) GetCommandType(name string) (reflect.Type, bool)`: Looks up and returns the `reflect.Type` for a command based on its full registered name (e.g., "posts/CreateCommand").
