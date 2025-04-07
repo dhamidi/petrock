@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json" // Added for JSON handling in API endpoints
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -156,7 +157,9 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// Note: net/http mux uses pattern-based routing. For path parameters like /posts/{id},
 	// you'd typically check r.URL.Path inside the handler or use a small helper/library.
 	mux.HandleFunc("GET /", core.HandleIndex( /* queryRegistry */ )) // Pass dependencies - Use core.HandleIndex
+	mux.HandleFunc("GET /commands", handleListCommands(commandRegistry)) // Added route for listing commands
 	// TODO: Add routes for features (e.g., mux.HandleFunc("GET /posts", handleListPosts), mux.HandleFunc("GET /posts/{id}", handleGetPost))
+	// TODO: Add routes for other API endpoints (/queries, POST /commands, GET /queries/{name})
 
 	// --- Server Start and Shutdown ---
 	server := &http.Server{
@@ -204,6 +207,25 @@ func runServe(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// handleListCommands creates an http.HandlerFunc that lists registered command types.
+func handleListCommands(registry *core.CommandRegistry) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		commandNames := registry.RegisteredCommandNames()
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(commandNames); err != nil {
+			slog.Error("Failed to encode command names list", "error", err)
+			// Hard to send error to client if header already written, but log it.
+		}
+	}
 }
 
 // --- Placeholder Middleware/Handlers (Replace with actual implementations) ---

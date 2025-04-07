@@ -59,6 +59,21 @@ func (r *CommandRegistry) Dispatch(ctx context.Context, cmd Command) error {
 	return handler(ctx, cmd)
 }
 
+// RegisteredCommandNames returns a slice of strings containing the names
+// of all registered command types.
+func (r *CommandRegistry) RegisteredCommandNames() []string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	names := make([]string, 0, len(r.handlers))
+	for cmdType := range r.handlers {
+		names = append(names, cmdType.Name()) // Use the simple type name
+	}
+	// Sort for predictable output order
+	// sort.Strings(names) // Optional: uncomment if consistent order is desired
+	return names
+}
+
 // --- Global Registry (Optional - consider dependency injection instead) ---
 // var Commands = NewCommandRegistry()
 
