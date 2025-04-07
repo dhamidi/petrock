@@ -6,8 +6,12 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url" // Added for parsing query parameters
 	"os"
 	"os/signal"
+	"reflect" // Added for command/query execution handlers
+	"strconv" // Added for converting query parameters
+	"strings" // Added for query parameter population helper
 	"syscall"
 	"time"
 
