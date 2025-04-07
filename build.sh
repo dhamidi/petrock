@@ -1,13 +1,54 @@
 #!/usr/bin/env bash
 
-main() {
-  # Determine log level: use $1 if provided, default to 'info'
-  local log_level="${1:-info}"
-  export PETROCK_LOG_LEVEL="$log_level"
+# Helper function to print error messages and exit
+error_exit() {
+  printf "Error: %s\n" "$1" >&2
+  exit 1
+}
 
-  step build_skeleton
-  step build_petrock
-  step test_petrock
+main() {
+  local log_level="info"
+  local target_step=""
+  local remaining_args=()
+
+  # Parse arguments
+  for arg in "$@"; do
+    case "$arg" in
+      --debug)
+        log_level="debug"
+        ;;
+      *)
+        # Collect non-flag arguments
+        remaining_args+=("$arg")
+        ;;
+    esac
+  done
+
+  # Determine the target step, if any
+  if [[ ${#remaining_args[@]} -gt 1 ]]; then
+    error_exit "Too many steps specified: ${remaining_args[*]}"
+  elif [[ ${#remaining_args[@]} -eq 1 ]]; then
+    target_step="${remaining_args[0]}"
+  fi
+
+  # Set log level environment variable
+  export PETROCK_LOG_LEVEL="$log_level"
+  printf "Log level set to: %s\n" "$log_level" # Inform user
+
+  # Execute steps
+  if [[ -n "$target_step" ]]; then
+    # Check if the target step function exists
+    if declare -F "$target_step" > /dev/null; then
+      step "$target_step"
+    else
+      error_exit "Unknown step: '$target_step'"
+    fi
+  else
+    # Run all default steps
+    step build_skeleton
+    step build_petrock
+    step test_petrock
+  fi
 }
 
 step() {
