@@ -16,6 +16,37 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// AppState is a placeholder for the application's aggregated state.
+// In a real application, this might be composed of states from different features.
+type AppState struct {
+	// In a more complex app, this might hold pointers to feature-specific states:
+	// posts *posts.State
+	// users *users.State
+}
+
+// NewAppState creates a new AppState.
+func NewAppState() *AppState {
+	return &AppState{}
+}
+
+// Apply processes a message (typically a command or event) to update the state.
+// This is crucial for rebuilding state from the message log on startup.
+func (s *AppState) Apply(msg interface{}) error {
+	// In a real app, this would delegate to the appropriate feature state's Apply method
+	// based on the message type.
+	slog.Debug("AppState Apply called (placeholder)", "type", fmt.Sprintf("%T", msg))
+	// Example delegation:
+	// switch m := msg.(type) {
+	// case posts.CreateCommand, posts.UpdateCommand, posts.DeleteCommand:
+	//     return s.posts.Apply(m)
+	// case users.RegisterCommand:
+	//     return s.users.Apply(m)
+	// default:
+	//     slog.Warn("AppState.Apply received unhandled message type", "type", fmt.Sprintf("%T", msg))
+	// }
+	return nil
+}
+
 // NewServeCmd creates the `serve` subcommand
 func NewServeCmd() *cobra.Command {
 	serveCmd := &cobra.Command{
@@ -28,7 +59,7 @@ func NewServeCmd() *cobra.Command {
 	// Add flags like --port, --host
 	serveCmd.Flags().IntP("port", "p", 8080, "Port to listen on")
 	serveCmd.Flags().String("host", "localhost", "Host to bind to")
-	// TODO: Add flags for database path, etc.
+	serveCmd.Flags().String("db-path", "app.db", "Path to the SQLite database file") // Added db-path flag
 
 	return serveCmd
 }
@@ -36,48 +67,73 @@ func NewServeCmd() *cobra.Command {
 func runServe(cmd *cobra.Command, args []string) error {
 	port, _ := cmd.Flags().GetInt("port")
 	host, _ := cmd.Flags().GetString("host")
+	dbPath, _ := cmd.Flags().GetString("db-path") // Get db-path flag value
 	addr := fmt.Sprintf("%s:%d", host, port)
 
 	// --- Initialization ---
 	slog.Info("Initializing application...")
 
-	// Example: Initialize database connection (replace with actual logic)
-	dbPath := "app.db" // TODO: Make configurable
+	// 1. Initialize Core Registries
+	commandRegistry := core.NewCommandRegistry()
+	queryRegistry := core.NewQueryRegistry()
+	slog.Debug("Initialized command and query registries")
+
+	// 2. Initialize Encoder
+	encoder := &core.JSONEncoder{} // Using JSON encoder
+	slog.Debug("Initialized JSON encoder")
+
+	// 3. Initialize Database Connection
+	slog.Debug("Setting up database connection", "path", dbPath)
 	db, err := core.SetupDatabase(dbPath)
 	if err != nil {
-		return fmt.Errorf("failed to setup database: %w", err)
+		return fmt.Errorf("failed to setup database at %s: %w", dbPath, err)
 	}
-	defer db.Close()
+	defer func() {
+		slog.Debug("Closing database connection", "path", dbPath)
+		if err := db.Close(); err != nil {
+			slog.Error("Error closing database", "path", dbPath, "error", err)
+		}
+	}()
 
-	// Example: Initialize message log
-	// TODO: Instantiate a real encoder (e.g., JSONEncoder)
-	// messageLog, err := core.NewMessageLog(db, &core.JSONEncoder{})
-	// if err != nil {
-	// 	return fmt.Errorf("failed to initialize message log: %w", err)
-	// }
-	// TODO: Register message types with messageLog.RegisterType(...)
+	// 4. Initialize Message Log
+	slog.Debug("Initializing message log")
+	messageLog, err := core.NewMessageLog(db, encoder)
+	if err != nil {
+		// This also runs setupSchema, so errors are possible here
+		return fmt.Errorf("failed to initialize message log: %w", err)
+	}
+	// Note: Message type registration (messageLog.RegisterType) will happen
+	// within feature registration later.
 
-	// Example: Initialize command/query registries (assuming global or passed instances)
-	// commandRegistry := core.NewCommandRegistry()
-	// queryRegistry := core.NewQueryRegistry()
+	// 5. Initialize Application State
+	slog.Debug("Initializing application state")
+	appState := NewAppState() // Using the placeholder defined above
 
-	// Example: Initialize application state by replaying log
-	// TODO: Implement state struct(s) and Apply method
-	// appState := core.NewAppState() // Replace with actual state struct
-	// messages, err := messageLog.Load(context.Background())
-	// if err != nil {
-	// 	return fmt.Errorf("failed to load messages for replay: %w", err)
-	// }
-	// for _, msg := range messages {
-	// 	if err := appState.Apply(msg); err != nil { // Assuming Apply method exists
-	// 		slog.Error("Failed to apply message during replay", "error", err, "message", msg)
-	// 		// Decide whether to continue or fail startup
-	// 	}
-	// }
-	// slog.Info("State replay completed", "message_count", len(messages))
+	// 6. Replay Message Log to Build State
+	slog.Info("Replaying message log to build application state...")
+	messages, err := messageLog.Load(context.Background())
+	if err != nil {
+		// Log loading errors can be critical, might indicate corruption
+		return fmt.Errorf("failed to load messages from log for replay: %w", err)
+	}
+	slog.Debug("Loaded messages from log", "count", len(messages))
+	replayErrors := 0
+	for i, msg := range messages {
+		// Apply each message to the state
+		if err := appState.Apply(msg); err != nil {
+			// Log errors during replay but continue if possible, depending on Apply logic
+			slog.Error("Failed to apply message during replay", "error", err, "message_index", i, "message_type", fmt.Sprintf("%T", msg))
+			replayErrors++
+			// Decide whether to fail startup on replay errors. For now, just log.
+		}
+	}
+	slog.Info("State replay completed", "message_count", len(messages), "replay_errors", replayErrors)
+	if replayErrors > 0 {
+		slog.Warn("Some messages failed to apply during state replay. State might be incomplete.")
+	}
 
-	// Example: Register feature handlers
-	// RegisterAllFeatures(commandRegistry, queryRegistry /*, appState, messageLog */) // Pass necessary dependencies
+	// 7. Register Feature Handlers (will be called here in Chunk 2)
+	// RegisterAllFeatures(commandRegistry, queryRegistry, messageLog, appState) // Pass initialized components
 
 	// --- HTTP Server Setup ---
 	slog.Info("Setting up HTTP server...")
