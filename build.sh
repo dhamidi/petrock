@@ -66,7 +66,7 @@ build_skeleton() {
 }
 
 build_petrock() {
-  rm internal/skeleton/go.mod # to allow go:embed to do its work
+  rm -f internal/skeleton/go.mod # to allow go:embed to do its work
   go build ./cmd/...
 }
 
