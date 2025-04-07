@@ -74,6 +74,21 @@ func (r *CommandRegistry) RegisteredCommandNames() []string {
 	return names
 }
 
+// GetCommandType retrieves the reflect.Type for a registered command by its name.
+// This is useful for decoding commands from external sources like API requests.
+func (r *CommandRegistry) GetCommandType(name string) (reflect.Type, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for cmdType := range r.handlers {
+		// Compare the simple name of the registered type
+		if cmdType.Name() == name {
+			return cmdType, true
+		}
+	}
+	return nil, false
+}
+
 // --- Global Registry (Optional - consider dependency injection instead) ---
 // var Commands = NewCommandRegistry()
 

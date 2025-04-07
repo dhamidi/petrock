@@ -157,9 +157,10 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// Note: net/http mux uses pattern-based routing. For path parameters like /posts/{id},
 	// you'd typically check r.URL.Path inside the handler or use a small helper/library.
 	mux.HandleFunc("GET /", core.HandleIndex( /* queryRegistry */ )) // Pass dependencies - Use core.HandleIndex
-	mux.HandleFunc("GET /commands", handleListCommands(commandRegistry)) // Added route for listing commands
+	mux.HandleFunc("GET /commands", handleListCommands(commandRegistry))
+	mux.HandleFunc("POST /commands", handleExecuteCommand(commandRegistry)) // Added route for executing commands
 	// TODO: Add routes for features (e.g., mux.HandleFunc("GET /posts", handleListPosts), mux.HandleFunc("GET /posts/{id}", handleGetPost))
-	// TODO: Add routes for other API endpoints (/queries, POST /commands, GET /queries/{name})
+	// TODO: Add routes for other API endpoints (/queries, GET /queries/{name})
 
 	// --- Server Start and Shutdown ---
 	server := &http.Server{
@@ -225,6 +226,85 @@ func handleListCommands(registry *core.CommandRegistry) http.HandlerFunc {
 			slog.Error("Failed to encode command names list", "error", err)
 			// Hard to send error to client if header already written, but log it.
 		}
+	}
+}
+
+// commandRequest is used to decode the incoming JSON payload for command execution.
+type commandRequest struct {
+	Type    string          `json:"type"`    // The registered name of the command type
+	Payload json.RawMessage `json:"payload"` // The command-specific data
+}
+
+// handleExecuteCommand creates an http.HandlerFunc that decodes and dispatches commands.
+func handleExecuteCommand(registry *core.CommandRegistry) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		if r.Header.Get("Content-Type") != "application/json" {
+			http.Error(w, "Unsupported Media Type: Content-Type must be application/json", http.StatusUnsupportedMediaType)
+			return
+		}
+
+		// Decode the request body into the intermediate struct
+		var req commandRequest
+		decoder := json.NewDecoder(r.Body)
+		decoder.DisallowUnknownFields() // Prevent unexpected fields
+		err := decoder.Decode(&req)
+		if err != nil {
+			slog.Error("Failed to decode command request body", "error", err)
+			http.Error(w, fmt.Sprintf("Bad Request: %s", err.Error()), http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+
+		// Validate type name presence
+		if req.Type == "" {
+			http.Error(w, "Bad Request: 'type' field is required", http.StatusBadRequest)
+			return
+		}
+
+		// Look up the command type in the registry
+		cmdType, found := registry.GetCommandType(req.Type)
+		if !found {
+			slog.Warn("Received request for unknown command type", "type", req.Type)
+			http.Error(w, fmt.Sprintf("Bad Request: unknown command type %q", req.Type), http.StatusBadRequest) // Or 404? 400 seems better for unknown type name.
+			return
+		}
+
+		// Create a new instance of the command struct (must be a pointer for unmarshaling)
+		cmdInstancePtr := reflect.New(cmdType).Interface()
+
+		// Unmarshal the payload into the command instance pointer
+		if err := json.Unmarshal(req.Payload, cmdInstancePtr); err != nil {
+			slog.Error("Failed to unmarshal command payload", "type", req.Type, "error", err)
+			http.Error(w, fmt.Sprintf("Bad Request: invalid payload for type %q: %s", req.Type, err.Error()), http.StatusBadRequest)
+			return
+		}
+
+		// Get the actual command value (dereferenced) to pass to Dispatch
+		cmdValue := reflect.ValueOf(cmdInstancePtr).Elem().Interface()
+
+		// Dispatch the command
+		slog.Debug("Dispatching command via API", "type", req.Type)
+		dispatchErr := registry.Dispatch(r.Context(), cmdValue)
+
+		if dispatchErr != nil {
+			slog.Error("Error dispatching command", "type", req.Type, "error", dispatchErr)
+			// TODO: Implement more specific error handling (e.g., validation errors -> 400)
+			// For now, treat all dispatch errors as internal server errors.
+			// If dispatchErr is a validation error type: http.Error(w, dispatchErr.Error(), http.StatusBadRequest); return
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		// Command successful
+		slog.Info("Command executed successfully via API", "type", req.Type)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK) // Or http.StatusAccepted (202) if processing is async
+		// Optionally return a success body
+		json.NewEncoder(w).Encode(map[string]string{"status": "success"})
 	}
 }
 
