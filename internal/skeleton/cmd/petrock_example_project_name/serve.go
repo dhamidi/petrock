@@ -374,7 +374,7 @@ func handleExecuteQuery(registry *core.QueryRegistry) http.HandlerFunc {
 		// Populate the query struct fields from URL query parameters
 		urlParams := r.URL.Query()
 		if err := populateStructFromURLParams(queryInstance, urlParams); err != nil {
-			slog.Error("Failed to populate query struct from URL parameters", "name", queryName, "error", err)
+			slog.Error("Failed to populate query struct from URL parameters", "name", fullQueryName, "error", err) // Use fullQueryName here
 			http.Error(w, fmt.Sprintf("Bad Request: %s", err.Error()), http.StatusBadRequest)
 			return
 		}
