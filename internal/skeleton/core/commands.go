@@ -15,7 +15,7 @@ type NamedMessage interface {
 
 // Command is an interface combining NamedMessage for command messages.
 type Command interface {
-	NamedMessage
+	CommandName() string // e.g., "feature/create-command"
 }
 
 // CommandHandler defines the function signature for handling commands.
@@ -36,13 +36,13 @@ func NewCommandRegistry() *CommandRegistry {
 	}
 }
 
-// Register associates a command type with its handler using its RegisteredName().
+// Register associates a command type with its handler using its CommandName().
 // It panics if a handler for the name is already registered.
 func (r *CommandRegistry) Register(cmd Command, handler CommandHandler) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	name := cmd.RegisteredName()
+	name := cmd.CommandName() // Use CommandName()
 	if _, exists := r.handlers[name]; exists {
 		panic(fmt.Sprintf("handler already registered for command name %q", name))
 	}
@@ -58,13 +58,13 @@ func (r *CommandRegistry) Register(cmd Command, handler CommandHandler) {
 	slog.Debug("Registered command handler", "name", name, "type", cmdType)
 }
 
-// Dispatch finds the handler for the given command's RegisteredName() and executes it.
+// Dispatch finds the handler for the given command's CommandName() and executes it.
 // It returns an error if no handler is found or if the handler returns an error.
 func (r *CommandRegistry) Dispatch(ctx context.Context, cmd Command) error {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	name := cmd.RegisteredName()
+	name := cmd.CommandName() // Use CommandName()
 	handler, exists := r.handlers[name]
 	if !exists {
 		return fmt.Errorf("no command handler registered for name %q (type %T)", name, cmd)

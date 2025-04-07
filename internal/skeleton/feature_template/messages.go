@@ -17,11 +17,6 @@ type CreateCommand struct {
 	CreatedBy   string `json:"created_by"` // e.g., User ID
 }
 
-// RegisteredName returns the unique name for this command type.
-func (c CreateCommand) RegisteredName() string {
-	return "petrock_example_feature_name/CreateCommand"
-}
-
 // UpdateCommand holds data needed to update an existing entity.
 type UpdateCommand struct {
 	ID          string `json:"id"` // ID of the entity to update
@@ -30,20 +25,10 @@ type UpdateCommand struct {
 	UpdatedBy   string `json:"updated_by"`
 }
 
-// RegisteredName returns the unique name for this command type.
-func (c UpdateCommand) RegisteredName() string {
-	return "petrock_example_feature_name/UpdateCommand"
-}
-
 // DeleteCommand holds data needed to delete an entity.
 type DeleteCommand struct {
 	ID        string `json:"id"` // ID of the entity to delete
 	DeletedBy string `json:"deleted_by"`
-}
-
-// RegisteredName returns the unique name for this command type.
-func (c DeleteCommand) RegisteredName() string {
-	return "petrock_example_feature_name/DeleteCommand"
 }
 
 // --- Queries (Implement core.Query) ---
@@ -54,21 +39,11 @@ type GetQuery struct {
 	ID string // ID of the entity to retrieve
 }
 
-// RegisteredName returns the unique name for this query type.
-func (q GetQuery) RegisteredName() string {
-	return "petrock_example_feature_name/GetQuery"
-}
-
 // ListQuery holds data needed to retrieve a list of entities, possibly filtered or paginated.
 type ListQuery struct {
 	Page     int    `json:"page"`      // For pagination
 	PageSize int    `json:"page_size"` // For pagination
 	Filter   string `json:"filter"`    // Example filter criteria
-}
-
-// RegisteredName returns the unique name for this query type.
-func (q ListQuery) RegisteredName() string {
-	return "petrock_example_feature_name/ListQuery"
 }
 
 // --- Query Results (Implement core.QueryResult) ---

@@ -8,9 +8,9 @@ import (
 	"sync"
 )
 
-// Query is an interface combining NamedMessage for query messages.
+// Query is an interface for query messages.
 type Query interface {
-	NamedMessage
+	QueryName() string // e.g., "feature/list-queries"
 }
 
 // QueryResult is a marker interface for the data returned by a query handler.
@@ -34,13 +34,13 @@ func NewQueryRegistry() *QueryRegistry {
 	}
 }
 
-// Register associates a query type with its handler using its RegisteredName().
+// Register associates a query type with its handler using its QueryName().
 // It panics if a handler for the name is already registered.
 func (r *QueryRegistry) Register(query Query, handler QueryHandler) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	name := query.RegisteredName()
+	name := query.QueryName() // Use QueryName()
 	if _, exists := r.handlers[name]; exists {
 		panic(fmt.Sprintf("handler already registered for query name %q", name))
 	}
@@ -56,13 +56,13 @@ func (r *QueryRegistry) Register(query Query, handler QueryHandler) {
 	slog.Debug("Registered query handler", "name", name, "type", queryType)
 }
 
-// Dispatch finds the handler for the given query's RegisteredName() and executes it.
+// Dispatch finds the handler for the given query's QueryName() and executes it.
 // It returns the result and an error if no handler is found or if the handler returns an error.
 func (r *QueryRegistry) Dispatch(ctx context.Context, query Query) (QueryResult, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	name := query.RegisteredName()
+	name := query.QueryName() // Use QueryName()
 	handler, exists := r.handlers[name]
 	if !exists {
 		return nil, fmt.Errorf("no query handler registered for name %q (type %T)", name, query)

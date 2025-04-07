@@ -13,12 +13,11 @@ This file defines the registry for commands and their associated handlers, formi
 ## Functions
 
 - `NewCommandRegistry() *CommandRegistry`: Constructor function to create and initialize a new `CommandRegistry`.
-- `Command`: Interface that command structs must implement. Embeds `NamedMessage`.
-- `NamedMessage`: Interface with `RegisteredName() string` method.
+- `Command`: Interface that command structs must implement. Requires `CommandName() string`.
 - `CommandHandler`: Function type for command handlers.
-- `CommandRegistry`: Maps command names (`feature/Type`) to handlers and `reflect.Type`.
+- `CommandRegistry`: Maps command names (`feature/kebab-case-name`) to handlers and `reflect.Type`.
 - `NewCommandRegistry()`: Constructor.
-- `(r *CommandRegistry) Register(cmd Command, handler CommandHandler)`: Registers a handler using the name returned by `cmd.RegisteredName()`. Stores the handler and `reflect.Type`. Panics if the name is already registered.
-- `(r *CommandRegistry) Dispatch(ctx context.Context, cmd Command) error`: Looks up the handler using `cmd.RegisteredName()` and executes it.
-- `(r *CommandRegistry) RegisteredCommandNames() []string`: Returns a slice containing the full registered names (e.g., "posts/CreateCommand") of all commands.
-- `(r *CommandRegistry) GetCommandType(name string) (reflect.Type, bool)`: Looks up and returns the `reflect.Type` for a command based on its full registered name (e.g., "posts/CreateCommand").
+- `(r *CommandRegistry) Register(cmd Command, handler CommandHandler)`: Registers a handler using the name returned by `cmd.CommandName()`. Stores the handler and `reflect.Type`. Panics if the name is already registered.
+- `(r *CommandRegistry) Dispatch(ctx context.Context, cmd Command) error`: Looks up the handler using `cmd.CommandName()` and executes it.
+- `(r *CommandRegistry) RegisteredCommandNames() []string`: Returns a slice containing the full registered kebab-case names (e.g., "posts/create-command") of all commands.
+- `(r *CommandRegistry) GetCommandType(name string) (reflect.Type, bool)`: Looks up and returns the `reflect.Type` for a command based on its full registered kebab-case name (e.g., "posts/create-command").

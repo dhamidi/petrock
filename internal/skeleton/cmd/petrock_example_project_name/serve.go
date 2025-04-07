@@ -164,7 +164,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	mux.HandleFunc("GET /commands", handleListCommands(commandRegistry))
 	mux.HandleFunc("POST /commands", handleExecuteCommand(commandRegistry))
 	mux.HandleFunc("GET /queries", handleListQueries(queryRegistry))
-	// Route pattern updated to capture feature/QueryName structure
+	// Route pattern updated to capture feature/kebab-case-query-name structure
 	mux.HandleFunc("GET /queries/{feature}/{queryName}", handleExecuteQuery(queryRegistry))
 	// TODO: Add routes for features (e.g., mux.HandleFunc("GET /posts", handleListPosts), mux.HandleFunc("GET /posts/{id}", handleGetPost))
 
@@ -271,11 +271,11 @@ func handleExecuteCommand(registry *core.CommandRegistry) http.HandlerFunc {
 			return
 		}
 
-		// Look up the command type in the registry using the full name
-		cmdType, found := registry.GetCommandType(req.Type) // req.Type should be "feature/CommandName"
+		// Look up the command type in the registry using the kebab-case name
+		cmdType, found := registry.GetCommandType(req.Type) // req.Type should be "feature/command-name"
 		if !found {
 			slog.Warn("Received request for unknown command type", "name", req.Type)
-			http.Error(w, fmt.Sprintf("Bad Request: unknown command type %q", req.Type), http.StatusBadRequest) // Use 400 for unknown type name
+			http.Error(w, fmt.Sprintf("Bad Request: unknown command type %q", req.Type), http.StatusBadRequest)
 			return
 		}
 
@@ -290,11 +290,10 @@ func handleExecuteCommand(registry *core.CommandRegistry) http.HandlerFunc {
 		}
 
 		// Get the actual command value (dereferenced) to pass to Dispatch
-		// Ensure the command instance implements core.Command (which includes RegisteredName)
+		// Ensure the command instance implements core.Command (which includes CommandName)
 		cmdValue, ok := reflect.ValueOf(cmdInstancePtr).Elem().Interface().(core.Command)
 		if !ok {
-			// This should not happen if GetCommandType returned a valid type that corresponds
-			// to a struct implementing the interface, but check defensively.
+			// Defensive check
 			slog.Error("Internal error: command instance does not implement core.Command", "name", req.Type, "type", reflect.TypeOf(cmdInstancePtr).Elem())
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
@@ -350,14 +349,14 @@ func handleExecuteQuery(registry *core.QueryRegistry) http.HandlerFunc {
 			return
 		}
 
-		// Extract feature and query type name from path (requires Go 1.22+)
+		// Extract feature and kebab-case query name from path (requires Go 1.22+)
 		featurePart := r.PathValue("feature")
-		queryTypePart := r.PathValue("queryName")
-		if featurePart == "" || queryTypePart == "" {
-			http.Error(w, "Bad Request: URL path must be /queries/{feature}/{QueryName}", http.StatusBadRequest)
+		queryNamePart := r.PathValue("queryName") // This is now kebab-case
+		if featurePart == "" || queryNamePart == "" {
+			http.Error(w, "Bad Request: URL path must be /queries/{feature}/{query-name}", http.StatusBadRequest)
 			return
 		}
-		fullQueryName := fmt.Sprintf("%s/%s", featurePart, queryTypePart)
+		fullQueryName := fmt.Sprintf("%s/%s", featurePart, queryNamePart) // The full kebab-case name
 		slog.Debug("Handling query request via API", "name", fullQueryName)
 
 		// Look up the query type in the registry using the full name
@@ -381,7 +380,7 @@ func handleExecuteQuery(registry *core.QueryRegistry) http.HandlerFunc {
 		}
 
 		// Get the actual query value (non-pointer) to pass to Dispatch
-		// Ensure the query instance implements core.Query (which includes RegisteredName)
+		// Ensure the query instance implements core.Query (which includes QueryName)
 		queryValue, ok := queryInstance.Interface().(core.Query)
 		if !ok {
 			// Defensive check

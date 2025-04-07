@@ -21,12 +21,12 @@ go run ./cmd/blog serve
 1.  The `posts` feature's commands, queries, and message types are registered with the core registries and message log upon startup.
 2.  The application serves HTTP requests on `localhost:8080` (by default).
 3.  The following API endpoints are functional:
-    *   `GET /commands`: Returns a JSON list of registered command type names.
-    *   `POST /commands`: Accepts a JSON payload (`{"type": "CmdName", "payload": {...}}`), executes the command via the registry, logs it, updates state, and returns success/error.
-    *   `GET /queries`: Returns a JSON list of registered query names (e.g., `posts/ListQuery`).
-    *   `GET /queries/{feature}/{QueryName}`: Accepts query parameters, executes the named query via the registry using the parameters, and returns the JSON result.
+    *   `GET /commands`: Returns a JSON list of registered command names (e.g., `posts/create-command`).
+    *   `POST /commands`: Accepts a JSON payload (`{"type": "feature/command-name", "payload": {...}}`), executes the command via the registry, logs it, updates state, and returns success/error.
+    *   `GET /queries`: Returns a JSON list of registered query names (e.g., `posts/list-query`).
+    *   `GET /queries/{feature}/{query-name}`: Accepts query parameters, executes the named query via the registry using the parameters, and returns the JSON result.
 4.  Executing commands via `POST /commands` correctly updates the application's in-memory state via the event log replay mechanism.
-5.  Visiting the root `/` displays a simple HTML page listing the registered command and query names (e.g., `posts/CreateCommand`).
+5.  Visiting the root `/` displays a simple HTML page listing the registered command and query names (e.g., `posts/create-command`).
 
 ---
 
@@ -117,8 +117,7 @@ This plan breaks down the work into iterative chunks. Each step builds upon the 
 *   **Goal:** Create an HTTP handler that returns a list of registered command type names.
 *   **Tasks:**
     1.  **Expose Registered Commands:** In `internal/skeleton/core/commands.go`:
-        *   Add a method to `CommandRegistry`, e.g., `RegisteredCommandNames() []string`.
-        *   This method should acquire the read lock (`r.mu.RLock()`), iterate over the `r.handlers` map, extract the type name (`reflect.Type.Name()`) for each key, collect them into a slice of strings, release the lock, and return the slice.
+        *   Ensure `RegisteredCommandNames() []string` returns the kebab-case names stored as keys in the registry.
     2.  **Create Handler:** In `internal/skeleton/cmd/petrock_example_project_name/serve.go`:
         *   Create a handler function `handleListCommands(registry *core.CommandRegistry) http.HandlerFunc`.
     3.  **Implement Handler Logic:**
@@ -149,16 +148,17 @@ This plan breaks down the work into iterative chunks. Each step builds upon the 
         }
         ```
     2.  **Enhance CommandRegistry:** In `internal/skeleton/core/commands.go`:
-        *   Add a method `GetCommandType(name string) (reflect.Type, bool)` that looks up the registered `reflect.Type` by its name string. Requires iterating through the `handlers` map keys. Thread-safe (read lock).
+        *   Ensure `GetCommandType(name string) (reflect.Type, bool)` accepts the kebab-case name (e.g., "posts/create-command") and looks up the type correctly from the registry's internal storage.
     3.  **Create Handler:** In `internal/skeleton/cmd/petrock_example_project_name/serve.go`:
         *   Create `handleExecuteCommand(registry *core.CommandRegistry) http.HandlerFunc`.
     4.  **Implement Handler Logic:**
         *   Define an intermediate struct to decode the request body, e.g., `type commandRequest struct { Type string `json:"type"`; Payload json.RawMessage `json:"payload"` }`.
         *   Decode the request body into this intermediate struct. Handle JSON decoding errors (return HTTP 400).
-        *   Use `registry.GetCommandType(req.Type)` to find the `reflect.Type` for the command. If not found, return HTTP 404 or 400.
+        *   Use `registry.GetCommandType(req.Type)` (where `req.Type` is kebab-case) to find the `reflect.Type`. If not found, return HTTP 400.
         *   Create a new zero-value instance of the command struct using `reflect.New(cmdType).Interface()`. This returns a pointer.
-        *   Unmarshal the `req.Payload` (which is `json.RawMessage`) into the command instance pointer. Handle JSON unmarshaling errors (return HTTP 400).
-        *   Dispatch the command: `err := registry.Dispatch(r.Context(), reflect.ValueOf(cmdInstance).Elem().Interface())`. We pass the actual struct value, not the pointer, assuming handlers expect the value type. *Correction:* Handlers likely expect the value type, but `Dispatch` takes `interface{}`. Let's stick to passing the value: `cmdValue := reflect.ValueOf(cmdInstance).Elem().Interface()`. Dispatch `err := registry.Dispatch(r.Context(), cmdValue)`.
+        *   Unmarshal the `req.Payload` into the command instance pointer. Handle JSON unmarshaling errors (return HTTP 400).
+        *   Get the command value and ensure it implements `core.Command`: `cmdValue, ok := reflect.ValueOf(cmdInstance).Elem().Interface().(core.Command)`. Handle `!ok`.
+        *   Dispatch the command: `err := registry.Dispatch(r.Context(), cmdValue)`.
         *   Handle errors returned by `Dispatch`:
             *   If it's a known validation error type (needs defining, maybe in `core`), return HTTP 400 with the error message.
             *   For other errors (e.g., persistence errors from the handler, state update errors), return HTTP 500. Log the error server-side.
@@ -183,7 +183,7 @@ This plan breaks down the work into iterative chunks. Each step builds upon the 
 *   **Goal:** Create an HTTP handler that returns a list of registered query type names.
 *   **Tasks:**
     1.  **Expose Registered Queries:** In `internal/skeleton/core/queries.go`:
-        *   Add `RegisteredQueryNames() []string` method to `QueryRegistry`, similar to the command registry. Thread-safe (read lock).
+        *   Ensure `RegisteredQueryNames() []string` returns the kebab-case names stored as keys in the registry.
     2.  **Create Handler:** In `internal/skeleton/cmd/petrock_example_project_name/serve.go`:
         *   Create `handleListQueries(registry *core.QueryRegistry) http.HandlerFunc`.
     3.  **Implement Handler Logic:**
@@ -202,16 +202,16 @@ This plan breaks down the work into iterative chunks. Each step builds upon the 
 
 *   **Goal:** Create an HTTP handler that executes a named query, populating its fields from URL query parameters, and returns the result.
 *   **Tasks:**
-    1.  **Query Naming Convention:** Use the full `feature/QueryName` string. The URL path will be `/queries/{feature}/{QueryName}`.
+    1.  **Query Naming Convention:** Use the full `feature/kebab-case-query-name` string. The URL path will be `/queries/{feature}/{query-name}`.
     2.  **Enhance QueryRegistry:** In `internal/skeleton/core/queries.go`:
-        *   Ensure `GetQueryType(name string) (reflect.Type, bool)` accepts the full name (e.g., "posts/ListQuery") and looks up the type correctly from the registry's internal storage.
+        *   Ensure `GetQueryType(name string) (reflect.Type, bool)` accepts the full kebab-case name (e.g., "posts/list-query") and looks up the type correctly.
     3.  **Create Handler:** In `internal/skeleton/cmd/petrock_example_project_name/serve.go`:
         *   Create `handleExecuteQuery(registry *core.QueryRegistry) http.HandlerFunc`.
     4.  **Implement Handler Logic:**
-        *   Extract the `feature` and `queryName` parts from the URL path using `r.PathValue()`. Construct the full name `feature + "/" + queryName`. Handle errors if parts are missing.
+        *   Extract the `feature` and `query-name` parts from the URL path using `r.PathValue()`. Construct the full kebab-case name `feature + "/" + query-name`. Handle errors.
         *   Use `registry.GetQueryType(fullQueryName)` to find the `reflect.Type`. If not found, return HTTP 404.
         *   Create a new zero-value instance (pointer) of the query struct using `reflect.New(queryType).Interface()`.
-        *   **Populate Query Struct from URL Params:** (Logic remains the same)
+        *   **Populate Query Struct from URL Params:** (Logic remains the same, uses struct field names, not kebab-case)
             *   Get URL query parameters using `r.URL.Query()`.
             *   Iterate through the fields of the query struct instance (using reflection on the pointer: `reflect.ValueOf(queryInstance).Elem()`).
             *   For each field, check if a corresponding key exists in the URL parameters.
@@ -227,7 +227,7 @@ This plan breaks down the work into iterative chunks. Each step builds upon the 
             *   Set `Content-Type: application/json`.
             *   Marshal the `result` (which implements `core.QueryResult`) to the response body. Handle marshaling errors (HTTP 500).
             *   Return HTTP 200 OK.
-    5.  **Register Route:** In `runServe`, register `mux.HandleFunc("GET /queries/{feature}/{queryName}", handleExecuteQuery(queryRegistry))`.
+    5.  **Register Route:** In `runServe`, register `mux.HandleFunc("GET /queries/{feature}/{queryName}", handleExecuteQuery(queryRegistry))`. Note: `queryName` in the route pattern *is* the kebab-case name from the URL.
 *   **References:**
     *   `internal/skeleton/core/queries.go`
     *   `internal/skeleton/cmd/petrock_example_project_name/serve.go`

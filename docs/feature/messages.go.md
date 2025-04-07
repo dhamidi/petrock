@@ -4,10 +4,10 @@ This file defines the specific command and query message structures, as well as 
 
 ## Types
 
-*All Command and Query structs must implement the `core.NamedMessage` interface by providing a `RegisteredName() string` method that returns `"featureName/TypeName"`.*
+*The `petrock feature` command automatically generates `CommandName()` and `QueryName()` methods for command and query structs respectively, returning the kebab-case name (e.g., `posts/create-post-command`).*
 
 ### Commands (Implement `core.Command`)
-- `CreatePostCommand`: Implements `RegisteredName() string { return "posts/CreateCommand" }`
+- `CreatePostCommand`: (Method `CommandName() string` generated)
     - `Title string`
     - `Content string`
     - `AuthorID string` // Or appropriate user identifier type
@@ -15,13 +15,13 @@ This file defines the specific command and query message structures, as well as 
     - `PostID string` // Identifier for the post to update
     - `Title string`
     - `Content string`
-- `DeletePostCommand`: Implements `RegisteredName() string { return "posts/DeleteCommand" }`
+- `DeletePostCommand`: (Method `CommandName() string` generated)
     - `PostID string` // Identifier for the post to delete
 
 ### Queries (Implement `core.Query`)
-- `GetPostQuery`: Implements `RegisteredName() string { return "posts/GetPostQuery" }`
+- `GetPostQuery`: (Method `QueryName() string` generated)
     - `PostID string` // Identifier for the post to retrieve
-- `ListPostsQuery`: Implements `RegisteredName() string { return "posts/ListPostsQuery" }`
+- `ListPostsQuery`: (Method `QueryName() string` generated)
     - `Page int` // For pagination
     - `PageSize int` // For pagination
     - `AuthorIDFilter string` // Optional filter criteria
