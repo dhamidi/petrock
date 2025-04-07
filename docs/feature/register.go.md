@@ -12,4 +12,7 @@ This file acts as the entry point for the feature module. Its primary role is to
     - It creates instances of the feature's executor (e.g., `NewPostExecutor(state)`) and querier (e.g., `NewPostQuerier(state)`).
     - It calls `commands.Register` for each command type defined in `posts/messages.go`, passing the corresponding handler method (e.g., `executor.HandleCreatePost`).
     - It calls `queries.Register` for each query type defined in `posts/messages.go`, passing the corresponding handler method (e.g., `querier.HandleGetPost`).
-    - It might also register message types with the `core.MessageLog` if needed for decoding during replay.
+    - It calls the feature's `RegisterTypes` function (defined in `state.go`) to register command/event types with the `core.MessageLog` for decoding during replay.
+    - It might initialize and register background jobs/workers if defined in `jobs.go`.
+
+*Note: The `petrock feature <name>` command automatically adds the necessary import and the call to this `RegisterFeature` function within the project's `cmd/<project>/features.go` file.*

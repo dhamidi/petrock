@@ -76,12 +76,16 @@ Petrock is about generating the simplest code that could possibly work to achiev
 
 The high-level overview of a Petrock application is this:
 
-Petrock accepts a command, usually via HTTP,
-and then hands this command over to the domain logic layer,
-which either accepts or rejects the command.
+1.  **Startup:** The application initializes core components (database connection, message log, command/query registries, application state). It then replays all messages from the persistent log (`messages` table in SQLite) to rebuild the in-memory application state. Finally, it registers all features defined in the project.
+2.  **Feature Registration:** When `petrock feature <name>` is run, it automatically adds an import and a registration call (e.g., `posts.RegisterFeature(...)`) to `cmd/<project>/features.go`. During startup, `RegisterAllFeatures` calls each feature's `RegisterFeature` function. This function registers the feature's command handlers, query handlers, and message types (for decoding) with the core registries and message log.
+3.  **API Interaction:** The application exposes a core API for interacting with commands and queries:
+    *   `GET /`: Displays an HTML index page listing available commands and queries.
+    *   `GET /commands`: Returns a JSON list of registered command type names (e.g., `["CreateCommand", "UpdateCommand"]`).
+    *   `POST /commands`: Executes a command. Expects a JSON body like `{"type": "CommandName", "payload": {...}}`. The handler decodes the payload into the appropriate command struct, dispatches it via the `CommandRegistry`, logs the command to the message log, and applies it to the in-memory state. Returns `200 OK` or `202 Accepted` on success, or `400/404/500` on error.
+    *   `GET /queries`: Returns a JSON list of registered query type names (e.g., `["GetQuery", "ListQuery"]`).
+    *   `GET /queries/{QueryName}`: Executes a query. The `{QueryName}` corresponds to the query struct name. Query parameters (e.g., `?ID=123&page=1`) are automatically parsed and mapped to the fields of the query struct. The handler dispatches the query via the `QueryRegistry` and returns the JSON result on success (`200 OK`), or `400/404/500` on error.
+4.  **Command Handling:** When a command is dispatched (typically via `POST /commands`), the registered handler validates it. If valid, the command is appended to the message log (`core.MessageLog`) and then applied to the relevant feature's in-memory state (`feature.State.Apply`).
+5.  **Query Handling:** When a query is dispatched (typically via `GET /queries/{Name}`), the registered handler reads directly from the feature's in-memory state (`feature.State`) to produce the result.
+6.  **State Management:** Each feature manages its own slice of the application state within its `state.go` file. The `Apply` method is crucial for both rebuilding state from the log at startup and applying live updates after a command is logged.
 
-If the command is accepted, it gets persisted in the command log, and the application state is updated based on the now-accepted command.
-
-At application startup, Petrock iterates over all commands to build the in-memory application state before it starts accepting requests.
-
-All commands are serialized with a configurable encoder, JSON by default, and then persisted in a sqlite3 database in a single table called messages.
+All commands are serialized with a configurable encoder (JSON by default) and persisted in a SQLite database in a single table called `messages`.
