@@ -17,6 +17,11 @@ type CreateCommand struct {
 	CreatedBy   string `json:"created_by"` // e.g., User ID
 }
 
+// CommandName returns the unique kebab-case name for this command type.
+func (c CreateCommand) CommandName() string {
+	return "petrock_example_feature_name/create-command"
+}
+
 // UpdateCommand holds data needed to update an existing entity.
 type UpdateCommand struct {
 	ID          string `json:"id"` // ID of the entity to update
@@ -25,10 +30,20 @@ type UpdateCommand struct {
 	UpdatedBy   string `json:"updated_by"`
 }
 
+// CommandName returns the unique kebab-case name for this command type.
+func (c UpdateCommand) CommandName() string {
+	return "petrock_example_feature_name/update-command"
+}
+
 // DeleteCommand holds data needed to delete an entity.
 type DeleteCommand struct {
 	ID        string `json:"id"` // ID of the entity to delete
 	DeletedBy string `json:"deleted_by"`
+}
+
+// CommandName returns the unique kebab-case name for this command type.
+func (c DeleteCommand) CommandName() string {
+	return "petrock_example_feature_name/delete-command"
 }
 
 // --- Queries (Implement core.Query) ---
@@ -39,11 +54,21 @@ type GetQuery struct {
 	ID string // ID of the entity to retrieve
 }
 
+// QueryName returns the unique kebab-case name for this query type.
+func (q GetQuery) QueryName() string {
+	return "petrock_example_feature_name/get-query"
+}
+
 // ListQuery holds data needed to retrieve a list of entities, possibly filtered or paginated.
 type ListQuery struct {
 	Page     int    `json:"page"`      // For pagination
 	PageSize int    `json:"page_size"` // For pagination
 	Filter   string `json:"filter"`    // Example filter criteria
+}
+
+// QueryName returns the unique kebab-case name for this query type.
+func (q ListQuery) QueryName() string {
+	return "petrock_example_feature_name/list-query"
 }
 
 // --- Query Results (Implement core.QueryResult) ---

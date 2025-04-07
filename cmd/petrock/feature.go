@@ -182,17 +182,7 @@ func runFeature(cmd *cobra.Command, args []string) error {
 
 	slog.Info("Feature registration added successfully.", "file", featuresFilePath)
 
-	// --- Step 7: Generate CommandName/QueryName methods ---
-	slog.Debug("Generating CommandName/QueryName methods...", "feature", featureName)
-	messagesFilePath := filepath.Join(destinationPath, "messages.go")
-	if err := addNameMethodsToMessages(messagesFilePath, featureName); err != nil {
-		// This is a critical step, fail if it doesn't work
-		return fmt.Errorf("failed to generate CommandName/QueryName methods in %s: %w", messagesFilePath, err)
-	}
-	slog.Info("Generated CommandName/QueryName methods successfully.", "file", messagesFilePath)
-
-
-	// --- Step 8: Run Go Mod Tidy ---
+	// --- Step 7: Run Go Mod Tidy ---
 	slog.Debug("Running go mod tidy...")
 	if err := utils.GoModTidy("."); err != nil {
 		// Log the error but don't necessarily fail the whole process,
@@ -372,87 +362,6 @@ func getIndentation(line string) string {
 	indentation := line[:len(line)-len(trimmed)] // Keep first declaration
 	// indentation = line[:len(line)-len(trimmed)] // This line seems redundant, removing it.
 	return indentation
-}
-
-// addNameMethodsToMessages parses the messages.go file, identifies command/query structs,
-// and appends the corresponding CommandName/QueryName methods.
-func addNameMethodsToMessages(filePath, featureName string) error {
-	contentBytes, err := os.ReadFile(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to read messages file %s: %w", filePath, err)
-	}
-	content := string(contentBytes)
-	lines := strings.Split(content, "\n")
-
-	var generatedMethods strings.Builder
-
-	// Regex to find command/query struct definitions
-	// Matches lines like: type CreateCommand struct {
-	// Matches lines like: type GetQuery struct {
-	// Captures the type name (e.g., CreateCommand, GetQuery)
-	structRegex := regexp.MustCompile(`^type\s+([A-Z]\w*(?:Command|Query))\s+struct\s*\{`)
-
-	for _, line := range lines {
-		matches := structRegex.FindStringSubmatch(line)
-		if len(matches) == 2 {
-			typeName := matches[1]
-			kebabName := camelToKebab(typeName)
-			fullKebabName := fmt.Sprintf("%s/%s", featureName, kebabName)
-
-			if strings.HasSuffix(typeName, "Command") {
-				method := fmt.Sprintf("\n// CommandName returns the unique kebab-case name for this command type.\nfunc (c %s) CommandName() string {\n\treturn %q\n}\n", typeName, fullKebabName)
-				generatedMethods.WriteString(method)
-				slog.Debug("Prepared CommandName method", "type", typeName, "name", fullKebabName)
-			} else if strings.HasSuffix(typeName, "Query") {
-				method := fmt.Sprintf("\n// QueryName returns the unique kebab-case name for this query type.\nfunc (q %s) QueryName() string {\n\treturn %q\n}\n", typeName, fullKebabName)
-				generatedMethods.WriteString(method)
-				slog.Debug("Prepared QueryName method", "type", typeName, "name", fullKebabName)
-			}
-		}
-	}
-
-	if generatedMethods.Len() == 0 {
-		slog.Warn("No Command or Query structs found in messages.go, no methods generated.", "file", filePath)
-		return nil // Not necessarily an error if the file structure changes
-	}
-
-	// Append generated methods to the original content
-	finalContent := content + generatedMethods.String()
-
-	// Write the modified content back
-	fileInfo, err := os.Stat(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to stat messages file %s: %w", filePath, err)
-	}
-	if err := os.WriteFile(filePath, []byte(finalContent), fileInfo.Mode()); err != nil {
-		return fmt.Errorf("failed to write generated methods to messages file %s: %w", filePath, err)
-	}
-
-	return nil
-}
-
-
-// camelToKebab converts a CamelCase string to kebab-case.
-// Example: CreateCommand -> create-command
-// Example: CreateDraftCommand -> create-draft-command
-func camelToKebab(s string) string {
-	if s == "" {
-		return ""
-	}
-	var result strings.Builder
-	var last rune
-	for i, r := range s {
-		if i > 0 && (unicode.IsUpper(r) && (unicode.IsLower(last) || (i+1 < len(s) && unicode.IsLower(rune(s[i+1]))))) {
-			// Add hyphen before uppercase letter if it's not the first letter,
-			// and it's preceded by a lowercase letter,
-			// OR if it's followed by a lowercase letter (to handle acronyms like ID -> -i-d correctly, though kebab usually lowercases them: id)
-			// Simpler rule: Add hyphen before any uppercase letter except the first.
-			result.WriteRune('-')
-		}
-		result.WriteRune(unicode.ToLower(r))
-		last = r
-	}
-	return result.String()
 }
 
 // modifyFeatureGoMod function removed as it's no longer needed.
