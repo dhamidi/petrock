@@ -2,7 +2,6 @@ package petrock_example_feature_name
 
 import (
 	"database/sql" // Example: If handlers need direct DB access
-	"database/sql" // Example: If handlers need direct DB access
 	"encoding/json"
 	"fmt"
 	"log/slog"
