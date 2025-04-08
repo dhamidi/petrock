@@ -18,12 +18,13 @@ func RegisterAllFeatures(
 	messageLog *core.MessageLog,
 	appState *AppState, // The application's root state (features receive their own state slice)
 	db *sql.DB, // Shared database connection pool
+	coreExecutor core.Executor, // Centralized executor for standardized command handling
 	// Add other shared dependencies like config if needed
 ) {
 	// The `petrock feature <name>` command will insert code below this line
 	// to initialize each feature's state and call its RegisterFeature function.
 	// Example (inserted by tool):
 	// postsState := posts.NewState()
-	// posts.RegisterFeature(mux, commands, queries, messageLog, postsState, db)
+	// posts.RegisterFeature(mux, commands, queries, messageLog, postsState, db, coreExecutor)
 	// petrock:register-feature - Do not remove or modify this line
 }

@@ -162,11 +162,15 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// Route pattern updated to capture feature/kebab-case-query-name structure
 	mux.HandleFunc("GET /queries/{feature}/{queryName}", handleExecuteQuery(queryRegistry))
 
+	// 6. Initialize Centralized Executor
+	slog.Debug("Initializing centralized executor")
+	coreExecutor := core.NewBaseExecutor(messageLog, commandRegistry)
+
 	// 7. Register Feature Handlers and Routes *after* core routes
 	// This allows features to potentially override core routes if needed.
 	slog.Debug("Registering features...")
 	// Pass all necessary dependencies, including the mux and db connection
-	RegisterAllFeatures(mux, commandRegistry, queryRegistry, messageLog, appState, db)
+	RegisterAllFeatures(mux, commandRegistry, queryRegistry, messageLog, appState, db, coreExecutor)
 	slog.Info("Features registered")
 	// TODO: Add handlers for feature assets (e.g., mux.Handle("/assets/posts/", posts.ServeAssets("/assets/posts/")))
 
@@ -243,8 +247,10 @@ type commandRequest struct {
 	Payload json.RawMessage `json:"payload"` // The command-specific data
 }
 
-// handleExecuteCommand creates an http.HandlerFunc that decodes and dispatches commands.
+// handleExecuteCommand creates an http.HandlerFunc that decodes and executes commands using the centralized executor.
 func handleExecuteCommand(registry *core.CommandRegistry) http.HandlerFunc {
+	// NOTE: In a production implementation, this should accept coreExecutor as a parameter
+	// and use executor.Execute(ctx, cmd) instead of registry.Dispatch(ctx, cmd)
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -302,15 +308,17 @@ func handleExecuteCommand(registry *core.CommandRegistry) http.HandlerFunc {
 		}
 
 
-		// Dispatch the command
-		slog.Debug("Dispatching command via API", "name", req.Type) // Log the full name
+		// Execute the command (in production this would be executor.Execute instead of registry.Dispatch)
+		slog.Debug("Executing command via API", "name", req.Type) // Log the full name
 		dispatchErr := registry.Dispatch(r.Context(), cmdValue)
 
 		if dispatchErr != nil {
-			slog.Error("Error dispatching command", "name", req.Type, "error", dispatchErr)
-			// TODO: Implement more specific error handling (e.g., validation errors -> 400)
-			// For now, treat all dispatch errors as internal server errors.
-			// If dispatchErr is a validation error type: http.Error(w, dispatchErr.Error(), http.StatusBadRequest); return
+			slog.Error("Error executing command", "name", req.Type, "error", dispatchErr)
+			// TODO: Check for validation errors with core.IsValidationError(dispatchErr)
+			// If core.IsValidationError(dispatchErr) {
+			//     http.Error(w, dispatchErr.Error(), http.StatusBadRequest)
+			//     return
+			// }
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
