@@ -338,7 +338,8 @@ func insertFeatureRegistration(content, modulePath, featureName string) (string,
 	// Assumes RegisterAllFeatures receives variables named 'commands', 'queries', 'messageLog', 'appState'
 	// Note: The feature's RegisterFeature expects its *own* state, not the global AppState placeholder.
 	// We initialize the feature's state here and pass it.
-	newRegisterLine := fmt.Sprintf("%s%s.RegisterFeature(commands, queries, messageLog, %s)", registerIndentation, featureName, stateVarName)
+	// Assumes RegisterAllFeatures receives variables named 'mux', 'commands', 'queries', 'messageLog', 'appState', 'db'
+	newRegisterLine := fmt.Sprintf("%s%s.RegisterFeature(mux, commands, queries, messageLog, %s, db)", registerIndentation, featureName, stateVarName) // Added mux and db
 	// TODO: If features need access to the *global* AppState or other shared state,
 	// the RegisterAllFeatures signature and the feature's RegisterFeature signature
 	// would need to be adjusted accordingly. For now, we pass the feature-specific state.
