@@ -1,24 +1,29 @@
 package petrock_example_feature_name
 
 import (
+	"database/sql" // Added for db dependency
 	"log/slog"
+	"net/http" // Added for mux dependency
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 )
 
-// RegisterFeature initializes and registers the feature's handlers with the core registries.
+// RegisterFeature initializes and registers the feature's handlers with the core registries
+// and registers feature-specific HTTP routes.
 // It connects the command/query messages to their respective handlers and registers
 // message types needed for log replay.
 func RegisterFeature(
+	mux *http.ServeMux, // The main HTTP router
 	commands *core.CommandRegistry,
 	queries *core.QueryRegistry,
 	messageLog *core.MessageLog, // For registering message types for decoding
 	state *State, // The feature's specific state instance
+	db *sql.DB, // Shared database connection pool
 	// Add other core dependencies if needed (e.g., config, external clients)
 ) {
 	slog.Debug("Registering feature", "feature", "petrock_example_feature_name")
 
-	// --- 1. Initialize handlers/executors/queriers ---
+	// --- 1. Initialize Core Logic Handlers (Executor, Querier) ---
 	// These components encapsulate the logic for handling commands and queries.
 	// They typically depend on the feature's state and potentially other core services.
 
@@ -29,33 +34,42 @@ func RegisterFeature(
 	// Assumes query.go defines NewQuerier and its handler methods.
 	querier := NewQuerier(state)
 
-	// --- 2. Register Command Handlers ---
+	// --- 2. Initialize HTTP Handler Dependencies ---
+	// Create the FeatureServer which holds dependencies needed by HTTP handlers.
+	// Pass all necessary components (executor, querier, state, log, db, etc.).
+	server := NewFeatureServer(executor, querier, state, messageLog, commands, db)
+
+	// --- 3. Register Feature-Specific HTTP Routes ---
+	// Call the function in routes.go to define routes on the main router.
+	slog.Debug("Registering feature HTTP routes", "feature", "petrock_example_feature_name")
+	RegisterRoutes(mux, server)
+
+	// --- 4. Register Core Command Handlers ---
 	// Map command message types (from messages.go) to their handler functions (from execute.go).
-	// The core.CommandRegistry ensures type safety during dispatch.
+	// These are used by the core /commands API endpoint.
 	slog.Debug("Registering command handlers", "feature", "petrock_example_feature_name")
 	commands.Register(CreateCommand{}, executor.HandleCreate) // Map CreateCommand to executor.HandleCreate
 	commands.Register(UpdateCommand{}, executor.HandleUpdate) // Map UpdateCommand to executor.HandleUpdate
 	commands.Register(DeleteCommand{}, executor.HandleDelete) // Map DeleteCommand to executor.HandleDelete
 	// Add registrations for other commands specific to this feature...
 
-	// --- 3. Register Query Handlers ---
+	// --- 5. Register Core Query Handlers ---
 	// Map query message types (from messages.go) to their handler functions (from query.go).
-	// The core.QueryRegistry ensures type safety during dispatch.
+	// These are used by the core /queries API endpoint.
 	slog.Debug("Registering query handlers", "feature", "petrock_example_feature_name")
 	queries.Register(GetQuery{}, querier.HandleGet)     // Map GetQuery to querier.HandleGet
 	queries.Register(ListQuery{}, querier.HandleList)   // Map ListQuery to querier.HandleList
 	// Add registrations for other queries specific to this feature...
 
-	// --- 4. Register Message Types for Decoding ---
-	// If the application replays the message log to rebuild state (common in event sourcing/CQRS),
-	// the core.MessageLog needs to know how to decode the stored message data back into
-	// concrete Go types. Call the type registration function (conventionally in state.go).
+	// --- 6. Register Message Types for Decoding ---
+	// Register message types (commands, events) with the MessageLog so it can
+	// decode them correctly during replay.
 	slog.Debug("Registering message types with MessageLog", "feature", "petrock_example_feature_name")
-	RegisterTypes(messageLog) // Assumes state.go provides RegisterTypes(*core.MessageLog)
+	RegisterTypes(messageLog) // Assumes messages.go or state.go provides RegisterTypes(*core.MessageLog)
 
-	// --- 5. Register Background Jobs/Workers (Optional) ---
+	// --- 7. Register Background Jobs/Workers (Optional) ---
 	// If the feature includes background processes (defined in jobs.go),
-	// they might need initialization or registration here, although the actual
+	// initialize them here. The actual launching (e.g., starting goroutines)
 	// launching (e.g., starting goroutines) is typically done in the main application
 	// entry point (e.g., cmd/serve.go) to manage their lifecycle.
 	// Example:
