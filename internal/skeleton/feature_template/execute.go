@@ -2,7 +2,6 @@ package petrock_example_feature_name
 
 import (
 	"context"
-	"errors" // Import errors package
 	"fmt"
 	"log/slog"
 	// "time" // Removed unused import
