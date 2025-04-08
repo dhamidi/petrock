@@ -16,11 +16,11 @@ This file defines Gomponents specific to rendering HTML for the posts feature. T
     - Populates fields with data from `post` if provided (for editing).
     - Uses `form.Values` to repopulate fields on validation error.
     - Includes CSRF token input (`core.CSRFTokenInput`).
-    - Sets appropriate `action` and `method` attributes. *Note: Form submission is typically handled via JavaScript making calls to the core API (`POST /commands`), rather than direct form posts or HTMX, although HTMX could be adapted.*
+    - Sets appropriate `action` and `method` attributes. *Note: Form submission can be handled in multiple ways: via JavaScript making calls to the core API (`POST /commands`), via JavaScript calling feature-specific routes (e.g., `POST /posts`), or potentially using libraries like HTMX targeting either core or feature routes.*
 - `PostsListView(result PostsListQueryResult) gomponents.Node`: Renders a list of posts, often as a table or a series of divs.
     - Iterates over `result.Posts`.
     - Calls `PostView` for each post (or renders a summary row).
     - May include pagination controls based on `result.TotalCount`, `result.Page`, `result.PageSize`.
-- `NewItemButton() gomponents.Node`: Renders a button or link that navigates to a page containing the `ItemForm` or triggers JavaScript to display the form for creating a new item. *Note: Direct HTMX attributes for loading forms have been removed from the default template in favor of API interaction.*
+- `NewItemButton() gomponents.Node`: Renders a button or link that might navigate to a page containing the `ItemForm` or trigger client-side logic (JavaScript, HTMX) to display a form or initiate an action.
 
-*Note: With the introduction of the core API (`/commands`, `/queries`), feature-specific views primarily focus on rendering data retrieved via queries. User interactions (creating, updating, deleting) are generally expected to be handled by client-side logic (e.g., JavaScript) calling the core API endpoints.*
+*Note: Feature-specific views primarily focus on rendering data retrieved via queries (either from the core API or feature-specific endpoints). User interactions (creating, updating, deleting) can be handled by client-side logic targeting either the core API endpoints (`/commands`, `/queries`) or custom endpoints defined by the feature in `routes.go`.*

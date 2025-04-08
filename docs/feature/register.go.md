@@ -8,11 +8,17 @@ This file acts as the entry point for the feature module. Its primary role is to
 
 ## Functions
 
-- `RegisterFeature(commands *core.CommandRegistry, queries *core.QueryRegistry, messageLog *core.MessageLog, state *State)`: This function initializes the feature's handlers and registers them.
-  - It creates instances of the feature's executor (e.g., `NewExecutor(state, messageLog)`) and querier (e.g., `NewQuerier(state)`).
-  - It calls `commands.Register` for each command type (e.g., `commands.Register(CreateCommand{}, executor.HandleCreate)`). The registry uses the command's `CommandName()` method internally.
-  - It calls `queries.Register` for each query type (e.g., `queries.Register(GetQuery{}, querier.HandleGet)`). The registry uses the query's `QueryName()` method internally.
-  - It calls the feature's `RegisterTypes` function (defined in `state.go`) to register command/event types with the `core.MessageLog` for decoding during replay.
-  - It might initialize and register background jobs/workers if defined in `jobs.go`.
+- `RegisterFeature(mux *http.ServeMux, commands *core.CommandRegistry, queries *core.QueryRegistry, messageLog *core.MessageLog, state *State, /* other shared deps */)`: This function initializes the feature's handlers, registers them with core registries, and registers any feature-specific HTTP routes.
+  - **Dependencies:** It receives shared core components like the main HTTP router (`mux`), command/query registries, message log, and the feature's specific state. It might receive other shared dependencies like a database connection pool (`*sql.DB`) if needed by handlers.
+  - **Initialization:**
+    - Creates instances of the feature's executor (e.g., `NewExecutor(state, messageLog)`) and querier (e.g., `NewQuerier(state)`).
+    - Creates an instance of the feature's HTTP handler container (e.g., `server := NewFeatureServer(executor, querier, state, messageLog, commands, db)` from `http.go`), passing necessary dependencies.
+  - **Core Registration:**
+    - Calls `commands.Register` for each command type (e.g., `commands.Register(CreateCommand{}, executor.HandleCreate)`).
+    - Calls `queries.Register` for each query type (e.g., `queries.Register(GetQuery{}, querier.HandleGet)`).
+    - Calls `RegisterTypes(messageLog)` (typically defined in `state.go` or `messages.go`) to register command/query types with the `core.MessageLog` for decoding during replay.
+  - **HTTP Route Registration:**
+    - Calls `RegisterRoutes(mux, server)` (defined in `routes.go`) to register the feature's specific HTTP routes with the main application router.
+  - **Background Jobs:** It might initialize and register background jobs/workers if defined in `jobs.go`.
 
-_Note: The `petrock feature <name>` command automatically adds the necessary import and the call to this `RegisterFeature` function within the project's `cmd/<project>/features.go` file._
+_Note: The `petrock feature <name>` command automatically adds the necessary import and the call to this `RegisterFeature` function (with the updated signature) within the project's `cmd/<project>/features.go` file. The registration happens *after* core routes are registered, allowing features to override core routes._

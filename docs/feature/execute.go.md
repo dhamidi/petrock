@@ -15,16 +15,16 @@ This file defines the command handlers responsible for executing state changes w
     - Perform validation (e.g., non-empty title/content).
     - Create a new `Post` object within the `e.state`.
     - Return `nil` on success, or an error on validation failure or state update issues.
-    *Note: This function signature matches `core.CommandHandler`.*
+    *Note: This function signature matches `core.CommandHandler`. It's typically called by the `core.CommandRegistry` when commands are dispatched via the core `/commands` API.*
 - `(e *PostExecutor) HandleUpdatePost(ctx context.Context, cmd core.Command) error`: Handles the `UpdatePostCommand`.
     - Type-assert `cmd` to `UpdatePostCommand`.
     - Validate input.
     - Find the existing post in `e.state` using `PostID`.
     - Update the post's fields in `e.state`.
     - Return error if post not found or validation fails.
-    *Note: This function signature matches `core.CommandHandler`.*
+    *Note: This function signature matches `core.CommandHandler`. It's typically called by the `core.CommandRegistry`.*
 - `(e *PostExecutor) HandleDeletePost(ctx context.Context, cmd core.Command) error`: Handles the `DeletePostCommand`.
     - Type-assert `cmd` to `DeletePostCommand`.
     - Remove the post from `e.state` using `PostID`.
     - Return error if post not found.
-    *Note: This function signature matches `core.CommandHandler`.*
+    *Note: This function signature matches `core.CommandHandler`. It's typically called by the `core.CommandRegistry`.*

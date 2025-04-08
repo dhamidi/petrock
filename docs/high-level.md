@@ -67,6 +67,9 @@ posts/state.go    # application state that needs to be kept
 posts/jobs.go     # long-running processes that
 posts/view.go     # components for rendering
 posts/assets.go   # a file that builds an in-memory FS using go:embed for the assets directory
+posts/routes.go   # defines feature-specific HTTP routes
+posts/http.go     # contains feature-specific HTTP handlers
+posts/assets.go   # a file that builds an in-memory FS using go:embed for the assets directory
 posts/assets/     # a directory containing binary assets that should get included in the final binary
 ```
 
@@ -84,8 +87,15 @@ The high-level overview of a Petrock application is this:
     *   `POST /commands`: Executes a command. Expects a JSON body like `{"type": "feature/create", "payload": {...}}`. The handler decodes the payload into the appropriate command struct, dispatches it via the `CommandRegistry` using its `CommandName()`, logs the command, and applies it to the state. Returns `200 OK` or `202 Accepted` on success, or `400/500` on error.
     *   `GET /queries`: Returns a JSON list of registered query names (e.g., `["posts/get", "posts/list"]`).
     *   `GET /queries/{feature}/{query-name}`: Executes a query. The path contains the full kebab-case name (e.g., `/queries/posts/list`). Query parameters (e.g., `?ID=123&page=1`) are automatically parsed and mapped to the fields of the query struct. The handler dispatches the query via the `QueryRegistry` using its `QueryName()` and returns the JSON result on success (`200 OK`), or `400/404/500` on error.
-4.  **Command Handling:** When a command is dispatched (typically via `POST /commands`), the registered handler (looked up by `cmd.CommandName()`) validates it. If valid, the command is appended to the message log (`core.MessageLog`) and then applied to the relevant feature's in-memory state (`feature.State.Apply`).
-5.  **Query Handling:** When a query is dispatched (typically via `GET /queries/{feature}/{query-name}`), the registered handler (looked up by `query.QueryName()`) reads directly from the feature's in-memory state (`feature.State`) to produce the result.
-6.  **State Management:** Each feature manages its own slice of the application state within its `state.go` file. The `Apply` method is crucial for both rebuilding state from the log at startup and applying live updates after a command is logged.
+4.  **Feature-Specific HTTP Routes:** In addition to the core API, features can define their own HTTP routes and handlers:
+    *   Routes are defined in `<feature>/routes.go` using the standard `net/http.ServeMux`.
+    *   Handlers are implemented in `<feature>/http.go`, typically as methods on a `FeatureServer` struct holding dependencies (Executor, Querier, State, Log, etc.).
+    *   These routes are registered in `cmd/<project>/serve.go` *after* the core routes. This means features can add new endpoints (e.g., `GET /posts/{id}`) or even override core endpoints (like `/`) if needed. Conventionally, feature routes should be prefixed (e.g., `/posts/...`) to avoid accidental overrides.
+5.  **Command Handling:** When a command is dispatched (either via `POST /commands` or potentially triggered by a feature-specific handler in `<feature>/http.go`), the goal is consistent handling:
+    *   The command should be validated.
+    *   If valid, it must be appended to the message log (`core.MessageLog`).
+    *   The change is then applied to the relevant feature's in-memory state (`feature.State.Apply`), typically driven by the log persistence/replay mechanism. Feature-specific handlers needing to trigger commands should usually use `core.MessageLog.Append` or `core.CommandRegistry.Dispatch`.
+6.  **Query Handling:** When a query is dispatched (either via `GET /queries/...` or a feature-specific handler), the registered handler reads directly from the feature's in-memory state (`feature.State`) to produce the result.
+7.  **State Management:** Each feature manages its own slice of the application state within its `state.go` file. The `Apply` method is crucial for both rebuilding state from the log at startup and applying live updates after a command is logged. Handlers in `<feature>/http.go` access this state, usually via the `Querier` or direct `State` access.
 
 All commands are serialized with a configurable encoder (JSON by default) and persisted in a SQLite database in a single table called `messages`.

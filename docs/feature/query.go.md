@@ -16,11 +16,11 @@ This file defines the query handlers responsible for retrieving data (reading st
     - If found, map the internal `Post` state struct to a `PostQueryResult` struct.
     - Return the `PostQueryResult` and `nil` error.
     - If not found, return `nil` and an appropriate error (e.g., `ErrPostNotFound`).
-    *Note: This function signature matches `core.QueryHandler`.*
+    *Note: This function signature matches `core.QueryHandler`. It's typically called by the `core.QueryRegistry` when queries are dispatched via the core `/queries/...` API, but can also be called directly by feature-specific handlers in `http.go`.*
 - `(q *PostQuerier) HandleListPosts(ctx context.Context, query core.Query) (core.QueryResult, error)`: Handles the `ListPostsQuery`.
     - Type-assert `query` to `ListPostsQuery`.
     - Retrieve the list of posts from `q.state`, applying filtering (e.g., by `AuthorIDFilter`) and pagination (`Page`, `PageSize`).
     - Map the internal `Post` state structs to `PostQueryResult` structs.
     - Construct a `PostsListQueryResult` containing the list and pagination details (total count, current page, page size).
     - Return the `PostsListQueryResult` and `nil` error.
-    *Note: This function signature matches `core.QueryHandler`.*
+    *Note: This function signature matches `core.QueryHandler`. It's typically called by the `core.QueryRegistry`, but can also be called directly by feature-specific handlers in `http.go`.*
