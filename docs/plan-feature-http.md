@@ -37,7 +37,7 @@
   - `cmd/petrock/feature.go`
 - **Definition of Done:** Running `petrock feature <name>` correctly creates the `<name>/routes.go` and `<name>/http.go` files and inserts the updated `<name>.RegisterFeature(...)` call into `cmd/<project>/features.go`.
 
-### Chunk 3: Update Feature Registration Template (`register.go`)
+### Chunk 3: Update Feature Registration Template (`register.go`) - DONE
 
 - **Goal:** Modify the feature's main registration function template to accommodate HTTP route registration.
 - **Tasks:**
@@ -51,7 +51,7 @@
   - `docs/feature/register.go.md`
 - **Definition of Done:** The `feature_template/register.go` file reflects the new signature and includes the logic to initialize `FeatureServer` and call `RegisterRoutes`.
 
-### Chunk 4: Update Project `features.go` Template
+### Chunk 4: Update Project `features.go` Template - DONE
 
 - **Goal:** Update the template for the project-level feature registration function to pass the necessary dependencies.
 - **Tasks:**
