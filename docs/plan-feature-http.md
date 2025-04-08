@@ -61,7 +61,7 @@
   - `internal/skeleton/cmd/petrock_example_project_name/features.go`
 - **Definition of Done:** The `features.go` template has the updated `RegisterAllFeatures` signature and the registration placeholder is correctly positioned.
 
-### Chunk 5: Update Project `serve.go` Template
+### Chunk 5: Update Project `serve.go` Template - DONE
 
 - **Goal:** Ensure the main server setup passes the HTTP router to the feature registration process at the correct time.
 - **Tasks:**

@@ -137,11 +137,6 @@ func runServe(cmd *cobra.Command, args []string) error {
 		slog.Warn("Some messages failed to apply during state replay. State might be incomplete.")
 	}
 
-	// 7. Register Feature Handlers
-	slog.Debug("Registering features...")
-	RegisterAllFeatures(commandRegistry, queryRegistry, messageLog, appState) // Pass initialized components
-	slog.Info("Features registered")
-
 	// --- HTTP Server Setup ---
 	slog.Info("Setting up HTTP server...")
 	mux := http.NewServeMux()
@@ -166,7 +161,14 @@ func runServe(cmd *cobra.Command, args []string) error {
 	mux.HandleFunc("GET /queries", handleListQueries(queryRegistry))
 	// Route pattern updated to capture feature/kebab-case-query-name structure
 	mux.HandleFunc("GET /queries/{feature}/{queryName}", handleExecuteQuery(queryRegistry))
-	// TODO: Add routes for features (e.g., mux.HandleFunc("GET /posts", handleListPosts), mux.HandleFunc("GET /posts/{id}", handleGetPost))
+
+	// 7. Register Feature Handlers and Routes *after* core routes
+	// This allows features to potentially override core routes if needed.
+	slog.Debug("Registering features...")
+	// Pass all necessary dependencies, including the mux and db connection
+	RegisterAllFeatures(mux, commandRegistry, queryRegistry, messageLog, appState, db)
+	slog.Info("Features registered")
+	// TODO: Add handlers for feature assets (e.g., mux.Handle("/assets/posts/", posts.ServeAssets("/assets/posts/")))
 
 	// --- Server Start and Shutdown ---
 	server := &http.Server{
