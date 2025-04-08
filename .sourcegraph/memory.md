@@ -1,9 +1,15 @@
 # Commands for petrock Go project
 
+## Development workflow:
+
+1. Make changes
+2. Commit changes with a auto-generated commit messages following conventional commits: `git add <changed-or-added-files> && git commit -m $'conventional commit message with multiple lines'
+3. Run tests to verify everything works
+
 ## Build Commands
 - Full build: `./build.sh`
 - Single component: `./build.sh build_skeleton` or `./build.sh build_petrock`
-- Run tests: `./build.sh test_petrock` or `go test ./...`
+- Run tests: `./build.sh --debug`
 - Single test: `go test -v ./path/to/package -run TestName`
 
 ## Lint Commands
