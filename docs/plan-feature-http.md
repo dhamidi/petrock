@@ -6,7 +6,7 @@
 
 ## Implementation Steps
 
-### Chunk 1: Create Feature HTTP Template Files
+### Chunk 1: Create Feature HTTP Template Files - DONE
 
 - **Goal:** Add the necessary template files (`routes.go`, `http.go`) to the feature skeleton.
 - **Tasks:**
@@ -25,7 +25,7 @@
   - `docs/feature/http.go.md`
 - **Definition of Done:** The two new template files exist in `internal/skeleton/feature_template/` with the basic structure and example implementations.
 
-### Chunk 2: Update `petrock feature` Command
+### Chunk 2: Update `petrock feature` Command - DONE
 
 - **Goal:** Modify the `petrock feature` command to copy the new templates and update the feature registration call site.
 - **Tasks:**
