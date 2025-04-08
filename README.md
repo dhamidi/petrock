@@ -26,9 +26,9 @@ Petrock acts purely as a **code generator**. It creates files based on templates
 ### Installation
 
 ```bash
-go install github.com/your-repo/petrock@latest
+go install github.com/dhamidi/petrock@latest
 ```
-*(Replace `github.com/your-repo/petrock` with the actual repository path)*
+*(Replace `github.com/dhamidi/petrock` with the actual repository path)*
 
 ### Creating a New Project
 
