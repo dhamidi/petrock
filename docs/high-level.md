@@ -91,10 +91,14 @@ The high-level overview of a Petrock application is this:
     *   Routes are defined in `<feature>/routes.go` using the standard `net/http.ServeMux`.
     *   Handlers are implemented in `<feature>/http.go`, typically as methods on a `FeatureServer` struct holding dependencies (Executor, Querier, State, Log, etc.).
     *   These routes are registered in `cmd/<project>/serve.go` *after* the core routes. This means features can add new endpoints (e.g., `GET /posts/{id}`) or even override core endpoints (like `/`) if needed. Conventionally, feature routes should be prefixed (e.g., `/posts/...`) to avoid accidental overrides.
-5.  **Command Handling:** When a command is dispatched (either via `POST /commands` or potentially triggered by a feature-specific handler in `<feature>/http.go`), the goal is consistent handling:
-    *   The command should be validated.
-    *   If valid, it must be appended to the message log (`core.MessageLog`).
-    *   The change is then applied to the relevant feature's in-memory state (`feature.State.Apply`), typically driven by the log persistence/replay mechanism. Feature-specific handlers needing to trigger commands should usually use `core.MessageLog.Append` or `core.CommandRegistry.Dispatch`.
+5.  **Command Handling:** Commands are processed through a centralized Executor pattern:
+    * All commands are executed via the `core.Executor.Execute(cmd)` method, which provides a standardized flow.
+    * Each command implements a `Validate()` method which is automatically called by the Executor before logging.
+    * If validation passes, the command is appended to the message log (`core.MessageLog`).
+    * The Executor then dispatches the command to its registered handler via the CommandRegistry.
+    * Handlers focus exclusively on domain-specific logic rather than repeating the validation/logging pattern.
+    * State changes are applied to the relevant feature's in-memory state (`feature.State.Apply`).
+    * Application code and feature-specific HTTP handlers use the core Executor to process commands rather than directly accessing the message log or command registry.
 6.  **Query Handling:** When a query is dispatched (either via `GET /queries/...` or a feature-specific handler), the registered handler reads directly from the feature's in-memory state (`feature.State`) to produce the result.
 7.  **State Management:** Each feature manages its own slice of the application state within its `state.go` file. The `Apply` method is crucial for both rebuilding state from the log at startup and applying live updates after a command is logged. Handlers in `<feature>/http.go` access this state, usually via the `Querier` or direct `State` access.
 
