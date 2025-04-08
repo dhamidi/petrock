@@ -1,6 +1,7 @@
 package petrock_example_feature_name
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
@@ -22,6 +23,15 @@ func (c CreateCommand) CommandName() string {
 	return "petrock_example_feature_name/create" // Removed suffix
 }
 
+// Validate implements core.Validator interface to enable self-validation.
+func (c CreateCommand) Validate() error {
+	if c.Name == "" {
+		return fmt.Errorf("name cannot be empty")
+	}
+	// Add other validation rules as needed
+	return nil
+}
+
 // UpdateCommand holds data needed to update an existing entity.
 type UpdateCommand struct {
 	ID          string `json:"id"` // ID of the entity to update
@@ -35,6 +45,18 @@ func (c UpdateCommand) CommandName() string {
 	return "petrock_example_feature_name/update" // Removed suffix
 }
 
+// Validate implements core.Validator interface to enable self-validation.
+func (c UpdateCommand) Validate() error {
+	if c.ID == "" {
+		return fmt.Errorf("id cannot be empty")
+	}
+	if c.Name == "" {
+		return fmt.Errorf("name cannot be empty")
+	}
+	// Add other validation rules as needed
+	return nil
+}
+
 // DeleteCommand holds data needed to delete an entity.
 type DeleteCommand struct {
 	ID        string `json:"id"` // ID of the entity to delete
@@ -44,6 +66,15 @@ type DeleteCommand struct {
 // CommandName returns the unique kebab-case name for this command type.
 func (c DeleteCommand) CommandName() string {
 	return "petrock_example_feature_name/delete" // Removed suffix
+}
+
+// Validate implements core.Validator interface to enable self-validation.
+func (c DeleteCommand) Validate() error {
+	if c.ID == "" {
+		return fmt.Errorf("id cannot be empty")
+	}
+	// Add other validation rules as needed
+	return nil
 }
 
 // --- Queries (Implement core.Query) ---
@@ -59,6 +90,14 @@ func (q GetQuery) QueryName() string {
 	return "petrock_example_feature_name/get" // Removed suffix
 }
 
+// Validate implements validation for the query.
+func (q GetQuery) Validate() error {
+	if q.ID == "" {
+		return fmt.Errorf("id cannot be empty")
+	}
+	return nil
+}
+
 // ListQuery holds data needed to retrieve a list of entities, possibly filtered or paginated.
 type ListQuery struct {
 	Page     int    `json:"page"`      // For pagination
@@ -69,6 +108,17 @@ type ListQuery struct {
 // QueryName returns the unique kebab-case name for this query type.
 func (q ListQuery) QueryName() string {
 	return "petrock_example_feature_name/list" // Removed suffix
+}
+
+// Validate implements validation for the query.
+func (q ListQuery) Validate() error {
+	if q.Page < 0 {
+		return fmt.Errorf("page cannot be negative")
+	}
+	if q.PageSize < 1 {
+		return fmt.Errorf("page size must be positive")
+	}
+	return nil
 }
 
 // --- Query Results (Implement core.QueryResult) ---

@@ -19,25 +19,26 @@ func RegisterFeature(
 	messageLog *core.MessageLog, // For registering message types for decoding
 	state *State, // The feature's specific state instance
 	db *sql.DB, // Shared database connection pool
+	coreExecutor core.Executor, // Centralized executor for standardized command handling
 	// Add other core dependencies if needed (e.g., config, external clients)
 ) {
 	slog.Debug("Registering feature", "feature", "petrock_example_feature_name")
 
-	// --- 1. Initialize Core Logic Handlers (Executor, Querier) ---
+	// --- 1. Initialize Core Logic Handlers (FeatureExecutor, Querier) ---
 	// These components encapsulate the logic for handling commands and queries.
 	// They typically depend on the feature's state and potentially other core services.
 
-	// Assumes execute.go defines NewExecutor and its handler methods.
-	// Pass dependencies like state and messageLog (if executor needs to append events/commands).
-	executor := NewExecutor(state, messageLog)
+	// Assumes execute.go defines NewFeatureExecutor and its handler methods.
+	// FeatureExecutor only depends on state, no longer needs MessageLog (handled by core.Executor)
+	featureExecutor := NewFeatureExecutor(state)
 
 	// Assumes query.go defines NewQuerier and its handler methods.
 	querier := NewQuerier(state)
 
 	// --- 2. Initialize HTTP Handler Dependencies ---
 	// Create the FeatureServer which holds dependencies needed by HTTP handlers.
-	// Pass all necessary components (executor, querier, state, log, db, etc.).
-	server := NewFeatureServer(executor, querier, state, messageLog, commands, db)
+	// Pass all necessary components (featureExecutor, querier, state, executor, commands, db, etc.).
+	server := NewFeatureServer(featureExecutor, querier, state, coreExecutor, commands, db)
 
 	// --- 3. Register Feature-Specific HTTP Routes ---
 	// Call the function in routes.go to define routes on the main router.
@@ -48,9 +49,9 @@ func RegisterFeature(
 	// Map command message types (from messages.go) to their handler functions (from execute.go).
 	// These are used by the core /commands API endpoint.
 	slog.Debug("Registering command handlers", "feature", "petrock_example_feature_name")
-	commands.Register(CreateCommand{}, executor.HandleCreate) // Map CreateCommand to executor.HandleCreate
-	commands.Register(UpdateCommand{}, executor.HandleUpdate) // Map UpdateCommand to executor.HandleUpdate
-	commands.Register(DeleteCommand{}, executor.HandleDelete) // Map DeleteCommand to executor.HandleDelete
+	commands.Register(CreateCommand{}, featureExecutor.HandleCreate) // Map CreateCommand to featureExecutor.HandleCreate
+	commands.Register(UpdateCommand{}, featureExecutor.HandleUpdate) // Map UpdateCommand to featureExecutor.HandleUpdate
+	commands.Register(DeleteCommand{}, featureExecutor.HandleDelete) // Map DeleteCommand to featureExecutor.HandleDelete
 	// Add registrations for other commands specific to this feature...
 
 	// --- 5. Register Core Query Handlers ---

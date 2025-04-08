@@ -14,36 +14,36 @@ import (
 // FeatureServer holds dependencies required by the feature's HTTP handlers.
 // This struct is initialized in register.go and passed to RegisterRoutes.
 type FeatureServer struct {
-	executor *Executor             // Command execution logic
-	querier  *Querier              // Query execution logic
-	state    *State                // Direct state access (use querier/executor preferably)
-	log      *core.MessageLog      // For logging commands/events directly
-	commands *core.CommandRegistry // For dispatching commands via the core system
-	db       *sql.DB               // Example: Shared DB connection pool
+	featureExecutor *FeatureExecutor      // Domain-specific command handling logic
+	querier         *Querier              // Query execution logic
+	state           *State                // Direct state access (use querier/executor preferably)
+	executor        core.Executor         // Core executor for centralized command execution
+	commands        *core.CommandRegistry // For command type resolution
+	db              *sql.DB               // Example: Shared DB connection pool
 	// Add other dependencies like config, template renderers, etc.
 }
 
 // NewFeatureServer creates and initializes the FeatureServer with its dependencies.
 func NewFeatureServer(
-	executor *Executor,
+	featureExecutor *FeatureExecutor,
 	querier *Querier,
 	state *State,
-	log *core.MessageLog,
+	executor core.Executor, // Now accepting core.Executor interface
 	commands *core.CommandRegistry,
 	db *sql.DB, // Add other dependencies here
 ) *FeatureServer {
 	// Basic validation
-	if executor == nil || querier == nil || state == nil || log == nil || commands == nil {
+	if featureExecutor == nil || querier == nil || state == nil || executor == nil || commands == nil {
 		// Depending on requirements, some dependencies might be optional (e.g., db)
 		panic("missing required dependencies for FeatureServer")
 	}
 	return &FeatureServer{
-		executor: executor,
-		querier:  querier,
-		state:    state,
-		log:      log,
-		commands: commands,
-		db:       db,
+		featureExecutor: featureExecutor,
+		querier:        querier,
+		state:          state,
+		executor:       executor,
+		commands:       commands,
+		db:             db,
 	}
 }
 
@@ -126,30 +126,22 @@ func (fs *FeatureServer) HandleCreateItem(w http.ResponseWriter, r *http.Request
 	}
 	defer r.Body.Close()
 
-	// --- State Change Strategy ---
-	// Option A (Recommended): Log the command directly using MessageLog.
-	// The state's Apply method will handle the actual state update, triggered by log replay or explicitly.
-	err := fs.log.Append(r.Context(), cmd)
+	// Execute the command using the centralized executor
+	err := fs.executor.Execute(r.Context(), cmd)
 	if err != nil {
-		// Handle potential errors (validation errors should ideally be caught before logging)
-		slog.Error("Failed to append CreateCommand via feature handler", "error", err)
-		// Check if the error is a validation error type and return 400 if so
-		// if validationErr, ok := err.(*core.ValidationError); ok {
-		//     respondJSON(w, http.StatusBadRequest, map[string]string{"error": validationErr.Error()})
-		//     return
-		// }
+		// Handle potential errors based on their type
+		slog.Error("Failed to execute CreateCommand", "error", err)
+		
+		// Check if it's a validation error and return appropriate response
+		if core.IsValidationError(err) {
+			respondJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		
+		// Otherwise it's an internal error
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-
-	// Option B: Dispatch via CommandRegistry (handles logging and state application via registered handler)
-	// err := fs.commands.Dispatch(r.Context(), cmd)
-	// if err != nil {
-	//     slog.Error("Failed to dispatch CreateCommand via feature handler", "error", err)
-	//     // Handle validation vs internal errors appropriately
-	//     http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	//     return
-	// }
 
 	// Respond with success (e.g., 201 Created or 202 Accepted)
 	// Optionally return the created resource or its ID
@@ -180,10 +172,17 @@ func (fs *FeatureServer) HandleUpdateItem(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Log the command (Option A)
-	err := fs.log.Append(r.Context(), cmd)
+	// Execute the command using the centralized executor
+	err := fs.executor.Execute(r.Context(), cmd)
 	if err != nil {
-		slog.Error("Failed to append UpdateCommand via feature handler", "error", err, "id", itemID)
+		slog.Error("Failed to execute UpdateCommand", "error", err, "id", itemID)
+		
+		// Check for validation errors
+		if core.IsValidationError(err) {
+			respondJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -205,11 +204,17 @@ func (fs *FeatureServer) HandleDeleteItem(w http.ResponseWriter, r *http.Request
 	// Construct the command
 	cmd := DeleteCommand{ID: itemID /* DeletedBy: "user_from_context" */}
 
-	// Log the command (Option A)
-	err := fs.log.Append(r.Context(), cmd)
+	// Execute the command using the centralized executor
+	err := fs.executor.Execute(r.Context(), cmd)
 	if err != nil {
-		// Handle not found errors if Append checks existence first, or let Apply handle it
-		slog.Error("Failed to append DeleteCommand via feature handler", "error", err, "id", itemID)
+		slog.Error("Failed to execute DeleteCommand", "error", err, "id", itemID)
+		
+		// Check for validation errors
+		if core.IsValidationError(err) {
+			respondJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
