@@ -2,10 +2,12 @@ package petrock_example_feature_name
 
 import (
 	"database/sql" // Example: If handlers need direct DB access
+	"database/sql" // Example: If handlers need direct DB access
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv" // Added for parseIntParam helper
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 )
@@ -65,12 +67,14 @@ func (fs *FeatureServer) HandleGetItem(w http.ResponseWriter, r *http.Request) {
 	// Execute the query using the feature's querier
 	result, err := fs.querier.HandleGet(r.Context(), query)
 	if err != nil {
-		// Handle specific errors, e.g., not found
-		// if errors.Is(err, core.ErrNotFound) { // Assuming a standard error type
-		// 	http.Error(w, "Not Found", http.StatusNotFound)
-		// 	return
+		// TODO: Handle specific errors, e.g., not found
+		// Example: Replace core.ErrNotFound with the actual error type/value used for not found cases
+		// if errors.Is(err, core.ErrNotFound) {
+		//     slog.Warn("Item not found", "feature", "petrock_example_feature_name", "id", itemID)
+		// 	   http.Error(w, "Not Found", http.StatusNotFound)
+		// 	   return
 		// }
-		// Generic error handling
+		// Generic error handling for other errors
 		slog.Error("Error handling GetQuery", "error", err, "id", itemID)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return

@@ -73,7 +73,7 @@
   - `docs/cmd/serve.go.md`
 - **Definition of Done:** The `serve.go` template correctly passes the `mux` and other dependencies to `RegisterAllFeatures` after core routes are defined.
 
-### Chunk 6: Testing and Refinement
+### Chunk 6: Testing and Refinement - DONE
 
 - **Goal:** Verify the entire workflow functions correctly.
 - **Tasks:**
