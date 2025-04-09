@@ -23,5 +23,13 @@ This file implements the persistent event/message log, backed by SQLite. It hand
 - `NewMessageLog(db *sql.DB, encoder Encoder) (*MessageLog, error)`: Constructor for `MessageLog`. Initializes the type registry.
 - `(l *MessageLog) RegisterType(instance interface{})`: Registers a Go type (by passing an instance, e.g., `CreatePostCommand{}`) so the log knows how to decode messages of this type string. It expects the instance to implement `core.Command` or `core.Query` and uses the name returned by `CommandName()` or `QueryName()` as the key. Stores the underlying `reflect.Type`.
 - `(l *MessageLog) Append(ctx context.Context, msg interface{}) error`: Encodes the given message using the `encoder`, determines its registered name string (via `CommandName()` or `QueryName()`), and inserts a new row into the `messages` table in the database. Returns an error if the message doesn't implement a known naming interface.
-- `(l *MessageLog) Load(ctx context.Context) ([]interface{}, error)`: Loads all messages from the database table, ordered by ID. For each row, it uses the `Type` string (which should be the kebab-case name) to look up the `reflect.Type` in `typeRegistry`, creates a new instance of that type, decodes the `Data` into it using the `encoder`, and returns a slice of these decoded messages (`[]interface{}`).
+- `(l *MessageLog) Load(ctx context.Context) ([]Message, error)`: Loads all raw `Message` structs (ID, Timestamp, Type, Data) from the database table, ordered by ID. This is typically used at application startup.
+- `(l *MessageLog) Decode(message Message) (interface{}, error)`: Decodes the `Data` field of a raw `Message` into a concrete Go command/query type. It uses the `message.Type` string to look up the `reflect.Type` in the `typeRegistry`, creates a new instance, and uses the `encoder` to deserialize the `Data` into it.
 - `(l *MessageLog) setupSchema(ctx context.Context) error`: Executes SQL `CREATE TABLE IF NOT EXISTS messages (...)` to set up the necessary database table. (Marked as internal as it's called by `NewMessageLog`).
+
+*Note on State Replay:* Application startup logic (e.g., in `cmd/serve.go`) typically involves:
+1. Calling `messageLog.Load()` to get all historical messages.
+2. Iterating through the loaded `Message` slice.
+3. For each message, calling `messageLog.Decode()` to get the concrete command instance.
+4. Looking up the corresponding *state update handler* using `commandRegistry.GetHandler(decodedCmd.CommandName())`.
+5. Executing the state update handler with the decoded command to rebuild the application state.
