@@ -18,7 +18,7 @@ This file acts as the entry point for the feature module. Its primary role is to
     - Calls `commands.Register` for each command type, passing:
         1. An instance of the command (e.g., `CreateCommand{}`).
         2. The corresponding *state update handler* method from the feature executor (e.g., `featureExecutor.HandleCreatePost`).
-        3. The feature executor instance itself as the `core.CommandValidator` (e.g., `featureExecutor`).
+        3. The feature executor instance itself, which implements `core.FeatureExecutor` (e.g., `featureExecutor`).
         Example: `commands.Register(CreateCommand{}, featureExecutor.HandleCreatePost, featureExecutor)`
     - Calls `queries.Register` for each query type, passing the handler from the `querier` (e.g., `queries.Register(GetQuery{}, querier.HandleGetPost)`).
     - Calls `RegisterTypes(messageLog)` (typically defined in `messages.go` or `state.go`) to register command/query types with the `core.MessageLog` for decoding.

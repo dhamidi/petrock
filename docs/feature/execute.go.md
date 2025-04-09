@@ -1,42 +1,32 @@
 # Plan for posts/execute.go (Example Feature)
 
-This file defines the feature-specific **Executor**. This component is responsible for both **validating** commands (using the feature's state) and **applying state changes** for those commands.
+This file defines the feature-specific **Executor**. This component holds the feature's state and provides the state update handlers. It also implements the `core.FeatureExecutor` interface to bridge validation calls from the central `core.Executor` to the command structs themselves.
 
 ## Types
 
-- `Executor`: A struct holding dependencies needed for command validation and state updates, primarily the feature's state. It implements `core.CommandValidator`.
+- `Executor`: A struct holding dependencies needed for state updates, primarily the feature's state. It implements `core.FeatureExecutor`.
     - `state *PostState`
-    - *Other dependencies if needed (e.g., external service clients for validation).*
+    - *Other dependencies if needed.*
+- `Validator` (Interface, potentially defined in `messages.go`): An interface implemented by command structs that require stateful validation.
+    - `Validate(state *PostState) error`
 
 ## Functions
 
 - `NewExecutor(state *PostState) *Executor`: Constructor for the feature `Executor`.
 
-### Validation Methods (Implement `core.CommandValidator` implicitly via `ValidateCommand`)
+### Validation Bridge Method (Implements `core.FeatureExecutor`)
 
-- `(e *Executor) ValidateCommand(ctx context.Context, cmd core.Command) error`: The central validation method called by `core.Executor`. It type-switches on the command and delegates to specific validation methods.
+- `(e *Executor) ValidateCommand(ctx context.Context, cmd core.Command) error`: This method is called by the central `core.Executor`. It checks if the received command `cmd` implements the feature's `Validator` interface. If it does, it calls the command's `Validate` method, passing its own state (`e.state`).
     ```go
-    switch c := cmd.(type) {
-    case CreatePostCommand:
-        return e.validateCreatePost(ctx, c)
-    case UpdatePostCommand:
-        return e.validateUpdatePost(ctx, c)
-    // ... other commands
-    default:
-        return fmt.Errorf("unknown command type for validation: %T", cmd)
+    // Check if the command implements the stateful validator interface
+    if validator, ok := cmd.(Validator); ok {
+        // If yes, call the command's Validate method with the feature state
+        return validator.Validate(e.state)
     }
+    // If the command doesn't implement Validator, assume no stateful validation needed
+    return nil
     ```
-- `(e *Executor) validateCreatePost(ctx context.Context, cmd CreatePostCommand) error`: Performs validation specific to `CreatePostCommand`.
-    - Checks basic field constraints (e.g., non-empty title).
-    - Checks state-dependent constraints using `e.state` (e.g., uniqueness of a slug derived from the title, if applicable).
-    - Returns `nil` if valid, or an error otherwise.
-- `(e *Executor) validateUpdatePost(ctx context.Context, cmd UpdatePostCommand) error`: Performs validation specific to `UpdatePostCommand`.
-    - Checks basic field constraints.
-    - Checks if the post with `cmd.PostID` exists in `e.state`.
-    - Returns `nil` if valid, or an error otherwise.
-- `(e *Executor) validateDeletePost(ctx context.Context, cmd DeletePostCommand) error`: Performs validation specific to `DeletePostCommand`.
-    - Checks if the post with `cmd.PostID` exists in `e.state`.
-    - Returns `nil` if valid, or an error otherwise.
+    *Note: Basic, stateless validation (e.g., checking required fields) can still be done within the command's `Validate` method or potentially before calling `core.Executor.Execute` in the HTTP handler.*
 
 ### State Update Handlers (Match `core.CommandHandler` signature)
 
