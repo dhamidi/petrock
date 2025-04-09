@@ -59,8 +59,8 @@ func RegisterFeature(
 	// Map query message types (from messages.go) to their handler functions (from query.go).
 	// These are used by the core /queries API endpoint.
 	slog.Debug("Registering query handlers", "feature", "petrock_example_feature_name")
-	queries.Register(GetQuery{}, querier.HandleGet)     // Map GetQuery to querier.HandleGet
-	queries.Register(ListQuery{}, querier.HandleList)   // Map ListQuery to querier.HandleList
+	queries.Register(GetQuery{}, querier.HandleGet)   // Map GetQuery to querier.HandleGet
+	queries.Register(ListQuery{}, querier.HandleList) // Map ListQuery to querier.HandleList
 	// Add registrations for other queries specific to this feature...
 
 	// --- 6. Register Message Types for Decoding ---
