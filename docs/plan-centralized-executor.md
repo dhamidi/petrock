@@ -200,7 +200,7 @@ func (c CreatePostCommand) Validate() error {
 
 **Goal:** Ensure all application entry points use the centralized executor pattern for consistent command processing.
 
-### Step 6: Update Documentation and Examples
+### Step 6: Update Documentation and Examples – DONE
 **Files to modify:**
 - `docs/high-level.md`
 - `docs/core/*.md` files
