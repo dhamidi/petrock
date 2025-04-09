@@ -35,9 +35,9 @@ type FeatureExecutor interface {
 // CommandRegistry maps command names (feature/Type) to their state update handlers,
 // feature executors, and types.
 type CommandRegistry struct {
-	handlers         map[string]CommandHandler // Key: "feature/TypeName" -> State update handler
+	handlers         map[string]CommandHandler  // Key: "feature/TypeName" -> State update handler
 	featureExecutors map[string]FeatureExecutor // Key: "feature/TypeName" -> Feature executor instance
-	types            map[string]reflect.Type   // Key: "feature/TypeName" -> Command type
+	types            map[string]reflect.Type    // Key: "feature/TypeName" -> Command type
 	mu               sync.RWMutex
 }
 
@@ -71,7 +71,6 @@ func (r *CommandRegistry) Register(cmd Command, handler CommandHandler, featureE
 	if featureExecutor == nil {
 		panic(fmt.Sprintf("attempted to register nil feature executor for command name %q", name))
 	}
-
 
 	cmdType := reflect.TypeOf(cmd)
 	// Ensure we store the non-pointer type for consistency if needed
@@ -118,7 +117,6 @@ func (r *CommandRegistry) GetHandlerAndFeatureExecutor(name string) (CommandHand
 	}
 	return nil, nil, false
 }
-
 
 // RegisteredCommandNames returns a slice of strings containing the full names
 // (e.g., "feature/TypeName") of all registered command types.
