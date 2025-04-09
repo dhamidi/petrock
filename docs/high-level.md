@@ -84,22 +84,22 @@ The high-level overview of a Petrock application is this:
 3.  **API Interaction:** The application exposes a core API for interacting with commands and queries:
     *   `GET /`: Displays an HTML index page listing available commands and queries.
     *   `GET /commands`: Returns a JSON list of registered command names (e.g., `["posts/create", "posts/update"]`).
-    *   `POST /commands`: Executes a command. Expects JSON like `{"type": "feature/create", "payload": {...}}`. The core handler decodes this into the appropriate command struct and passes it to the `core.Executor.Execute`. The Executor validates (if `Validate()` exists), logs, and then calls the registered feature-specific *state update handler*. Returns `200 OK`/`202 Accepted` on success, `400` on validation/decoding errors, `500` on logging errors. (State update errors cause panic).
+    *   `POST /commands`: Executes a command. Expects JSON like `{"type": "feature/create", "payload": {...}}`. The core handler decodes this into the appropriate command struct and passes it to the `core.Executor.Execute`. The Executor retrieves the feature's validator, calls its `ValidateCommand` method, logs the command if valid, and then calls the registered feature-specific *state update handler*. Returns `200 OK`/`202 Accepted` on success, `400` on validation/decoding errors, `500` on logging errors. (State update errors cause panic).
     *   `GET /queries`: Returns JSON list of registered query names.
     *   `GET /queries/{feature}/{query-name}`: Executes a query. Path gives the name (e.g., `/queries/posts/list`). Query params (e.g., `?ID=123`) map to query struct fields. The core handler decodes, dispatches via `QueryRegistry` to the feature's query handler, and returns JSON result (`200 OK`) or `400/404/500` error.
 4.  **Feature-Specific HTTP Routes:** Features define routes in `<feature>/routes.go` and handlers in `<feature>/http.go`.
-    *   Handlers are methods on a `FeatureServer` struct holding dependencies like the `core.Executor`, the feature's `Querier`, and `State`.
+    *   Handlers are methods on a `FeatureServer` struct holding dependencies like the central `core.Executor`, the feature's `Querier`, and `State`.
     *   Routes are registered *after* core routes, allowing overrides. Conventionally prefixed (e.g., `/posts/...`).
-    *   Feature handlers needing to perform writes **must** go through the `core.Executor.Execute(ctx, cmd)` method to ensure validation, logging, and consistent state updates.
+    *   Feature handlers needing to perform writes **must** go through the central `core.Executor.Execute(ctx, cmd)` method to ensure validation (by the feature executor), logging, and consistent state updates.
     *   Feature handlers performing reads use the feature's `Querier`.
 5.  **Command Handling (via `core.Executor`):**
     *   A command (`core.Command`) is constructed (e.g., from an HTTP request).
     *   It's passed to `core.Executor.Execute(ctx, cmd)`.
-    *   The Executor calls `cmd.Validate()` if implemented. Fails -> return error.
-    *   The Executor appends the command to `core.MessageLog`. Fails -> return error.
-    *   The Executor looks up the *state update handler* in `core.CommandRegistry` using `cmd.CommandName()`. Not found -> return error.
+    *   The Executor looks up the feature's validator (`core.CommandValidator`) and state update handler (`core.CommandHandler`) in `core.CommandRegistry` using `cmd.CommandName()`. Not found -> return error.
+    *   The Executor calls `validator.ValidateCommand(ctx, cmd)`. Fails -> return validation error.
+    *   The Executor appends the command to `core.MessageLog`. Fails -> return logging error.
     *   The Executor calls the state update handler (defined in `<feature>/execute.go`). Fails -> **panic**.
 6.  **Query Handling:** Queries (`core.Query`) are dispatched via the `core.QueryRegistry` to the appropriate handler defined in `<feature>/query.go`. These handlers read directly from the feature's in-memory state (`<feature>/state.go`).
-7.  **State Management:** Each feature manages its state in `<feature>/state.go`. State is rebuilt at startup by replaying the `core.MessageLog`: for each logged command, the corresponding *state update handler* (registered in `core.CommandRegistry`) is executed. Live updates also happen via these same state update handlers, called by the `core.Executor` after logging.
+7.  **State Management:** Each feature manages its state in `<feature>/state.go`. State is rebuilt at startup by replaying the `core.MessageLog`: for each logged command, the corresponding *state update handler* (retrieved from `core.CommandRegistry`) is executed. Live updates also happen via these same state update handlers, called by the `core.Executor` after successful validation and logging.
 
 All commands are serialized with a configurable encoder (JSON by default) and persisted in a SQLite database in a single table called `messages`.
