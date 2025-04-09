@@ -32,24 +32,28 @@ type FeatureExecutor interface {
 	ValidateCommand(ctx context.Context, cmd Command) error
 }
 
-// CommandRegistry maps command names (feature/Type) to their handlers and types.
+// CommandRegistry maps command names (feature/Type) to their state update handlers,
+// feature executors, and types.
 type CommandRegistry struct {
-	handlers map[string]CommandHandler // Key: "feature/TypeName"
-	types    map[string]reflect.Type   // Key: "feature/TypeName"
-	mu       sync.RWMutex
+	handlers         map[string]CommandHandler // Key: "feature/TypeName" -> State update handler
+	featureExecutors map[string]FeatureExecutor // Key: "feature/TypeName" -> Feature executor instance
+	types            map[string]reflect.Type   // Key: "feature/TypeName" -> Command type
+	mu               sync.RWMutex
 }
 
 // NewCommandRegistry creates a new, initialized CommandRegistry.
 func NewCommandRegistry() *CommandRegistry {
 	return &CommandRegistry{
-		handlers: make(map[string]CommandHandler),
-		types:    make(map[string]reflect.Type),
+		handlers:         make(map[string]CommandHandler),
+		featureExecutors: make(map[string]FeatureExecutor),
+		types:            make(map[string]reflect.Type),
 	}
 }
 
-// Register associates a command type with its handler using its CommandName().
-// It panics if a handler for the name is already registered.
-func (r *CommandRegistry) Register(cmd Command, handler CommandHandler) {
+// Register associates a command type with its state update handler and the responsible
+// feature executor instance using its CommandName().
+// It panics if a handler or executor for the name is already registered.
+func (r *CommandRegistry) Register(cmd Command, handler CommandHandler, featureExecutor FeatureExecutor) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -57,6 +61,17 @@ func (r *CommandRegistry) Register(cmd Command, handler CommandHandler) {
 	if _, exists := r.handlers[name]; exists {
 		panic(fmt.Sprintf("handler already registered for command name %q", name))
 	}
+	if _, exists := r.featureExecutors[name]; exists {
+		// This shouldn't happen if Register is called correctly once per command type
+		panic(fmt.Sprintf("feature executor already registered for command name %q", name))
+	}
+	if handler == nil {
+		panic(fmt.Sprintf("attempted to register nil handler for command name %q", name))
+	}
+	if featureExecutor == nil {
+		panic(fmt.Sprintf("attempted to register nil feature executor for command name %q", name))
+	}
+
 
 	cmdType := reflect.TypeOf(cmd)
 	// Ensure we store the non-pointer type for consistency if needed
@@ -65,25 +80,45 @@ func (r *CommandRegistry) Register(cmd Command, handler CommandHandler) {
 	}
 
 	r.handlers[name] = handler
+	r.featureExecutors[name] = featureExecutor
 	r.types[name] = cmdType // Store the type for lookup
-	slog.Debug("Registered command handler", "name", name, "type", cmdType)
+	slog.Debug("Registered command handler and feature executor", "name", name, "type", cmdType)
 }
 
-// Dispatch finds the handler for the given command's CommandName() and executes it.
-// It returns an error if no handler is found or if the handler returns an error.
-func (r *CommandRegistry) Dispatch(ctx context.Context, cmd Command) error {
+// GetHandler retrieves the registered state update handler for a given command name.
+func (r *CommandRegistry) GetHandler(name string) (CommandHandler, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-
-	name := cmd.CommandName() // Use CommandName()
-	handler, exists := r.handlers[name]
-	if !exists {
-		return fmt.Errorf("no command handler registered for name %q (type %T)", name, cmd)
-	}
-
-	slog.Debug("Dispatching command", "name", name, "type", reflect.TypeOf(cmd))
-	return handler(ctx, cmd)
+	handler, found := r.handlers[name]
+	return handler, found
 }
+
+// GetFeatureExecutor retrieves the registered feature executor instance for a given command name.
+func (r *CommandRegistry) GetFeatureExecutor(name string) (FeatureExecutor, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	executor, found := r.featureExecutors[name]
+	return executor, found
+}
+
+// GetHandlerAndFeatureExecutor retrieves both the handler and feature executor for a given command name.
+func (r *CommandRegistry) GetHandlerAndFeatureExecutor(name string) (CommandHandler, FeatureExecutor, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	handler, handlerFound := r.handlers[name]
+	executor, executorFound := r.featureExecutors[name]
+	// Both must be found for the registration to be considered complete
+	found := handlerFound && executorFound
+	if found {
+		return handler, executor, true
+	}
+	// Log if one is found but not the other, indicating an incomplete registration
+	if handlerFound != executorFound {
+		slog.Error("Inconsistent registration found for command", "name", name, "handlerFound", handlerFound, "executorFound", executorFound)
+	}
+	return nil, nil, false
+}
+
 
 // RegisteredCommandNames returns a slice of strings containing the full names
 // (e.g., "feature/TypeName") of all registered command types.
