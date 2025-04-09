@@ -6,6 +6,8 @@
 2. Commit changes with a auto-generated commit messages following conventional commits: `git add <changed-or-added-files> && git commit -m $'conventional commit message with multiple lines'
 3. Run tests to verify everything works
 
+When working through a plan, mark tasks as done by adding ` – DONE` to the end of the headline in the plan document.  Before moving on to the next step, verify that all conditions under the definition of done are met.  If they are aren't ask me for input.
+
 ## Build Commands
 - Full build: `./build.sh`
 - Single component: `./build.sh build_skeleton` or `./build.sh build_petrock`
