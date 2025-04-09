@@ -10,34 +10,35 @@ import (
 
 // RegisterFeature initializes and registers the feature's handlers with the core registries
 // and registers feature-specific HTTP routes.
-// It connects the command/query messages to their respective handlers and registers
-// message types needed for log replay.
+// It connects the command/query messages to their respective handlers, registers
+// message types needed for log replay, and sets up feature-specific HTTP routes.
 func RegisterFeature(
 	mux *http.ServeMux, // The main HTTP router
 	commands *core.CommandRegistry,
 	queries *core.QueryRegistry,
 	messageLog *core.MessageLog, // For registering message types for decoding
+	centralExecutor *core.Executor, // The central command executor
 	state *State, // The feature's specific state instance
 	db *sql.DB, // Shared database connection pool
 	// Add other core dependencies if needed (e.g., config, external clients)
 ) {
 	slog.Debug("Registering feature", "feature", "petrock_example_feature_name")
 
-	// --- 1. Initialize Core Logic Handlers (Executor, Querier) ---
-	// These components encapsulate the logic for handling commands and queries.
+	// --- 1. Initialize Feature-Specific Logic Handlers ---
+	// These components encapsulate the logic for handling commands (validation + state updates) and queries.
 	// They typically depend on the feature's state and potentially other core services.
 
-	// Assumes execute.go defines NewExecutor and its handler methods.
-	// Pass dependencies like state and messageLog (if executor needs to append events/commands).
-	executor := NewExecutor(state, messageLog)
+	// Assumes execute.go defines NewExecutor (the feature executor) and its handler methods.
+	// Pass dependencies like state.
+	featureExecutor := NewExecutor(state) // Feature executor holds state for validation
 
 	// Assumes query.go defines NewQuerier and its handler methods.
 	querier := NewQuerier(state)
 
 	// --- 2. Initialize HTTP Handler Dependencies ---
 	// Create the FeatureServer which holds dependencies needed by HTTP handlers.
-	// Pass all necessary components (executor, querier, state, log, db, etc.).
-	server := NewFeatureServer(executor, querier, state, messageLog, commands, db)
+	// Pass the *central* executor, querier, state, log, db, etc.
+	server := NewFeatureServer(centralExecutor, querier, state, messageLog, db) // Pass centralExecutor
 
 	// --- 3. Register Feature-Specific HTTP Routes ---
 	// Call the function in routes.go to define routes on the main router.
@@ -46,11 +47,12 @@ func RegisterFeature(
 
 	// --- 4. Register Core Command Handlers ---
 	// Map command message types (from messages.go) to their handler functions (from execute.go).
-	// These are used by the core /commands API endpoint.
-	slog.Debug("Registering command handlers", "feature", "petrock_example_feature_name")
-	commands.Register(CreateCommand{}, executor.HandleCreate) // Map CreateCommand to executor.HandleCreate
-	commands.Register(UpdateCommand{}, executor.HandleUpdate) // Map UpdateCommand to executor.HandleUpdate
-	commands.Register(DeleteCommand{}, executor.HandleDelete) // Map DeleteCommand to executor.HandleDelete
+	// These are used by the central core.Executor.
+	// Register the command type, the state update handler method, and the feature executor instance.
+	slog.Debug("Registering command handlers and feature executor", "feature", "petrock_example_feature_name")
+	commands.Register(CreateCommand{}, featureExecutor.HandleCreate, featureExecutor) // Pass handler AND executor instance
+	commands.Register(UpdateCommand{}, featureExecutor.HandleUpdate, featureExecutor) // Pass handler AND executor instance
+	commands.Register(DeleteCommand{}, featureExecutor.HandleDelete, featureExecutor) // Pass handler AND executor instance
 	// Add registrations for other commands specific to this feature...
 
 	// --- 5. Register Core Query Handlers ---

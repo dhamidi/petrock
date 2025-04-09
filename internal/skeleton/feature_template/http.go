@@ -14,35 +14,33 @@ import (
 // FeatureServer holds dependencies required by the feature's HTTP handlers.
 // This struct is initialized in register.go and passed to RegisterRoutes.
 type FeatureServer struct {
-	executor *Executor             // Command execution logic
-	querier  *Querier              // Query execution logic
-	state    *State                // Direct state access (use querier/executor preferably)
-	log      *core.MessageLog      // For logging commands/events directly
-	commands *core.CommandRegistry // For dispatching commands via the core system
-	db       *sql.DB               // Example: Shared DB connection pool
+	executor *core.Executor   // Central command executor
+	querier  *Querier         // Query execution logic
+	state    *State           // Direct state access (use querier/executor preferably)
+	log      *core.MessageLog // For logging commands/events directly (less common now)
+	db       *sql.DB          // Example: Shared DB connection pool
 	// Add other dependencies like config, template renderers, etc.
 }
 
 // NewFeatureServer creates and initializes the FeatureServer with its dependencies.
+// Note: It now receives the central core.Executor.
 func NewFeatureServer(
-	executor *Executor,
+	executor *core.Executor, // Changed from feature executor to core executor
 	querier *Querier,
 	state *State,
-	log *core.MessageLog,
-	commands *core.CommandRegistry,
+	log *core.MessageLog, // Keep log if needed for other purposes, but not primary command path
 	db *sql.DB, // Add other dependencies here
 ) *FeatureServer {
 	// Basic validation
-	if executor == nil || querier == nil || state == nil || log == nil || commands == nil {
-		// Depending on requirements, some dependencies might be optional (e.g., db)
+	if executor == nil || querier == nil || state == nil || log == nil {
+		// Depending on requirements, some dependencies might be optional (e.g., db, log)
 		panic("missing required dependencies for FeatureServer")
 	}
 	return &FeatureServer{
-		executor: executor,
+		executor: executor, // Store the central executor
 		querier:  querier,
 		state:    state,
 		log:      log,
-		commands: commands,
 		db:       db,
 	}
 }
