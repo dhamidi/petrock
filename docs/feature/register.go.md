@@ -8,11 +8,12 @@ This file acts as the entry point for the feature module. Its primary role is to
 
 ## Functions
 
-- `RegisterFeature(mux *http.ServeMux, commands *core.CommandRegistry, queries *core.QueryRegistry, messageLog *core.MessageLog, state *State, /* other shared deps */)`: This function initializes the feature's handlers, registers them with core registries, and registers any feature-specific HTTP routes.
-  - **Dependencies:** It receives shared core components like the main HTTP router (`mux`), command/query registries, message log, and the feature's specific state. It might receive other shared dependencies like a database connection pool (`*sql.DB`) if needed by handlers.
+- `RegisterFeature(mux *http.ServeMux, commands *core.CommandRegistry, queries *core.QueryRegistry, messageLog *core.MessageLog, state *State, db *sql.DB, executor core.Executor)`: This function initializes the feature's handlers, registers them with core registries, and registers any feature-specific HTTP routes.
+  - **Dependencies:** It receives shared core components like the main HTTP router (`mux`), command/query registries, message log, database connection (`db`), the feature's specific state, and the core executor. The executor is a critical dependency that centralizes command validation, logging, and dispatch.
   - **Initialization:**
-    - Creates instances of the feature's executor (e.g., `NewExecutor(state, messageLog)`) and querier (e.g., `NewQuerier(state)`).
-    - Creates an instance of the feature's HTTP handler container (e.g., `server := NewFeatureServer(executor, querier, state, messageLog, commands, db)` from `http.go`), passing necessary dependencies.
+    - Creates instances of the feature's command handler (e.g., `NewPostExecutor(state)`) and querier (e.g., `NewQuerier(state)`).
+    - Uses the provided core `executor` parameter for command execution rather than accessing the message log directly.
+    - Creates an instance of the feature's HTTP handler container (e.g., `server := NewFeatureServer(coreExecutor, featureExecutor, querier, state, commands, db)` from `http.go`), passing necessary dependencies.
   - **Core Registration:**
     - Calls `commands.Register` for each command type (e.g., `commands.Register(CreateCommand{}, executor.HandleCreate)`).
     - Calls `queries.Register` for each query type (e.g., `queries.Register(GetQuery{}, querier.HandleGet)`).
