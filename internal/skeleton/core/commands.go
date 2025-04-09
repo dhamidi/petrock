@@ -153,3 +153,79 @@ func (r *CommandRegistry) GetCommandType(name string) (reflect.Type, bool) {
 // 	Commands = NewCommandRegistry()
 // 	Queries = NewQueryRegistry() // Assuming Queries registry exists
 // }
+
+// --- Central Command Executor ---
+
+// Executor orchestrates the validation, logging, and execution of commands.
+type Executor struct {
+	log      *MessageLog      // Dependency for appending commands
+	registry *CommandRegistry // Dependency for finding handlers and feature executors
+}
+
+// NewExecutor creates a new central command executor.
+func NewExecutor(log *MessageLog, registry *CommandRegistry) *Executor {
+	if log == nil {
+		panic("MessageLog cannot be nil for Executor")
+	}
+	if registry == nil {
+		panic("CommandRegistry cannot be nil for Executor")
+	}
+	return &Executor{
+		log:      log,
+		registry: registry,
+	}
+}
+
+// Execute orchestrates the full lifecycle of a command:
+// 1. Retrieves the state update handler and the responsible feature executor.
+// 2. Calls the feature executor's ValidateCommand method.
+// 3. Appends the command to the message log.
+// 4. Executes the state update handler.
+// It returns an error if validation or logging fails.
+// It panics if the state update handler returns an error after the command has been logged,
+// indicating an unrecoverable inconsistency.
+func (e *Executor) Execute(ctx context.Context, cmd Command) error {
+	name := cmd.CommandName()
+	slog.Debug("Executing command", "name", name)
+
+	// 1. Get Handler and Feature Executor
+	handler, featureExecutor, found := e.registry.GetHandlerAndFeatureExecutor(name)
+	if !found {
+		slog.Error("No handler and/or feature executor registered for command", "name", name)
+		return fmt.Errorf("command %q not registered", name)
+	}
+
+	// 2. Validate Command using Feature Executor
+	slog.Debug("Validating command", "name", name)
+	if err := featureExecutor.ValidateCommand(ctx, cmd); err != nil {
+		slog.Warn("Command validation failed", "name", name, "error", err)
+		// TODO: Consider defining specific validation error types to return distinct HTTP status codes (e.g., 400 Bad Request)
+		return fmt.Errorf("validation failed for command %q: %w", name, err)
+	}
+	slog.Debug("Command validation successful", "name", name)
+
+	// 3. Append Command to Log
+	slog.Debug("Appending command to log", "name", name)
+	if err := e.log.Append(ctx, cmd); err != nil {
+		slog.Error("Failed to append command to log", "name", name, "error", err)
+		// This is a critical error, as the action wasn't persisted.
+		return fmt.Errorf("failed to persist command %q: %w", name, err)
+	}
+	slog.Debug("Command appended to log successfully", "name", name)
+
+	// 4. Execute State Update Handler
+	slog.Debug("Executing state update handler", "name", name)
+	handlerErr := handler(ctx, cmd)
+	if handlerErr != nil {
+		// PANIC! If the handler fails *after* the command was logged,
+		// the state is inconsistent with the log. This is unrecoverable
+		// without manual intervention or complex compensation logic.
+		// A panic forces a restart, allowing state to be rebuilt from the log.
+		slog.Error("State update handler failed after command was logged! PANICKING.", "name", name, "error", handlerErr)
+		panic(fmt.Sprintf("unrecoverable state inconsistency: handler for %q failed after logging: %v", name, handlerErr))
+	}
+	slog.Debug("State update handler executed successfully", "name", name)
+
+	slog.Info("Command executed successfully", "name", name)
+	return nil
+}
