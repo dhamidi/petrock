@@ -126,7 +126,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to load messages from log for replay: %w", err)
 	}
 	slog.Debug("Loaded messages from log", "count", len(messages))
-	replayErrors := 0 // Count errors during replay
+	replayErrors := 0                 // Count errors during replay
 	replayCtx := context.Background() // Use a background context for replay
 
 	for i, msg := range messages {
@@ -167,7 +167,6 @@ func runServe(cmd *cobra.Command, args []string) error {
 	if replayErrors > 0 {
 		slog.Warn("Some messages were skipped during state replay due to missing handlers.")
 	}
-
 
 	// --- HTTP Server Setup ---
 	slog.Info("Setting up HTTP server...")
