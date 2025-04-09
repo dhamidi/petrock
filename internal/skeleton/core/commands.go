@@ -19,7 +19,18 @@ type Command interface {
 }
 
 // CommandHandler defines the function signature for handling commands.
+// These handlers are responsible *only* for applying state changes after validation and logging.
+// Returning an error from a CommandHandler will cause the core.Executor to panic.
 type CommandHandler func(ctx context.Context, cmd Command) error
+
+// FeatureExecutor defines an interface that feature-specific executors must implement.
+// This allows the central core.Executor to delegate command validation to the appropriate feature.
+type FeatureExecutor interface {
+	// ValidateCommand checks if a command is valid according to the feature's rules and state.
+	// The implementation should typically check if the command implements a feature-specific
+	// Validator interface and call its Validate(state) method if it does.
+	ValidateCommand(ctx context.Context, cmd Command) error
+}
 
 // CommandRegistry maps command names (feature/Type) to their handlers and types.
 type CommandRegistry struct {
