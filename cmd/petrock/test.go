@@ -121,7 +121,7 @@ func runTest(cmd *cobra.Command, args []string) error {
 
 	// 6. Start the web server in a background goroutine
 	slog.Info("Starting web server for integration test")
-	serverCmd := exec.Command("go", "run", "./cmd/selftest", "serve")
+	serverCmd := exec.Command("go", "run", "./cmd/selftest", "serve", "--port", "8081")
 	serverCmd.Stdout = os.Stdout
 	serverCmd.Stderr = os.Stderr
 
@@ -148,8 +148,8 @@ func runTest(cmd *cobra.Command, args []string) error {
 	time.Sleep(2 * time.Second)
 
 	// 8. Make an HTTP request to /posts
-	slog.Info("Testing HTTP endpoint", "url", "http://localhost:8080/posts")
-	resp, err := http.Get("http://localhost:8080/posts")
+	slog.Info("Testing HTTP endpoint", "url", "http://localhost:8081/posts")
+	resp, err := http.Get("http://localhost:8081/posts")
 	if err != nil {
 		return fmt.Errorf("failed to make HTTP request: %w", err)
 	}
