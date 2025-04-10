@@ -61,7 +61,7 @@ func (fs *FeatureServer) HandleGetItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	slog.Debug("HandleGetItem called", "feature", "petrock_example_feature_name", "id", itemID)
-	
+
 	// Check for success message in query parameters
 	successAction := r.URL.Query().Get("success")
 	var successMsg string
@@ -95,10 +95,10 @@ func (fs *FeatureServer) HandleGetItem(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	
+
 	// Create page title
 	pageTitle := fmt.Sprintf("%s - Detail", itemResult.Name)
-	
+
 	// Render the page with our helper and success message if present
 	if err := RenderPageWithSuccess(w, pageTitle, ItemView(*itemResult), successMsg); err != nil {
 		slog.Error("Error rendering item view", "error", err)
@@ -115,7 +115,7 @@ func (fs *FeatureServer) HandleListItems(w http.ResponseWriter, r *http.Request)
 	page := parseIntParam(r.URL.Query().Get("page"), 1)
 	pageSize := parseIntParam(r.URL.Query().Get("pageSize"), 20)
 	filter := r.URL.Query().Get("filter")
-	
+
 	// Check for success message in query parameters
 	successAction := r.URL.Query().Get("success")
 	var successMsg string
@@ -151,10 +151,10 @@ func (fs *FeatureServer) HandleListItems(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	
+
 	// Create page title
 	pageTitle := "All Items"
-	
+
 	// Render the page with our helper and success message if present
 	if err := RenderPageWithSuccess(w, pageTitle, ItemsListView(*listResult), successMsg); err != nil {
 		slog.Error("Error rendering list view", "error", err)
@@ -324,7 +324,7 @@ func (fs *FeatureServer) HandleNewForm(w http.ResponseWriter, r *http.Request) {
 	// Render the form
 	// Create page title
 	pageTitle := "Create New Item"
-	
+
 	// Render the page with our helper
 	if err := RenderPage(w, pageTitle, ItemForm(form, nil, csrfToken)); err != nil {
 		slog.Error("Error rendering new item form", "error", err)
@@ -355,7 +355,7 @@ func (fs *FeatureServer) HandleCreateForm(w http.ResponseWriter, r *http.Request
 		// Create page title for validation error
 		pageTitle := "Create New Item"
 		csrfToken := "token" // Replace with actual CSRF token
-		
+
 		// Render the page with validation errors
 		if err := RenderPage(w, pageTitle, ItemForm(form, nil, csrfToken)); err != nil {
 			slog.Error("Error rendering form with validation errors", "error", err)
@@ -379,11 +379,11 @@ func (fs *FeatureServer) HandleCreateForm(w http.ResponseWriter, r *http.Request
 		if strings.Contains(err.Error(), "validation failed") || strings.Contains(err.Error(), "already exists") {
 			// Add the error to the form and re-render
 			form.AddError("name", err.Error())
-			
+
 			// Create page title for validation error
 			pageTitle := "Create New Item"
 			csrfToken := "token" // Replace with actual CSRF token
-			
+
 			// Render the page with validation errors
 			if err := RenderPage(w, pageTitle, ItemForm(form, nil, csrfToken)); err != nil {
 				slog.Error("Error rendering form with validation errors", "error", err)
@@ -401,7 +401,7 @@ func (fs *FeatureServer) HandleCreateForm(w http.ResponseWriter, r *http.Request
 	// Set a success message in session (this would be implemented with a real session mechanism)
 	// For now, we'll use a direct redirect, but in a real implementation you would:
 	// session.SetFlash("success", "Item created successfully")
-	
+
 	// Redirect to the list view on success
 	w.Header().Set("Location", "/petrock_example_feature_name?success=created")
 	w.WriteHeader(http.StatusSeeOther) // 303 See Other
@@ -447,7 +447,7 @@ func (fs *FeatureServer) HandleEditForm(w http.ResponseWriter, r *http.Request) 
 	// Render the edit form
 	// Create page title
 	pageTitle := fmt.Sprintf("Edit %s", item.Name)
-	
+
 	// Render the page with our helper
 	if err := RenderPage(w, pageTitle, ItemForm(form, item, csrfToken)); err != nil {
 		slog.Error("Error rendering edit form", "error", err)
@@ -500,7 +500,7 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 		// Create page title for validation error
 		pageTitle := fmt.Sprintf("Edit %s", item.Name)
 		csrfToken := "token" // Replace with actual CSRF token
-		
+
 		// Render the page with validation errors
 		if err := RenderPage(w, pageTitle, ItemForm(form, item, csrfToken)); err != nil {
 			slog.Error("Error rendering form with validation errors", "error", err)
@@ -546,7 +546,7 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 			// Create page title for validation error
 			pageTitle := fmt.Sprintf("Edit %s", item.Name)
 			csrfToken := "token" // Replace with actual CSRF token
-			
+
 			// Render the page with validation errors
 			if err := RenderPage(w, pageTitle, ItemForm(form, item, csrfToken)); err != nil {
 				slog.Error("Error rendering form with validation errors", "error", err)
@@ -564,7 +564,7 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 	// Set a success message in session (this would be implemented with a real session mechanism)
 	// For now, we'll use a direct redirect, but in a real implementation you would:
 	// session.SetFlash("success", "Item updated successfully")
-	
+
 	// Redirect to the item view on success
 	w.Header().Set("Location", "/petrock_example_feature_name/"+itemID+"?success=updated")
 	w.WriteHeader(http.StatusSeeOther) // 303 See Other
@@ -607,7 +607,7 @@ func (fs *FeatureServer) HandleDeleteForm(w http.ResponseWriter, r *http.Request
 	// Render the delete confirmation view
 	// Create page title
 	pageTitle := fmt.Sprintf("Delete %s", item.Name)
-	
+
 	// Render the page with our helper
 	if err := RenderPage(w, pageTitle, DeleteConfirmForm(item, csrfToken)); err != nil {
 		slog.Error("Error rendering delete confirmation", "error", err)
@@ -660,7 +660,7 @@ func (fs *FeatureServer) HandleDeleteConfirm(w http.ResponseWriter, r *http.Requ
 	// Set a success message in session (this would be implemented with a real session mechanism)
 	// For now, we'll use a direct redirect, but in a real implementation you would:
 	// session.SetFlash("success", "Item deleted successfully")
-	
+
 	// Redirect to the list view on success
 	w.Header().Set("Location", "/petrock_example_feature_name?success=deleted")
 	w.WriteHeader(http.StatusSeeOther) // 303 See Other
@@ -679,7 +679,7 @@ func RenderPage(w http.ResponseWriter, pageTitle string, content g.Node) error {
 func RenderPageWithSuccess(w http.ResponseWriter, pageTitle string, content g.Node, successMsg string) error {
 	// Set content type for HTML
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	
+
 	// Create the page using a modern layout
 	html := html.HTML(
 		html.Lang("en"),
@@ -690,7 +690,7 @@ func RenderPageWithSuccess(w http.ResponseWriter, pageTitle string, content g.No
 			// Link to Tailwind CSS (modern version)
 			html.Link(
 				html.Rel("stylesheet"),
-				html.Href("https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css"),
+				html.Href("https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"),
 			),
 			// Add a modern font
 			html.Link(
@@ -701,7 +701,7 @@ func RenderPageWithSuccess(w http.ResponseWriter, pageTitle string, content g.No
 		html.Body(
 			// Modern styling
 			g.Attr("class", "bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen font-sans antialiased text-slate-800"),
-			
+
 			// Header - full width
 			html.Header(
 				g.Attr("class", "bg-white shadow-sm border-b border-slate-200"),
@@ -733,7 +733,7 @@ func RenderPageWithSuccess(w http.ResponseWriter, pageTitle string, content g.No
 					),
 				),
 			),
-			
+
 			// Main content - centered on larger screens
 			html.Main(
 				g.Attr("class", "container mx-auto px-4 sm:px-6 lg:px-8 py-8"),
@@ -757,7 +757,7 @@ func RenderPageWithSuccess(w http.ResponseWriter, pageTitle string, content g.No
 									g.Attr("class", "ml-3"),
 									html.P(
 										g.Attr("class", "text-sm font-medium text-green-800"),
-										g.Text("✓ " + successMsg),
+										g.Text("✓ "+successMsg),
 									),
 								),
 							),
@@ -770,7 +770,7 @@ func RenderPageWithSuccess(w http.ResponseWriter, pageTitle string, content g.No
 					),
 				),
 			),
-			
+
 			// Footer - full width
 			html.Footer(
 				g.Attr("class", "bg-white border-t border-slate-200 mt-auto"),
@@ -784,7 +784,7 @@ func RenderPageWithSuccess(w http.ResponseWriter, pageTitle string, content g.No
 			),
 		),
 	)
-	
+
 	// Render the HTML
 	return html.Render(w)
 }

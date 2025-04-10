@@ -19,7 +19,7 @@ func Layout(pageTitle string, bodyContent ...g.Node) g.Node {
 
 			// Link to Tailwind CSS (via CDN for simplicity, replace with local build if needed)
 			// Consider using the project's own asset bundling pipeline
-			StylesheetLink("https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"),
+			StylesheetLink("https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"),
 
 			// Placeholder for other CSS or JS links
 			// StylesheetLink("/assets/core/main.css"), // Example for core assets
