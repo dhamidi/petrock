@@ -148,8 +148,8 @@ func runTest(cmd *cobra.Command, args []string) error {
 	time.Sleep(2 * time.Second)
 
 	// 8. Make an HTTP request to /posts
-	slog.Info("Testing HTTP endpoint", "url", "http://localhost:3000/posts")
-	resp, err := http.Get("http://localhost:3000/posts")
+	slog.Info("Testing HTTP endpoint", "url", "http://localhost:8080/posts")
+	resp, err := http.Get("http://localhost:8080/posts")
 	if err != nil {
 		return fmt.Errorf("failed to make HTTP request: %w", err)
 	}
