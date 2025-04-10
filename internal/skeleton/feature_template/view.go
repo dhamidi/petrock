@@ -165,7 +165,12 @@ func ItemForm(form *core.Form, item *Result, csrfToken string) g.Node {
 				),
 				html.P(
 					g.Attr("class", "mt-1 text-sm text-slate-500"),
-					g.Text(isEdit ? "Update the item details below." : "Fill out the form below to create a new item."),
+					g.Text(func() string {
+						if isEdit {
+							return "Update the item details below."
+						}
+						return "Fill out the form below to create a new item."
+					}()),
 				),
 			),
 
