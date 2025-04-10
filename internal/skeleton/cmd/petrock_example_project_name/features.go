@@ -26,6 +26,6 @@ func RegisterAllFeatures(
 	// It should now pass the 'executor' variable to RegisterFeature.
 	// Example (inserted by tool):
 	// postsState := posts.NewState()
-	// posts.RegisterFeature(mux, commands, queries, messageLog, postsState, db)
+	// posts.RegisterFeature(mux, commands, queries, messageLog, executor, postsState, db)
 	// petrock:register-feature - Do not remove or modify this line
 }

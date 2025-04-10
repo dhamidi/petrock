@@ -11,27 +11,47 @@ import (
 // with the main application's router.
 // It receives the router and the feature's dependency container (FeatureServer).
 func RegisterRoutes(mux *http.ServeMux, deps *FeatureServer) {
+	// Safety check to prevent nil pointer dereference
+	if mux == nil {
+		slog.Error("Error registering routes: nil HTTP mux provided", "feature", "petrock_example_feature_name")
+		return
+	}
+	
+	// Safety check for dependencies
+	if deps == nil {
+		slog.Error("Error registering routes: nil FeatureServer provided", "feature", "petrock_example_feature_name")
+		return
+	}
 	featurePrefix := "/petrock_example_feature_name" // Base path for this feature's routes
 	slog.Debug("Registering feature HTTP routes", "feature", "petrock_example_feature_name", "prefix", featurePrefix)
 
 	// Example Routes:
 	// It's strongly recommended to prefix feature routes to avoid collisions.
 
-	// GET /petrock_example_feature_name/{id} - Get a specific item
+	// GET /petrock_example_feature_name/ - List items 
+	mux.HandleFunc("GET "+featurePrefix+"/", deps.HandleListItems)
+
+	// GET /petrock_example_feature_name/{id} - View a specific item
 	// Note: Go 1.22+ required for path parameters in ServeMux patterns
 	mux.HandleFunc("GET "+featurePrefix+"/{id}", deps.HandleGetItem)
 
-	// GET /petrock_example_feature_name/ - List items (example)
-	mux.HandleFunc("GET "+featurePrefix+"/", deps.HandleListItems)
+	// GET /petrock_example_feature_name/new - Show form for creating a new item
+	mux.HandleFunc("GET "+featurePrefix+"/new", deps.HandleNewForm)
 
-	// POST /petrock_example_feature_name/ - Create a new item
-	mux.HandleFunc("POST "+featurePrefix+"/", deps.HandleCreateItem)
+	// POST /petrock_example_feature_name/new - Process the creation form
+	mux.HandleFunc("POST "+featurePrefix+"/new", deps.HandleCreateForm)
 
-	// PUT /petrock_example_feature_name/{id} - Update an item (example)
-	mux.HandleFunc("PUT "+featurePrefix+"/{id}", deps.HandleUpdateItem)
+	// GET /petrock_example_feature_name/{id}/edit - Show form for editing an item
+	mux.HandleFunc("GET "+featurePrefix+"/{id}/edit", deps.HandleEditForm)
 
-	// DELETE /petrock_example_feature_name/{id} - Delete an item (example)
-	mux.HandleFunc("DELETE "+featurePrefix+"/{id}", deps.HandleDeleteItem)
+	// POST /petrock_example_feature_name/{id}/edit - Process the edit form
+	mux.HandleFunc("POST "+featurePrefix+"/{id}/edit", deps.HandleUpdateForm)
+
+	// GET /petrock_example_feature_name/{id}/delete - Show delete confirmation
+	mux.HandleFunc("GET "+featurePrefix+"/{id}/delete", deps.HandleDeleteForm)
+
+	// POST /petrock_example_feature_name/{id}/delete - Process the deletion
+	mux.HandleFunc("POST "+featurePrefix+"/"+"{id}/delete", deps.HandleDeleteConfirm)
 
 	// Add more feature-specific routes here...
 

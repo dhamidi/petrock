@@ -88,17 +88,18 @@ func runServe(cmd *cobra.Command, args []string) error {
 	slog.Debug("Initializing application state")
 	appState := NewAppState() // Using the placeholder defined above
 
+	// --- HTTP Server Setup ---
+	// Create HTTP mux BEFORE registering features
+	mux := http.NewServeMux()
+
 	// Register features BEFORE replaying the log
 	// Pass all necessary dependencies through RegisterAllFeatures
-	RegisterAllFeatures(nil, app.CommandRegistry, app.QueryRegistry, app.MessageLog, app.Executor, appState, app.DB)
+	RegisterAllFeatures(mux, app.CommandRegistry, app.QueryRegistry, app.MessageLog, app.Executor, appState, app.DB)
 
 	// Replay the message log to build application state
 	if err := app.ReplayLog(); err != nil {
 		return fmt.Errorf("failed to replay message log: %w", err)
 	}
-
-	// --- HTTP Server Setup ---
-	mux := http.NewServeMux()
 
 	// Example: Setup middleware (logging, CSRF)
 	// Note: Standard library middleware is often wrapped around specific handlers or the global mux.
@@ -123,10 +124,10 @@ func runServe(cmd *cobra.Command, args []string) error {
 	mux.HandleFunc("GET /queries", handleListQueries(app.QueryRegistry))
 	mux.HandleFunc("GET /queries/{feature}/{queryName}", handleExecuteQuery(app.QueryRegistry))
 
-	// Register feature-specific handlers and routes
-	// The mux is needed here to register HTTP routes
-	// Note: Features were already registered above for command/query handling
-	RegisterFeatureRoutes(mux, appState, app.Executor) // A new function to register only routes
+	// IMPORTANT: We don't need this anymore since routes are registered during feature registration
+	// RegisterFeatureRoutes was a workaround for when mux was passed as nil to RegisterAllFeatures
+	// Keeping this commented out for reference only
+	// RegisterFeatureRoutes(mux, appState, app.Executor)
 
 	// --- Server Start and Shutdown ---
 	server := &http.Server{

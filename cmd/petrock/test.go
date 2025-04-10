@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -117,7 +119,49 @@ func runTest(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("'go build ./...' failed in %s: %w", projectAbsDir, err) // Use projectAbsDir here
 	}
 
+	// 6. Start the web server in a background goroutine
+	slog.Info("Starting web server for integration test")
+	serverCmd := exec.Command("go", "run", "./cmd/selftest", "serve", "--port", "8081")
+	serverCmd.Stdout = os.Stdout
+	serverCmd.Stderr = os.Stderr
+
+	// Create a channel that we could use for server termination signaling if needed
+	// But we'll just use the defer function with Process.Kill() for simplicity
+	
+	// Start the server in a goroutine
+	if err := serverCmd.Start(); err != nil {
+		return fmt.Errorf("failed to start web server: %w", err)
+	}
+
+	// Ensure server is terminated when we're done
+	defer func() {
+		slog.Info("Terminating test web server")
+		if err := serverCmd.Process.Kill(); err != nil {
+			slog.Error("Failed to kill web server process", "error", err)
+		}
+		// Wait for the process to exit
+		_ = serverCmd.Wait()
+	}()
+
+	// 7. Wait a moment for the server to initialize
+	slog.Info("Waiting for server to initialize...")
+	time.Sleep(2 * time.Second)
+
+	// 8. Make an HTTP request to /posts
+	slog.Info("Testing HTTP endpoint", "url", "http://localhost:8081/posts")
+	resp, err := http.Get("http://localhost:8081/posts")
+	if err != nil {
+		return fmt.Errorf("failed to make HTTP request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// 9. Verify the response is 200 OK
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: got %d, want %d", resp.StatusCode, http.StatusOK)
+	}
+	slog.Info("HTTP endpoint test successful", "status", resp.Status)
+
 	slog.Info("Self-test completed successfully!")
-	fmt.Println("\nSuccess! The generated project builds correctly.")
+	fmt.Println("\nSuccess! The generated project builds correctly and serves content.")
 	return nil
 }
