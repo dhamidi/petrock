@@ -26,104 +26,58 @@ These routes will be defined:
 
 ## Implementation Plan
 
-### 1. Routes and Handlers Updates
+### 1. Route & HTTP Handler Implementation
 
-1. Update `routes.go` to:
-   - Remove existing routes that use PUT/DELETE methods
-   - Add all the GET/POST routes as specified
-   - Ensure route naming follows the convention (prefix + path)
+1. **Update `routes.go`**
+   - [ ] Remove routes using PUT/DELETE methods
+   - [ ] Add GET/POST routes as specified in the requirements
+   - [ ] Define the correct feature prefix path (`/petrock_example_feature_name` → `/posts`)
 
-2. Update `http.go` to:
-   - Implement new handlers that work with HTML forms instead of JSON
-   - Add handlers for the new routes (new post form, edit form, delete confirmation)
-   - Modify existing handlers to return HTML responses
-   - Add form handling logic (validation, error display, redirection)
+2. **Create New Handlers in `http.go`**
+   - [ ] `HandleNewForm` (GET /posts/new) - renders the form for adding new post
+   - [ ] `HandleCreateForm` (POST /posts/new) - processes form submission → CreateCommand
+   - [ ] `HandleEditForm` (GET /posts/{id}/edit) - renders edit form for a post
+   - [ ] `HandleUpdateForm` (POST /posts/{id}/edit) - processes edit form → UpdateCommand
+   - [ ] `HandleDeleteForm` (GET /posts/{id}/delete) - renders delete confirmation
+   - [ ] `HandleDeleteConfirm` (POST /posts/{id}/delete) - processes delete → DeleteCommand
 
-### 2. View Component Updates
+3. **Update Existing Handlers in `http.go`**
+   - [ ] Modify `HandleGetItem` to render HTML using `ItemView` instead of JSON
+   - [ ] Modify `HandleListItems` to render HTML using `ItemsListView` instead of JSON
+   - [ ] Replace JSON responses with HTML responses using gomponents
 
-1. Modify `view.go` to:
-   - Implement form components that use `core.Form` for validation
-   - Create view components for each page (list, detail, new, edit, delete)
-   - Ensure components follow Tailwind CSS styling
-   - Add navigation elements between views
+### 2. View Components Implementation in `view.go`
 
-### 3. Command and Query Modifications
+1. **Form Components**
+   - [ ] Update `ItemForm` to work as both create and edit form
+   - [ ] Implement `DeleteConfirmForm` for deletion confirmation
+   - [ ] Ensure forms use `core.Form` methods like `HasError`, `GetError`, `ValidateRequired`
+   - [ ] Set proper form actions and methods (POST)
 
-1. Update `messages.go` to:
-   - Ensure all commands have proper validation
-   - Add string trimming to command validation
-   - Add uniqueness checks for IDs
+2. **Item View Components**
+   - [ ] Update `ItemView` to render all post attributes with labels
+   - [ ] Add proper links to edit and delete actions
+   - [ ] Update `ItemsListView` to include "New Post" button linking to /posts/new
+   - [ ] Add navigation between views (back to list, edit links, etc.)
 
-2. Update `query.go` to:
-   - Ensure query handlers return appropriate data for HTML views
-   - Add any needed query methods for the new routes
+### 3. Command/Query Functionality
 
-### 4. Testing and Verification
+1. **Update Command Validation in `messages.go`**
+   - [ ] Ensure `CreateCommand.Validate()` trims strings using `strings.TrimSpace()`
+   - [ ] Add empty string validation in `CreateCommand.Validate()`
+   - [ ] Add ID uniqueness check in state map
+   - [ ] Update `UpdateCommand.Validate()` for proper field validation
+   - [ ] Update `DeleteCommand.Validate()` to verify post exists
 
-1. Create test cases for each route
-2. Verify form validation works correctly
-3. Test navigation between pages
-4. Ensure all error cases are handled appropriately
+2. **Update HTTP Handler Logic for Form Handling**
+   - [ ] Add `parseForm` helper to extract form data
+   - [ ] Implement form → command conversion in handlers
+   - [ ] Add error handling to render forms with validation errors
+   - [ ] Implement proper HTTP 303 See Other redirects on success
 
-## Detailed Tasks
+### 4. Form Integration Helpers
 
-### Routes and Handlers
-
-1. **Add Route Definitions**
-   - [ ] Update `/routes.go` to define all required GET/POST routes
-   - [ ] Remove PUT/DELETE routes
-   - [ ] Update route prefix to use the feature name
-
-2. **Create New Form Handlers**
-   - [ ] Implement `HandleNewForm` (GET /posts/new)
-   - [ ] Implement `HandleCreateForm` (POST /posts/new)
-   - [ ] Implement `HandleEditForm` (GET /posts/{id}/edit)
-   - [ ] Implement `HandleUpdateForm` (POST /posts/{id}/edit)
-   - [ ] Implement `HandleDeleteForm` (GET /posts/{id}/delete)
-   - [ ] Implement `HandleDeleteConfirm` (POST /posts/{id}/delete)
-
-3. **Update Existing Handlers**
-   - [ ] Modify `HandleGetItem` to render HTML instead of JSON
-   - [ ] Modify `HandleListItems` to render HTML instead of JSON
-   - [ ] Remove or adapt JSON-specific handlers
-
-### View Components
-
-1. **Create Form Components**
-   - [ ] Implement `NewItemForm` using core.Form
-   - [ ] Implement `EditItemForm` using core.Form
-   - [ ] Implement `DeleteConfirmForm` 
-
-2. **Update View Components**
-   - [ ] Enhance `ItemView` to display all attributes
-   - [ ] Update `ItemsListView` to include new item button
-   - [ ] Add navigation links between views
-
-3. **Styling and UX**
-   - [ ] Apply consistent Tailwind CSS styling
-   - [ ] Add basic form validation feedback
-   - [ ] Ensure responsive design
-
-### Command and Query Updates
-
-1. **Command Validation**
-   - [ ] Update `CreateCommand.Validate()` to trim strings
-   - [ ] Add empty string validation
-   - [ ] Add ID uniqueness check
-
-2. **Form Handling**
-   - [ ] Implement logic to convert form data to commands
-   - [ ] Add error handling for validation failures
-   - [ ] Implement proper redirects after successful operations
-
-### Common Utilities
-
-1. **Core Form Integration**
-   - [ ] Ensure proper use of the core.Form package
-   - [ ] Add helper functions for form validation
-   - [ ] Add utilities for form rendering
-
-2. **HTTP Utilities**
-   - [ ] Add redirect helpers
-   - [ ] Add form parsing helpers
-   - [ ] Add CSRF token management
+1. **HTML Form Utilities**
+   - [ ] Create helper function to render form errors
+   - [ ] Create helper to generate CSRF tokens for forms
+   - [ ] Add utility to preserve form values on validation failure
