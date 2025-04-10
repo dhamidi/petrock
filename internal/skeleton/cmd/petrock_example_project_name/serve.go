@@ -36,16 +36,17 @@ func NewAppState() *AppState {
 
 // Apply processes a message (typically a command or event) to update the state.
 // This is crucial for rebuilding state from the message log on startup.
-func (s *AppState) Apply(msg interface{}) error {
+// The msgMeta parameter is non-nil during replay, providing access to timestamp and ID.
+func (s *AppState) Apply(msg interface{}, msgMeta *core.Message) error {
 	// In a real app, this would delegate to the appropriate feature state's Apply method
 	// based on the message type.
-	slog.Debug("AppState Apply called (placeholder)", "type", fmt.Sprintf("%T", msg))
+	slog.Debug("AppState Apply called (placeholder)", "type", fmt.Sprintf("%T", msg), "hasMeta", msgMeta != nil)
 	// Example delegation:
 	// switch m := msg.(type) {
 	// case posts.CreateCommand, posts.UpdateCommand, posts.DeleteCommand:
-	//     return s.posts.Apply(m)
+	//     return s.posts.Apply(m, msgMeta)
 	// case users.RegisterCommand:
-	//     return s.users.Apply(m)
+	//     return s.users.Apply(m, msgMeta)
 	// default:
 	//     slog.Warn("AppState.Apply received unhandled message type", "type", fmt.Sprintf("%T", msg))
 	// }
@@ -141,7 +142,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 			// If AppState needs to react to other message types, add logic here or in AppState.Apply.
 			slog.Debug("Skipping non-command message during handler replay", "id", msg.ID, "type", fmt.Sprintf("%T", decodedMsg))
 			// Example: Apply directly to appState if needed for non-command messages
-			// if err := appState.Apply(decodedMsg); err != nil { ... }
+			// if err := appState.Apply(decodedMsg, &msg.Message); err != nil { ... }
 			continue
 		}
 
@@ -156,8 +157,9 @@ func runServe(cmd *cobra.Command, args []string) error {
 		}
 
 		// Execute ONLY the state update handler. DO NOT VALIDATE OR LOG AGAIN.
+		// Pass the message metadata to provide context like timestamp during replay
 		slog.Debug("Log replay: Applying state handler", "id", msg.ID, "name", cmd.CommandName())
-		handlerErr := handler(replayCtx, cmd)
+		handlerErr := handler(replayCtx, cmd, &msg.Message)
 		if handlerErr != nil {
 			// PANIC! If a state handler fails during replay, the state logic is
 			// inconsistent with the previously validated and logged command.
