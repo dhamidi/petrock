@@ -8,8 +8,12 @@ import (
 	"net/http"
 	"strconv" // Added for parseIntParam helper
 	"strings"
+	"time"
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
+	g "maragu.dev/gomponents"                     // Gomponents import for view functions
+	. "maragu.dev/gomponents/components"          // Components import for DeleteConfirmForm
+	"maragu.dev/gomponents/html"                // HTML import for DeleteConfirmForm
 )
 
 // FeatureServer holds dependencies required by the feature's HTTP handlers.
@@ -79,7 +83,14 @@ func (fs *FeatureServer) HandleGetItem(w http.ResponseWriter, r *http.Request) {
 
 	// Render the item view HTML
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := ItemView(result).Render(w); err != nil {
+	// Type assert the result to the appropriate type
+	itemResult, ok := result.(*Result)
+	if !ok {
+		slog.Error("Invalid result type for item view", "type", fmt.Sprintf("%T", result))
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	if err := ItemView(*itemResult).Render(w); err != nil {
 		slog.Error("Error rendering item view", "error", err)
 		http.Error(w, "Error rendering view", http.StatusInternalServerError)
 	}
@@ -112,7 +123,14 @@ func (fs *FeatureServer) HandleListItems(w http.ResponseWriter, r *http.Request)
 
 	// Render the list view HTML
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := ItemsListView(result.(ListResult)).Render(w); err != nil {
+	// Type assert the result to the appropriate type
+	listResult, ok := result.(*ListResult)
+	if !ok {
+		slog.Error("Invalid result type for list view", "type", fmt.Sprintf("%T", result))
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	if err := ItemsListView(*listResult).Render(w); err != nil {
 		slog.Error("Error rendering list view", "error", err)
 		http.Error(w, "Error rendering view", http.StatusInternalServerError)
 	}

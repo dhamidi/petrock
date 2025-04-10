@@ -3,6 +3,7 @@ package petrock_example_feature_name
 import (
 	"errors" // Added for validation errors
 	"fmt"    // Added for validation errors
+	"strings" // Added for string trimming
 	"time"
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
