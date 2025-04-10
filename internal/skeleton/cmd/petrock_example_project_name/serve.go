@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json" // Added for JSON handling in API endpoints
 	"fmt"
-	"iter"
 	"log/slog"
 	"net/http"
 	"net/url" // Added for parsing query parameters
