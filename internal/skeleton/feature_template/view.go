@@ -106,7 +106,7 @@ func ItemForm(form *core.Form, item *Result, csrfToken string) g.Node {
 			Classes{"flex": true, "justify-between": true, "items-center": true, "mb-6": true},
 			html.H2(Classes{"text-xl": true, "font-semibold": true}, g.Text(title)),
 			html.A(
-				g.Attr("href", isEdit ? "/petrock_example_feature_name/"+item.ID : "/petrock_example_feature_name"),
+				g.Attr("href", backLink(isEdit, item)),
 				Classes{"text-blue-500": true},
 				g.Text("Back"),
 			),
@@ -314,4 +314,12 @@ func NewItemButton() g.Node {
 		Classes{"px-4": true, "py-2": true, "bg-green-500": true, "text-white": true, "rounded": true, "hover:bg-green-600": true},
 		g.Text("New Item"),
 	)
+}
+
+// backLink returns the appropriate back link URL based on whether we're in edit mode
+func backLink(isEdit bool, item *Result) string {
+	if isEdit && item != nil {
+		return "/petrock_example_feature_name/" + item.ID
+	}
+	return "/petrock_example_feature_name"
 }
