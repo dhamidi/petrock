@@ -110,11 +110,15 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// Note: Message type registration (messageLog.RegisterType) will happen
 	// within feature registration later.
 
-	// 5. Initialize Application State
+	// 5. Initialize Central Command Executor
+	slog.Debug("Initializing central command executor")
+	executor := core.NewExecutor(messageLog, commandRegistry)
+
+	// 6. Initialize Application State
 	slog.Debug("Initializing application state")
 	appState := NewAppState() // Using the placeholder defined above
 
-	// 6. Replay Message Log to Build State
+	// 7. Replay Message Log to Build State
 	slog.Info("Replaying message log to build application state...")
 	messages, err := messageLog.Load(context.Background())
 	if err != nil {
@@ -122,19 +126,46 @@ func runServe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to load messages from log for replay: %w", err)
 	}
 	slog.Debug("Loaded messages from log", "count", len(messages))
-	replayErrors := 0
+	replayErrors := 0                 // Count errors during replay
+	replayCtx := context.Background() // Use a background context for replay
+
 	for i, msg := range messages {
-		// Apply each message to the state
-		if err := appState.Apply(msg); err != nil {
-			// Log errors during replay but continue if possible, depending on Apply logic
-			slog.Error("Failed to apply message during replay", "error", err, "message_index", i, "message_type", fmt.Sprintf("%T", msg))
+		// Check if the message is a command
+		cmd, isCommand := msg.(core.Command)
+		if !isCommand {
+			// If it's not a command (e.g., an event if using event sourcing),
+			// the AppState.Apply should handle it directly if needed.
+			// For now, we assume only commands modify state via handlers.
+			// If AppState needs to react to other message types, add logic here or in AppState.Apply.
+			slog.Debug("Skipping non-command message during handler replay", "index", i, "type", fmt.Sprintf("%T", msg))
+			// Example: Apply directly to appState if needed for non-command messages
+			// if err := appState.Apply(msg); err != nil { ... }
+			continue
+		}
+
+		// Get the state update handler for the command
+		handler, found := commandRegistry.GetHandler(cmd.CommandName())
+		if !found {
+			// This indicates a potential issue: a command was logged but no handler is registered.
+			// This might happen if a feature was removed or a command renamed without migration.
+			slog.Error("Log replay: No state handler found for logged command", "index", i, "name", cmd.CommandName())
 			replayErrors++
-			// Decide whether to fail startup on replay errors. For now, just log.
+			continue // Skip this command
+		}
+
+		// Execute ONLY the state update handler. DO NOT VALIDATE OR LOG AGAIN.
+		slog.Debug("Log replay: Applying state handler", "index", i, "name", cmd.CommandName())
+		handlerErr := handler(replayCtx, cmd)
+		if handlerErr != nil {
+			// PANIC! If a state handler fails during replay, the state logic is
+			// inconsistent with the previously validated and logged command.
+			slog.Error("Log replay: State update handler failed! PANICKING.", "index", i, "name", cmd.CommandName(), "error", handlerErr)
+			panic(fmt.Sprintf("unrecoverable state inconsistency during log replay: handler for %q failed: %v", cmd.CommandName(), handlerErr))
 		}
 	}
 	slog.Info("State replay completed", "message_count", len(messages), "replay_errors", replayErrors)
 	if replayErrors > 0 {
-		slog.Warn("Some messages failed to apply during state replay. State might be incomplete.")
+		slog.Warn("Some messages were skipped during state replay due to missing handlers.")
 	}
 
 	// --- HTTP Server Setup ---
@@ -157,16 +188,17 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// you'd typically check r.URL.Path inside the handler or use a small helper/library.
 	mux.HandleFunc("GET /", core.HandleIndex(commandRegistry, queryRegistry)) // Pass registries to index handler
 	mux.HandleFunc("GET /commands", handleListCommands(commandRegistry))
-	mux.HandleFunc("POST /commands", handleExecuteCommand(commandRegistry))
+	// Pass the executor instance to the handler factory
+	mux.HandleFunc("POST /commands", handleExecuteCommand(executor, commandRegistry))
 	mux.HandleFunc("GET /queries", handleListQueries(queryRegistry))
 	// Route pattern updated to capture feature/kebab-case-query-name structure
 	mux.HandleFunc("GET /queries/{feature}/{queryName}", handleExecuteQuery(queryRegistry))
 
-	// 7. Register Feature Handlers and Routes *after* core routes
+	// 8. Register Feature Handlers and Routes *after* core routes
 	// This allows features to potentially override core routes if needed.
 	slog.Debug("Registering features...")
-	// Pass all necessary dependencies, including the mux and db connection
-	RegisterAllFeatures(mux, commandRegistry, queryRegistry, messageLog, appState, db)
+	// Pass all necessary dependencies, including the mux, db connection, and the central executor
+	RegisterAllFeatures(mux, commandRegistry, queryRegistry, messageLog, executor, appState, db) // Pass executor here
 	slog.Info("Features registered")
 	// TODO: Add handlers for feature assets (e.g., mux.Handle("/assets/posts/", posts.ServeAssets("/assets/posts/")))
 
@@ -243,8 +275,9 @@ type commandRequest struct {
 	Payload json.RawMessage `json:"payload"` // The command-specific data
 }
 
-// handleExecuteCommand creates an http.HandlerFunc that decodes and dispatches commands.
-func handleExecuteCommand(registry *core.CommandRegistry) http.HandlerFunc {
+// handleExecuteCommand creates an http.HandlerFunc that decodes and executes commands
+// using the central core.Executor.
+func handleExecuteCommand(executor *core.Executor, registry *core.CommandRegistry) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -301,17 +334,20 @@ func handleExecuteCommand(registry *core.CommandRegistry) http.HandlerFunc {
 			return
 		}
 
+		// Execute the command using the central executor
+		slog.Debug("Executing command via API", "name", req.Type)
+		execErr := executor.Execute(r.Context(), cmdValue) // Use executor.Execute
 
-		// Dispatch the command
-		slog.Debug("Dispatching command via API", "name", req.Type) // Log the full name
-		dispatchErr := registry.Dispatch(r.Context(), cmdValue)
-
-		if dispatchErr != nil {
-			slog.Error("Error dispatching command", "name", req.Type, "error", dispatchErr)
-			// TODO: Implement more specific error handling (e.g., validation errors -> 400)
-			// For now, treat all dispatch errors as internal server errors.
-			// If dispatchErr is a validation error type: http.Error(w, dispatchErr.Error(), http.StatusBadRequest); return
+		if execErr != nil {
+			slog.Error("Error executing command", "name", req.Type, "error", execErr)
+			// Handle validation errors vs. other errors
+			// Example: Check if the error is a validation error (you might need to define custom error types or check wrapped errors)
+			// if errors.As(execErr, &core.ValidationError{}) { // Assuming a ValidationError type
+			//     respondJSON(w, http.StatusBadRequest, map[string]string{"error": execErr.Error()})
+			// } else {
+			// Treat other errors (logging failure, etc.) as internal server errors
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			// }
 			return
 		}
 
