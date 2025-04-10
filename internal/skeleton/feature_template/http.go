@@ -757,7 +757,7 @@ func RenderPageWithSuccess(w http.ResponseWriter, pageTitle string, content g.No
 									g.Attr("class", "ml-3"),
 									html.P(
 										g.Attr("class", "text-sm font-medium text-green-800"),
-										g.Text("u2713 " + successMsg),
+										g.Text("✓ " + successMsg),
 									),
 								),
 							),
