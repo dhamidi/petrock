@@ -33,7 +33,7 @@ This file implements the persistent event/message log, backed by SQLite. It hand
 
 *Note on State Replay:* Application startup logic (e.g., in `cmd/serve.go`) typically involves:
 1. Getting the current application version using `messageLog.Version()`.
-2. Iterating through messages using `for msg := range iter.Pull(messageLog.After(ctx, lastSeenVersion))` to get new messages.
+2. Iterating through messages using `for msg := range messageLog.After(ctx, lastSeenVersion)` to get new messages.
 3. For each PersistedMessage, access the DecodedPayload to get the concrete command instance.
 4. Looking up the corresponding *state update handler* using `commandRegistry.GetHandler(decodedCmd.CommandName())`.
-5. Executing the state update handler with the decoded command to update the application state.
+5. Executing the state update handler with both the decoded command payload and a pointer to the message metadata (e.g., `handler(ctx, msg.DecodedPayload, &msg.Message)`) to update the application state.

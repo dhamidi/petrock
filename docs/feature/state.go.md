@@ -19,9 +19,10 @@ This file defines the in-memory application state specific to the posts feature.
 ## Functions
 
 - `NewPostState() *PostState`: Constructor to create an initialized (empty) `PostState`.
-- `(s *PostState) Apply(msg core.Message)`: Updates the state based on a logged message (replayed event/command). This function contains the core logic for state reconstruction.
-    - It needs to decode `msg.Data` based on `msg.Type` (which should correspond to command types like `CreatePostCommand`, `UpdatePostCommand`, `DeletePostCommand`).
-    - Based on the decoded command, it modifies the `s.Posts` map accordingly (adds, updates, or marks/removes posts). Requires locking/unlocking `s.mu`.
+- `(s *PostState) Apply(decodedPayload interface{}, msg *core.Message)`: Updates the state based on a decoded message payload and optional message metadata. This function contains the core logic for state reconstruction.
+    - The `decodedPayload` parameter is already decoded and typed (e.g., `CreatePostCommand`, `UpdatePostCommand`, `DeletePostCommand`).
+    - The `msg` parameter is a pointer to the original message metadata (ID, Timestamp, etc.) which is non-nil during message replay, and nil for direct state modifications.
+    - Based on the payload type, it modifies the `s.Posts` map accordingly (adds, updates, or marks/removes posts). Requires locking/unlocking `s.mu`.
 - `(s *PostState) GetPost(id string) (*Post, bool)`: Retrieves a post by its ID. Returns the post pointer and `true` if found, `nil` and `false` otherwise. Requires read-locking `s.mu`.
 - `(s *PostState) ListPosts(page, pageSize int, authorIDFilter string) ([]*Post, int)`: Retrieves a slice of posts, applying filtering and pagination. Returns the slice of posts for the current page and the total count of matching posts. Requires read-locking `s.mu`.
 - `(s *PostState) AddPost(post *Post)`: Adds a new post to the state map. Requires write-locking `s.mu`.

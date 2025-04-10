@@ -28,7 +28,7 @@ This file defines the `serve` subcommand, responsible for starting the HTTP serv
             - Access decoded message directly: `decodedMsg := msg.DecodedPayload`.
             - If it's a command (`core.Command`):
                 - Look up state update handler: `handler, ok := commandRegistry.GetHandler(cmd.CommandName())`.
-                - If handler found, execute it: `err := handler(ctx, cmd)`. **Panic on error here.**
+                - If handler found, execute it with both the payload and message metadata: `err := handler(ctx, decodedMsg, &msg.Message)`. **Panic on error here.**
             - If it's a query or unknown type, ignore for replay.
     7. Creates the main HTTP router (`mux := http.NewServeMux()`).
     8. **Registers core HTTP handlers** (e.g., `/`, `/commands`, `/queries`) using the `executor`, `queryRegistry`, etc.
