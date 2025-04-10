@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
-	"net/http"
-	"reflect"
 )
 
 // App is the central struct that holds all application dependencies and state
@@ -125,19 +123,7 @@ func (a *App) ReplayLog() error {
 	return nil
 }
 
-// SetupHTTPHandlers registers HTTP handlers for core routes
-func (a *App) SetupHTTPHandlers(mux *http.ServeMux) {
-	slog.Info("Setting up HTTP server...")
-	
-	// Example: Define HTTP routes/handlers for core endpoints
-	mux.HandleFunc("GET /", HandleIndex(a.CommandRegistry, a.QueryRegistry)) 
-	mux.HandleFunc("GET /commands", handleListCommands(a.CommandRegistry))
-	mux.HandleFunc("POST /commands", handleExecuteCommand(a.Executor, a.CommandRegistry))
-	mux.HandleFunc("GET /queries", handleListQueries(a.QueryRegistry))
-	mux.HandleFunc("GET /queries/{feature}/{queryName}", handleExecuteQuery(a.QueryRegistry))
-	
-	// Feature-specific HTTP routes should be registered by the caller
-}
+
 
 // Close gracefully closes all resources
 func (a *App) Close() error {

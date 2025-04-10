@@ -111,8 +111,17 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// mux.Handle("/assets/core/", http.StripPrefix("/assets/core/", http.FileServer(http.FS(coreAssetsFS))))
 	// TODO: Add handlers for feature assets
 
-	// Setup core HTTP routes using App.SetupHTTPHandlers
-	app.SetupHTTPHandlers(mux)
+	// Setup core HTTP routes
+	slog.Info("Setting up HTTP server routes...")
+	
+	// Setup index route
+	mux.HandleFunc("GET /", core.HandleIndex(app.CommandRegistry, app.QueryRegistry))
+	
+	// Setup core API routes
+	mux.HandleFunc("GET /commands", handleListCommands(app.CommandRegistry))
+	mux.HandleFunc("POST /commands", handleExecuteCommand(app.Executor, app.CommandRegistry))
+	mux.HandleFunc("GET /queries", handleListQueries(app.QueryRegistry))
+	mux.HandleFunc("GET /queries/{feature}/{queryName}", handleExecuteQuery(app.QueryRegistry))
 
 	// Register feature-specific handlers and routes
 	// The mux is needed here to register HTTP routes
