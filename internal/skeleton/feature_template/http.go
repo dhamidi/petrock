@@ -688,9 +688,10 @@ func RenderPageWithSuccess(w http.ResponseWriter, pageTitle string, content g.No
 			html.Meta(html.Name("viewport"), html.Content("width=device-width, initial-scale=1")),
 			html.TitleEl(g.Text(pageTitle)),
 			// Link to Tailwind CSS (modern version)
-			html.Link(
-				html.Rel("stylesheet"),
-				html.Href("https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"),
+			html.Script(
+				html.Src("https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"),
+				html.Async(),
+				html.Defer(),
 			),
 			// Add a modern font
 			html.Link(
