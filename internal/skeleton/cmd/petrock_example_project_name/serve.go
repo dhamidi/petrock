@@ -128,7 +128,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 
 	// Use the iterator to process messages one by one
 	messageCount := 0
-	for msg := range iter.Pull(messageLog.After(replayCtx, startVersion)) {
+	for msg := range messageLog.After(replayCtx, startVersion) {
 		messageCount++
 		// DecodedPayload contains the decoded command or query
 		decodedMsg := msg.DecodedPayload
