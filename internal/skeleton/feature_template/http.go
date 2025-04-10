@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
+	g "maragu.dev/gomponents"                     // For rendering HTML
 )
 
 // FeatureServer holds dependencies required by the feature's HTTP handlers.
@@ -87,7 +88,15 @@ func (fs *FeatureServer) HandleGetItem(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if err := ItemView(*itemResult).Render(w); err != nil {
+	
+	// Create page title
+	pageTitle := fmt.Sprintf("%s - Detail", itemResult.Name)
+	
+	// Wrap the component in the Layout
+	page := core.Layout(pageTitle, ItemView(*itemResult))
+	
+	// Render the page
+	if err := page.Render(w); err != nil {
 		slog.Error("Error rendering item view", "error", err)
 		http.Error(w, "Error rendering view", http.StatusInternalServerError)
 	}
@@ -127,7 +136,15 @@ func (fs *FeatureServer) HandleListItems(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	if err := ItemsListView(*listResult).Render(w); err != nil {
+	
+	// Create page title
+	pageTitle := "All Items"
+	
+	// Wrap the component in the Layout
+	page := core.Layout(pageTitle, ItemsListView(*listResult))
+	
+	// Render the page
+	if err := page.Render(w); err != nil {
 		slog.Error("Error rendering list view", "error", err)
 		http.Error(w, "Error rendering view", http.StatusInternalServerError)
 	}
@@ -294,7 +311,15 @@ func (fs *FeatureServer) HandleNewForm(w http.ResponseWriter, r *http.Request) {
 
 	// Render the form
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := ItemForm(form, nil, csrfToken).Render(w); err != nil {
+	
+	// Create page title
+	pageTitle := "Create New Item"
+	
+	// Wrap the form in the Layout
+	page := core.Layout(pageTitle, ItemForm(form, nil, csrfToken))
+	
+	// Render the page
+	if err := page.Render(w); err != nil {
 		slog.Error("Error rendering new item form", "error", err)
 		http.Error(w, "Error rendering form", http.StatusInternalServerError)
 	}
@@ -322,7 +347,15 @@ func (fs *FeatureServer) HandleCreateForm(w http.ResponseWriter, r *http.Request
 	if !form.IsValid() {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		csrfToken := "token" // Replace with actual CSRF token
-		if err := ItemForm(form, nil, csrfToken).Render(w); err != nil {
+		
+		// Create page title for validation error
+		pageTitle := "Create New Item"
+		
+		// Wrap the form in the Layout
+		page := core.Layout(pageTitle, ItemForm(form, nil, csrfToken))
+		
+		// Render the page with validation errors
+		if err := page.Render(w); err != nil {
 			slog.Error("Error rendering form with validation errors", "error", err)
 			http.Error(w, "Error rendering form", http.StatusInternalServerError)
 		}
@@ -346,7 +379,15 @@ func (fs *FeatureServer) HandleCreateForm(w http.ResponseWriter, r *http.Request
 			form.AddError("name", err.Error())
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			csrfToken := "token" // Replace with actual CSRF token
-			if err := ItemForm(form, nil, csrfToken).Render(w); err != nil {
+			
+			// Create page title for validation error
+			pageTitle := "Create New Item"
+			
+			// Wrap the form in the Layout
+			page := core.Layout(pageTitle, ItemForm(form, nil, csrfToken))
+			
+			// Render the page with validation errors
+			if err := page.Render(w); err != nil {
 				slog.Error("Error rendering form with validation errors", "error", err)
 				http.Error(w, "Error rendering form", http.StatusInternalServerError)
 			}
@@ -403,7 +444,15 @@ func (fs *FeatureServer) HandleEditForm(w http.ResponseWriter, r *http.Request) 
 
 	// Render the edit form
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := ItemForm(form, item, csrfToken).Render(w); err != nil {
+	
+	// Create page title
+	pageTitle := fmt.Sprintf("Edit %s", item.Name)
+	
+	// Wrap the form in the Layout
+	page := core.Layout(pageTitle, ItemForm(form, item, csrfToken))
+	
+	// Render the page
+	if err := page.Render(w); err != nil {
 		slog.Error("Error rendering edit form", "error", err)
 		http.Error(w, "Error rendering form", http.StatusInternalServerError)
 	}
@@ -453,7 +502,15 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		csrfToken := "token" // Replace with actual CSRF token
-		if err := ItemForm(form, item, csrfToken).Render(w); err != nil {
+		
+		// Create page title for validation error
+		pageTitle := fmt.Sprintf("Edit %s", item.Name)
+		
+		// Wrap the form in the Layout
+		page := core.Layout(pageTitle, ItemForm(form, item, csrfToken))
+		
+		// Render the page with validation errors
+		if err := page.Render(w); err != nil {
 			slog.Error("Error rendering form with validation errors", "error", err)
 			http.Error(w, "Error rendering form", http.StatusInternalServerError)
 		}
@@ -496,7 +553,15 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			csrfToken := "token" // Replace with actual CSRF token
-			if err := ItemForm(form, item, csrfToken).Render(w); err != nil {
+			
+			// Create page title for validation error
+			pageTitle := fmt.Sprintf("Edit %s", item.Name)
+			
+			// Wrap the form in the Layout
+			page := core.Layout(pageTitle, ItemForm(form, item, csrfToken))
+			
+			// Render the page with validation errors
+			if err := page.Render(w); err != nil {
 				slog.Error("Error rendering form with validation errors", "error", err)
 				http.Error(w, "Error rendering form", http.StatusInternalServerError)
 			}
@@ -550,7 +615,15 @@ func (fs *FeatureServer) HandleDeleteForm(w http.ResponseWriter, r *http.Request
 
 	// Render the delete confirmation view
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := DeleteConfirmForm(item, csrfToken).Render(w); err != nil {
+	
+	// Create page title
+	pageTitle := fmt.Sprintf("Delete %s", item.Name)
+	
+	// Wrap the delete confirmation form in the Layout
+	page := core.Layout(pageTitle, DeleteConfirmForm(item, csrfToken))
+	
+	// Render the page
+	if err := page.Render(w); err != nil {
 		slog.Error("Error rendering delete confirmation", "error", err)
 		http.Error(w, "Error rendering confirmation", http.StatusInternalServerError)
 	}
