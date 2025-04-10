@@ -11,6 +11,17 @@ import (
 // with the main application's router.
 // It receives the router and the feature's dependency container (FeatureServer).
 func RegisterRoutes(mux *http.ServeMux, deps *FeatureServer) {
+	// Safety check to prevent nil pointer dereference
+	if mux == nil {
+		slog.Error("Error registering routes: nil HTTP mux provided", "feature", "petrock_example_feature_name")
+		return
+	}
+	
+	// Safety check for dependencies
+	if deps == nil {
+		slog.Error("Error registering routes: nil FeatureServer provided", "feature", "petrock_example_feature_name")
+		return
+	}
 	featurePrefix := "/petrock_example_feature_name" // Base path for this feature's routes
 	slog.Debug("Registering feature HTTP routes", "feature", "petrock_example_feature_name", "prefix", featurePrefix)
 

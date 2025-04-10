@@ -23,6 +23,29 @@ func RegisterFeature(
 	// Add other core dependencies if needed (e.g., config, external clients)
 ) {
 	slog.Debug("Registering feature", "feature", "petrock_example_feature_name")
+	
+	// Validate required dependencies
+	if commands == nil {
+		slog.Error("Cannot register feature: CommandRegistry is nil", "feature", "petrock_example_feature_name")
+		return
+	}
+	if queries == nil {
+		slog.Error("Cannot register feature: QueryRegistry is nil", "feature", "petrock_example_feature_name")
+		return
+	}
+	if messageLog == nil {
+		slog.Error("Cannot register feature: MessageLog is nil", "feature", "petrock_example_feature_name")
+		return
+	}
+	if centralExecutor == nil {
+		slog.Error("Cannot register feature: Executor is nil", "feature", "petrock_example_feature_name")
+		return
+	}
+	if state == nil {
+		slog.Error("Cannot register feature: State is nil", "feature", "petrock_example_feature_name")
+		return
+	}
+	// db can be optional depending on the feature
 
 	// --- 1. Initialize Feature-Specific Logic Handlers ---
 	// These components encapsulate the logic for handling commands (validation + state updates) and queries.
