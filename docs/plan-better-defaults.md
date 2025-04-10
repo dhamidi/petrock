@@ -26,9 +26,9 @@ These routes will be defined:
 
 ## Implementation Plan
 
-### 1. Route & HTTP Handler Implementation
+### 1. Route & HTTP Handler Implementation - DONE
 
-1. **Update `internal/skeleton/feature_template/routes.go`**
+1. **Update `internal/skeleton/feature_template/routes.go`** - DONE
    - [ ] Remove routes with PUT method (`mux.HandleFunc("PUT "+featurePrefix+"/{id}", deps.HandleUpdateItem)`) 
    - [ ] Remove routes with DELETE method (`mux.HandleFunc("DELETE "+featurePrefix+"/{id}", deps.HandleDeleteItem)`) 
    - [ ] Add route for new form: `mux.HandleFunc("GET "+featurePrefix+"/new", deps.HandleNewForm)`

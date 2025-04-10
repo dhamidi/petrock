@@ -20,9 +20,10 @@ type Validator interface {
 // CreateCommand holds data needed to create a new entity.
 type CreateCommand struct {
 	// Example fields - replace with actual data needed for creation
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	CreatedBy   string `json:"created_by"` // e.g., User ID
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	CreatedBy   string    `json:"created_by"` // e.g., User ID
+	CreatedAt   time.Time `json:"created_at"` // Timestamp when created
 }
 
 // CommandName returns the unique kebab-case name for this command type.
@@ -33,20 +34,29 @@ func (c CreateCommand) CommandName() string {
 // Validate implements the Validator interface for CreateCommand.
 // It performs validation checks, potentially using the current state.
 func (c CreateCommand) Validate(state *State) error {
+	// Trim all string fields
+	trimmedName := strings.TrimSpace(c.Name)
+	trimmedDescription := strings.TrimSpace(c.Description)
+	
 	// Basic stateless validation
-	if c.Name == "" {
+	if trimmedName == "" {
 		return errors.New("item name cannot be empty")
 	}
+	
+	if trimmedDescription == "" {
+		return errors.New("item description cannot be empty")
+	}
+	
 	// Example stateful validation: Check if an item with the same name already exists
 	// Note: state.GetItem currently uses ID, not name. If using name as ID on create,
 	// this check is relevant. Adjust based on actual ID strategy.
 	// Assuming state.GetItem uses the ID field from the Item struct.
 	// If CreateCommand implies using Name as the potential ID:
 	state.mu.RLock() // Read lock for checking existence
-	_, exists := state.Items[c.Name]
+	_, exists := state.Items[trimmedName]
 	state.mu.RUnlock()
 	if exists {
-		return fmt.Errorf("item with name %q already exists", c.Name)
+		return fmt.Errorf("item with name %q already exists", trimmedName)
 	}
 
 	// Add other validation rules...
@@ -55,10 +65,11 @@ func (c CreateCommand) Validate(state *State) error {
 
 // UpdateCommand holds data needed to update an existing entity.
 type UpdateCommand struct {
-	ID          string `json:"id"` // ID of the entity to update
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	UpdatedBy   string `json:"updated_by"`
+	ID          string    `json:"id"` // ID of the entity to update
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	UpdatedBy   string    `json:"updated_by"`
+	UpdatedAt   time.Time `json:"updated_at"` // Timestamp when updated
 }
 
 // CommandName returns the unique kebab-case name for this command type.
@@ -68,17 +79,28 @@ func (c UpdateCommand) CommandName() string {
 
 // Validate implements the Validator interface for UpdateCommand.
 func (c UpdateCommand) Validate(state *State) error {
+	// Trim all string fields
+	trimmedID := strings.TrimSpace(c.ID)
+	trimmedName := strings.TrimSpace(c.Name)
+	trimmedDescription := strings.TrimSpace(c.Description)
+	
 	// Basic stateless validation
-	if c.ID == "" {
+	if trimmedID == "" {
 		return errors.New("item ID cannot be empty for update")
 	}
-	if c.Name == "" {
+	
+	if trimmedName == "" {
 		return errors.New("item name cannot be empty")
 	}
+	
+	if trimmedDescription == "" {
+		return errors.New("item description cannot be empty")
+	}
+	
 	// Example stateful validation: Check if the item exists
-	_, found := state.GetItem(c.ID) // GetItem handles locking
+	_, found := state.GetItem(trimmedID) // GetItem handles locking
 	if !found {
-		return fmt.Errorf("item with ID %q not found", c.ID)
+		return fmt.Errorf("item with ID %q not found", trimmedID)
 	}
 	// Example: Check if updating the name conflicts with another existing item's name
 	// state.mu.RLock()
@@ -96,8 +118,9 @@ func (c UpdateCommand) Validate(state *State) error {
 
 // DeleteCommand holds data needed to delete an entity.
 type DeleteCommand struct {
-	ID        string `json:"id"` // ID of the entity to delete
-	DeletedBy string `json:"deleted_by"`
+	ID        string    `json:"id"` // ID of the entity to delete
+	DeletedBy string    `json:"deleted_by"`
+	DeletedAt time.Time `json:"deleted_at"` // Timestamp when deleted
 }
 
 // CommandName returns the unique kebab-case name for this command type.
@@ -107,15 +130,19 @@ func (c DeleteCommand) CommandName() string {
 
 // Validate implements the Validator interface for DeleteCommand.
 func (c DeleteCommand) Validate(state *State) error {
+	// Trim all string fields
+	trimmedID := strings.TrimSpace(c.ID)
+	
 	// Basic stateless validation
-	if c.ID == "" {
+	if trimmedID == "" {
 		return errors.New("item ID cannot be empty for deletion")
 	}
+	
 	// Example stateful validation: Check if the item exists
-	_, found := state.GetItem(c.ID) // GetItem handles locking
+	_, found := state.GetItem(trimmedID) // GetItem handles locking
 	if !found {
 		// Decide if deleting a non-existent item is an error or idempotent success
-		return fmt.Errorf("item with ID %q not found", c.ID) // Return error
+		return fmt.Errorf("item with ID %q not found", trimmedID) // Return error
 		// return nil // Alternative: Treat as success
 	}
 	// Add other validation rules (e.g., check if item is deletable based on status)

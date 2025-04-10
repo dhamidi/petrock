@@ -14,27 +14,47 @@ import (
 // Adapt the fields and structure based on the 'Result' type in messages.go.
 func ItemView(item Result) g.Node {
 	return html.Div(
-		// Example structure - customize as needed
-		html.H3(g.Text(item.Name)),
-		html.P(g.Textf("ID: %s", item.ID)),
-		html.P(g.Textf("Description: %s", item.Description)),
-		html.Small(
-			g.Textf("Created: %s, Updated: %s, Version: %d",
-				item.CreatedAt.Format("2006-01-02 15:04"),
-				item.UpdatedAt.Format("2006-01-02 15:04"),
-				item.Version,
+		// Header with title and navigation
+		html.Div(
+			Classes{"flex": true, "justify-between": true, "items-center": true, "mb-4": true},
+			html.H3(Classes{"text-xl": true, "font-bold": true}, g.Text(item.Name)),
+			html.A(g.Attr("href", "/petrock_example_feature_name"), Classes{"text-blue-500": true}, g.Text("Back to List")),
+		),
+		
+		// Item details with labels and values
+		html.Div(Classes{"mb-6": true, "bg-gray-50": true, "p-4": true, "rounded": true},
+			// ID field
+			html.Div(Classes{"mb-2": true},
+				html.Label(Classes{"font-semibold": true, "block": true}, g.Text("ID:")),
+				html.Div(Classes{"pl-2": true}, g.Text(item.ID)),
+			),
+			// Description field
+			html.Div(Classes{"mb-2": true},
+				html.Label(Classes{"font-semibold": true, "block": true}, g.Text("Description:")),
+				html.Div(Classes{"pl-2": true}, g.Text(item.Description)),
+			),
+			// Metadata
+			html.Div(Classes{"mt-4": true, "text-sm": true, "text-gray-600": true},
+				html.Div(g.Textf("Created: %s", item.CreatedAt.Format("2006-01-02 15:04"))),
+				html.Div(g.Textf("Last Updated: %s", item.UpdatedAt.Format("2006-01-02 15:04"))),
+				html.Div(g.Textf("Version: %d", item.Version)),
 			),
 		),
-		// Add Edit/Delete buttons if applicable (link to API or separate pages)
-		html.Button(
-			Classes{"ml-2": true, "text-blue-500": true, "hover:underline": true}, // Example styling
-			// Consider linking to an edit page or using JS to call the API
-			g.Text("Edit"),
-		),
-		html.Button(
-			Classes{"ml-2": true, "text-red-500": true, "hover:underline": true}, // Example styling
-			// Consider using JS to call the API with confirmation
-			g.Text("Delete"),
+		
+		// Action buttons
+		html.Div(Classes{"mt-4": true, "flex": true, "space-x-2": true},
+			// Edit link
+			html.A(
+				g.Attr("href", "/petrock_example_feature_name/"+item.ID+"/edit"),
+				Classes{"px-4": true, "py-2": true, "bg-blue-500": true, "text-white": true, "rounded": true, "hover:bg-blue-600": true},
+				g.Text("Edit"),
+			),
+			// Delete link
+			html.A(
+				g.Attr("href", "/petrock_example_feature_name/"+item.ID+"/delete"),
+				Classes{"px-4": true, "py-2": true, "bg-red-500": true, "text-white": true, "rounded": true, "hover:bg-red-600": true},
+				g.Text("Delete"),
+			),
 		),
 	)
 }
@@ -44,86 +64,254 @@ func ItemView(item Result) g.Node {
 // 'item' can be nil when creating a new item.
 // 'csrfToken' should be provided by the handler.
 func ItemForm(form *core.Form, item *Result, csrfToken string) g.Node {
-	actionURL := "/feature-path" // Placeholder URL for creating
-	method := "POST"
-	if item != nil {
-		actionURL = fmt.Sprintf("/feature-path/%s", item.ID) // Placeholder URL for updating
-		method = "PUT"                                       // Or PATCH
+	// Determine if we're creating or editing
+	isEdit := item != nil
+	var title, submitLabel string
+	var actionURL string
+	
+	if isEdit {
+		title = "Edit Item"
+		submitLabel = "Update Item"
+		actionURL = fmt.Sprintf("/petrock_example_feature_name/%s/edit", item.ID) 
+	} else {
+		title = "Create New Item"
+		submitLabel = "Create Item"
+		actionURL = "/petrock_example_feature_name/new"
 	}
 
 	// Get values from form (if validation failed) or from item (if editing)
 	nameValue := form.Get("name")
 	descriptionValue := form.Get("description")
-	if !form.HasError("name") && item != nil {
+	if !form.HasError("name") && isEdit {
 		nameValue = item.Name
 	}
-	if !form.HasError("description") && item != nil {
+	if !form.HasError("description") && isEdit {
 		descriptionValue = item.Description
 	}
 
-	return html.Form(
-		// Standard form attributes - submission would likely be handled by JS calling the API
-		html.Action(actionURL), // Action might point to the page itself or an API endpoint
-		html.Method(method),    // Use POST for create/update via API typically
+	// Form error helpers
+	formErrorMessage := func(field string) g.Node {
+		if !form.HasError(field) {
+			return nil
+		}
+		return html.Div(
+			Classes{"text-red-500": true, "text-sm": true, "mt-1": true},
+			g.Text(form.GetError(field)),
+		)
+	}
 
-		// CSRF Token
-		core.CSRFTokenInput(csrfToken), // Assumes core.CSRFTokenInput exists
-
-		// Form Fields using core components
+	return html.Div(
+		// Form header with title and back button
 		html.Div(
-			Classes{"mb-4": true},
-			html.Label(html.For("name"), Classes{"block": true, "text-sm": true, "font-medium": true, "text-gray-700": true}, g.Text("Name")),
-			core.Input("text", "name", nameValue, html.ID("name"), Classes{"border-red-500": form.HasError("name")}), // Add error class conditionally
-			core.FormError(form, "name"),
+			Classes{"flex": true, "justify-between": true, "items-center": true, "mb-6": true},
+			html.H2(Classes{"text-xl": true, "font-semibold": true}, g.Text(title)),
+			html.A(
+				g.Attr("href", isEdit ? "/petrock_example_feature_name/"+item.ID : "/petrock_example_feature_name"),
+				Classes{"text-blue-500": true},
+				g.Text("Back"),
+			),
 		),
-		html.Div(
-			Classes{"mb-4": true},
-			html.Label(html.For("description"), Classes{"block": true, "text-sm": true, "font-medium": true, "text-gray-700": true}, g.Text("Description")),
-			core.TextArea("description", descriptionValue, html.ID("description"), Classes{"border-red-500": form.HasError("description")}), // Add error class conditionally
-			core.FormError(form, "description"),
-		),
+		
+		html.Form(
+			// Form attributes
+			html.Action(actionURL),
+			html.Method("POST"),
 
-		// Submit Button
-		core.Button("Save Item"), // Uses core.Button component
+			// CSRF Token (as hidden input)
+			html.Input(
+				g.Attr("type", "hidden"),
+				g.Attr("name", "csrf_token"),
+				g.Attr("value", csrfToken),
+			),
+
+			// Form Fields
+			html.Div(
+				Classes{"mb-4": true},
+				html.Label(
+					html.For("name"),
+					Classes{"block": true, "text-sm": true, "font-medium": true, "text-gray-700": true, "mb-1": true},
+					g.Text("Name"),
+				),
+				html.Input(
+					g.Attr("type", "text"),
+					g.Attr("name", "name"),
+					g.Attr("id", "name"),
+					g.Attr("value", nameValue),
+					Classes{
+						"w-full": true, "p-2": true, "border": true, "rounded": true,
+						"border-red-500": form.HasError("name"),
+						"border-gray-300": !form.HasError("name"),
+					},
+				),
+				formErrorMessage("name"),
+			),
+			html.Div(
+				Classes{"mb-4": true},
+				html.Label(
+					html.For("description"),
+					Classes{"block": true, "text-sm": true, "font-medium": true, "text-gray-700": true, "mb-1": true},
+					g.Text("Description"),
+				),
+				html.TextArea(
+					g.Attr("name", "description"),
+					g.Attr("id", "description"),
+					Classes{
+						"w-full": true, "p-2": true, "border": true, "rounded": true,
+						"border-red-500": form.HasError("description"),
+						"border-gray-300": !form.HasError("description"),
+					},
+					g.Text(descriptionValue),
+				),
+				formErrorMessage("description"),
+			),
+
+			// Submit Button
+			html.Div(
+				Classes{"mt-6": true},
+				html.Button(
+					g.Attr("type", "submit"),
+					Classes{"px-4": true, "py-2": true, "bg-blue-500": true, "text-white": true, "rounded": true, "hover:bg-blue-600": true},
+					g.Text(submitLabel),
+				),
+			),
+		),
 	)
 }
 
 // ItemsListView renders a list of items, potentially with pagination.
 func ItemsListView(result ListResult) g.Node {
-	itemNodes := make([]g.Node, 0, len(result.Items))
+	// Header with title and New button
+	header := html.Div(
+		Classes{"flex": true, "justify-between": true, "items-center": true, "mb-6": true},
+		html.H2(Classes{"text-xl": true, "font-semibold": true}, g.Text("Items")),
+		html.A(
+			g.Attr("href", "/petrock_example_feature_name/new"),
+			Classes{"px-4": true, "py-2": true, "bg-green-500": true, "text-white": true, "rounded": true, "hover:bg-green-600": true},
+			g.Text("New Item"),
+		),
+	)
+
+	// Item list
+	var itemList g.Node
 	if len(result.Items) == 0 {
-		itemNodes = append(itemNodes, html.P(g.Text("No items found.")))
+		itemList = html.Div(
+			Classes{"p-6": true, "text-center": true, "bg-gray-50": true, "rounded": true, "text-gray-500": true},
+			g.Text("No items found. Create one using the 'New Item' button."),
+		)
 	} else {
+		items := make([]g.Node, 0, len(result.Items))
 		for _, item := range result.Items {
-			// Render each item - could be a full ItemView or a summary row
-			itemNodes = append(itemNodes, html.Li(ItemView(item))) // Example: using ItemView within a list
+			// Create a simplified item row for the list view
+			items = append(items, html.Div(
+				Classes{"p-4": true, "border": true, "border-gray-200": true, "rounded": true, "mb-2": true, "hover:bg-gray-50": true},
+				html.Div(
+					Classes{"flex": true, "justify-between": true, "items-center": true},
+					html.Div(
+						html.A(
+							g.Attr("href", "/petrock_example_feature_name/"+item.ID),
+							Classes{"font-semibold": true, "text-blue-600": true, "hover:underline": true},
+							g.Text(item.Name),
+						),
+						html.Div(Classes{"text-sm": true, "text-gray-600": true, "mt-1": true}, g.Text(item.Description)),
+					),
+					html.Div(
+						Classes{"flex": true, "space-x-2": true},
+						html.A(
+							g.Attr("href", "/petrock_example_feature_name/"+item.ID+"/edit"),
+							Classes{"text-blue-500": true, "hover:underline": true},
+							g.Text("Edit"),
+						),
+						html.A(
+							g.Attr("href", "/petrock_example_feature_name/"+item.ID+"/delete"),
+							Classes{"text-red-500": true, "hover:underline": true},
+							g.Text("Delete"),
+						),
+					),
+				),
+			))
 		}
+		itemList = html.Div(g.Group(items))
 	}
 
-	return html.Div(
-		html.H2(Classes{"text-xl": true, "font-semibold": true, "mb-4": true}, g.Text("Items")),
-		NewItemButton(), // Add button to create new item
-		html.Ul(
-			Classes{"space-y-4": true}, // Example list styling
-			g.Group(itemNodes),
-		),
-		// Basic Pagination Example (implement proper logic based on result)
+	// Pagination
+	pagination := html.Div(
+		Classes{"mt-6": true, "flex": true, "justify-between": true, "items-center": true},
+		html.Span(Classes{"text-sm": true, "text-gray-600": true}, g.Textf("Total: %d", result.TotalCount)),
 		html.Div(
-			Classes{"mt-4": true, "flex": true, "justify-between": true, "items-center": true},
-			html.Span(g.Textf("Total: %d", result.TotalCount)),
-			html.Span(g.Textf("Page %d/%d", result.Page, (result.TotalCount+result.PageSize-1)/result.PageSize)), // Calculate total pages
-			// Add Previous/Next buttons with HTMX if needed
+			Classes{"flex": true, "space-x-2": true},
+			html.Span(Classes{"text-sm": true, "text-gray-600": true}, g.Textf("Page %d of %d", result.Page, (result.TotalCount+result.PageSize-1)/result.PageSize)),
+		),
+	)
+
+	return html.Div(header, itemList, pagination)
+}
+
+// DeleteConfirmForm renders a form to confirm deletion of an item.
+func DeleteConfirmForm(item *Result, csrfToken string) g.Node {
+	return html.Div(
+		// Header with title and back button
+		html.Div(
+			Classes{"flex": true, "justify-between": true, "items-center": true, "mb-6": true},
+			html.H2(Classes{"text-xl": true, "font-semibold": true}, g.Text("Confirm Delete")),
+			html.A(
+				g.Attr("href", "/petrock_example_feature_name/"+item.ID),
+				Classes{"text-blue-500": true},
+				g.Text("Back"),
+			),
+		),
+		
+		// Item details
+		html.Div(
+			Classes{"mb-6": true, "p-4": true, "bg-red-50": true, "border": true, "border-red-200": true, "rounded": true},
+			html.P(
+				Classes{"mb-2": true},
+				g.Text("Are you sure you want to delete this item?"),
+			),
+			html.Div(
+				Classes{"font-semibold": true},
+				g.Text(item.Name),
+			),
+			html.Div(
+				Classes{"text-sm": true, "text-gray-600": true, "mt-1": true},
+				g.Text(item.Description),
+			),
+		),
+		
+		// Confirmation form
+		html.Form(
+			html.Action("/petrock_example_feature_name/"+item.ID+"/delete"),
+			html.Method("POST"),
+			
+			// CSRF Token
+			html.Input(
+				g.Attr("type", "hidden"),
+				g.Attr("name", "csrf_token"),
+				g.Attr("value", csrfToken),
+			),
+			
+			// Action buttons
+			html.Div(
+				Classes{"flex": true, "space-x-4": true},
+				html.Button(
+					g.Attr("type", "submit"),
+					Classes{"px-4": true, "py-2": true, "bg-red-500": true, "text-white": true, "rounded": true, "hover:bg-red-600": true},
+					g.Text("Delete Item"),
+				),
+				html.A(
+					g.Attr("href", "/petrock_example_feature_name/"+item.ID),
+					Classes{"px-4": true, "py-2": true, "bg-gray-300": true, "text-gray-800": true, "rounded": true, "hover:bg-gray-400": true},
+					g.Text("Cancel"),
+				),
+			),
 		),
 	)
 }
 
 // NewItemButton renders a button or link to navigate to the item creation page/view.
 func NewItemButton() g.Node {
-	// This button would typically link to a page containing the ItemForm,
-	// or trigger JavaScript to display the form and handle API submission.
-	return core.Button(
-		"Create New Item",
-		// Example: Link to a separate page (adjust URL as needed)
-		// g.Attr("onclick", "window.location.href='/feature-path/new'"),
+	return html.A(
+		g.Attr("href", "/petrock_example_feature_name/new"),
+		Classes{"px-4": true, "py-2": true, "bg-green-500": true, "text-white": true, "rounded": true, "hover:bg-green-600": true},
+		g.Text("New Item"),
 	)
 }
