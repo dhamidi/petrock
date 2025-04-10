@@ -10,6 +10,20 @@
 - golang.org/x/crypto for password hashing and other crypto functions
 - github.com/google/uuid for UUID generation
 
+## Architecture Components
+
+- core/app.go: Central application initialization and coordination
+- core/commands.go: Command registry and execution
+- core/queries.go: Query registry and execution
+- core/log.go: Persistent event log
+
+## Application Flow
+
+1. App initialization (core/app.go)
+2. Feature registration (called by app.go before replay)
+3. Log replay to rebuild state (after registration)
+4. HTTP server setup and lifecycle (cmd/serve.go)
+
 ## For code in use in the petrock project
 
 - github.com/spf13/cobra for CLIs

@@ -79,7 +79,7 @@ Petrock is about generating the simplest code that could possibly work to achiev
 
 The high-level overview of a Petrock application is this:
 
-1.  **Startup:** The application initializes core components (database connection, message log, command/query registries, application state). It then replays messages from the persistent log (`messages` table in SQLite) by iterating through them with `messageLog.After(ctx, 0)` to rebuild the in-memory application state. Finally, it registers all features defined in the project.
+1.  **Startup:** The application initializes core components through the central `App` struct in `core/app.go` which manages database connection, message log, command/query registries, and application state. `App.RegisterFeatures()` registers all features defined in the project. Then `App.ReplayLog()` replays messages from the persistent log (`messages` table in SQLite) by iterating through them with `messageLog.After(ctx, 0)` to rebuild the in-memory application state. The `serve.go` file simply creates the App, registers HTTP routes, and manages server lifecycle.
 2.  **Feature Registration:** When `petrock feature <name>` is run, it automatically adds an import and a registration call (e.g., `posts.RegisterFeature(...)`) to `cmd/<project>/features.go`. During startup, `RegisterAllFeatures` calls each feature's `RegisterFeature` function. This function registers the feature's command handlers, query handlers, and message types (for decoding) with the core registries and message log.
 3.  **API Interaction:** The application exposes a core API for interacting with commands and queries:
     *   `GET /`: Displays an HTML index page listing available commands and queries.

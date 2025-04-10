@@ -1,6 +1,6 @@
 # Plan for core/commands.go
 
-This file defines the core components for command handling: the `Executor` which orchestrates command processing, the `CommandRegistry` which maps command names to state update handlers, and associated interfaces/types.
+This file defines the core components for command handling: the `Executor` which orchestrates command processing, the `CommandRegistry` which maps command names to state update handlers, and associated interfaces/types. The `CommandRegistry` and `Executor` are initialized by the `App` in `core/app.go`.
 
 ## Types
 

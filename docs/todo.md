@@ -1,10 +1,5 @@
 # Deficiencies
 
-## core/log.go
-- is missing a LoadAfter method
-- LoadAfter should return a Go iterator
-- The iterator should return PersistedMessage objects, which correspond to database rows but with a decoded payload.
-
 ## cmd/serve.go
 
 - the application intialization logic should move to core/app.go
