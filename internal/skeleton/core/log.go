@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"reflect"
 	"time"
+	"iter"
 
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
@@ -33,10 +34,16 @@ func (e *JSONEncoder) Decode(data []byte, v interface{}) error {
 
 // Message represents a single entry in the persistent log.
 type Message struct {
-	ID        int64
+	ID        uint64
 	Timestamp time.Time
 	Type      string // String identifier for the concrete type of Data
 	Data      []byte // Serialized message data
+}
+
+// PersistedMessage combines a raw message with its decoded payload.
+type PersistedMessage struct {
+	Message        // Embedded raw message struct
+	DecodedPayload interface{} // The decoded Go object from the message data
 }
 
 // MessageLog provides an interface to the persistent message log backed by SQLite.
@@ -173,49 +180,77 @@ func (l *MessageLog) Append(ctx context.Context, msg interface{}) error {
 	return nil
 }
 
-// Load retrieves all messages from the database, ordered by ID.
-// It attempts to decode each message's data into the registered Go type.
-// Returns a slice of decoded messages (as interface{}) or an error.
-func (l *MessageLog) Load(ctx context.Context) ([]interface{}, error) {
-	query := `SELECT id, timestamp, type, data FROM messages ORDER BY id ASC`
-	rows, err := l.db.QueryContext(ctx, query)
+// Version returns the highest message ID in the log (the current version).
+// Returns 0 if no messages exist.
+func (l *MessageLog) Version(ctx context.Context) (uint64, error) {
+	var version uint64
+	query := `SELECT COALESCE(MAX(id), 0) FROM messages`
+	err := l.db.QueryRowContext(ctx, query).Scan(&version)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query messages: %w", err)
+		return 0, fmt.Errorf("failed to query log version: %w", err)
 	}
-	defer rows.Close()
+	return version, nil
+}
 
-	var loadedMessages []interface{}
-	for rows.Next() {
-		var m Message
-		if err := rows.Scan(&m.ID, &m.Timestamp, &m.Type, &m.Data); err != nil {
-			slog.Error("Failed to scan message row", "error", err)
-			continue // Or return error, depending on desired strictness
+// After returns an iterator over messages after the specified version.
+// Uses Go 1.22's iter package for efficient iteration without loading everything into memory.
+func (l *MessageLog) After(ctx context.Context, startID uint64) iter.Seq[PersistedMessage] {
+	return func(yield func(PersistedMessage) bool) {
+		query := `SELECT id, timestamp, type, data FROM messages WHERE id > ? ORDER BY id ASC`
+		rows, err := l.db.QueryContext(ctx, query, startID)
+		if err != nil {
+			slog.Error("Failed to query messages after version", "error", err, "startID", startID)
+			return
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var m Message
+			if err := rows.Scan(&m.ID, &m.Timestamp, &m.Type, &m.Data); err != nil {
+				slog.Error("Failed to scan message row", "error", err)
+				continue 
+			}
+
+			decodedPayload, err := l.Decode(m)
+			if err != nil {
+				slog.Error("Failed to decode message", "error", err, "type", m.Type, "id", m.ID)
+				continue
+			}
+
+			pm := PersistedMessage{
+				Message:        m,
+				DecodedPayload: decodedPayload,
+			}
+
+			if !yield(pm) {
+				break
+			}
 		}
 
-		registeredType, exists := l.typeRegistry[m.Type]
-		if !exists {
-			slog.Warn("Skipping message: unknown type found in log", "type", m.Type, "id", m.ID)
-			continue // Skip messages we don't know how to decode
+		if err := rows.Err(); err != nil {
+			slog.Error("Error iterating message rows", "error", err)
 		}
+	}
+}
 
-		// Create a new instance of the registered type (must be a pointer for Decode)
-		newValue := reflect.New(registeredType).Interface()
-
-		if err := l.encoder.Decode(m.Data, newValue); err != nil {
-			slog.Error("Failed to decode message data", "error", err, "type", m.Type, "id", m.ID)
-			continue // Or return error
-		}
-
-		// Append the decoded message (dereferenced from the pointer)
-		loadedMessages = append(loadedMessages, reflect.ValueOf(newValue).Elem().Interface())
+// Decode decodes the Data field of a raw Message into a concrete Go command/query type.
+// It uses the message.Type string to look up the reflect.Type in the typeRegistry,
+// creates a new instance, and uses the encoder to deserialize the Data into it.
+func (l *MessageLog) Decode(message Message) (interface{}, error) {
+	registeredType, exists := l.typeRegistry[message.Type]
+	if !exists {
+		return nil, fmt.Errorf("unknown message type: %s", message.Type)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating message rows: %w", err)
+	// Create a new instance of the registered type (must be a pointer for Decode)
+	newValue := reflect.New(registeredType).Interface()
+
+	if err := l.encoder.Decode(message.Data, newValue); err != nil {
+		return nil, fmt.Errorf("failed to decode message data for type %s: %w", message.Type, err)
 	}
 
-	slog.Debug("Loaded messages from log", "count", len(loadedMessages))
-	return loadedMessages, nil
+	// Return the decoded value (dereferenced from the pointer)
+	return reflect.ValueOf(newValue).Elem().Interface(), nil
 }
 
 // --- Database Setup Helper ---

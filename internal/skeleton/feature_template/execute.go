@@ -57,7 +57,7 @@ func (e *Executor) ValidateCommand(ctx context.Context, cmd core.Command) error 
 // Returning an error here will cause the core.Executor to PANIC.
 
 // HandleCreate applies state changes for CreateCommand.
-func (e *Executor) HandleCreate(ctx context.Context, command core.Command) error {
+func (e *Executor) HandleCreate(ctx context.Context, command core.Command, msg *core.Message) error {
 	cmd, ok := command.(CreateCommand)
 	if !ok {
 		// This should ideally not happen if registration is correct, but check defensively.
@@ -70,7 +70,8 @@ func (e *Executor) HandleCreate(ctx context.Context, command core.Command) error
 
 	// Apply the change using the state's Apply method or direct state modification.
 	// The state.Apply method (in state.go) contains the actual logic.
-	if err := e.state.Apply(cmd); err != nil {
+	// Pass through the message metadata if available (from replay)
+	if err := e.state.Apply(cmd, msg); err != nil {
 		// Log the error, but return it to trigger panic in core.Executor
 		slog.Error("State Apply failed for CreateCommand", "error", err, "name", cmd.Name)
 		return fmt.Errorf("state.Apply failed for CreateCommand: %w", err)
@@ -81,7 +82,7 @@ func (e *Executor) HandleCreate(ctx context.Context, command core.Command) error
 }
 
 // HandleUpdate applies state changes for UpdateCommand.
-func (e *Executor) HandleUpdate(ctx context.Context, command core.Command) error {
+func (e *Executor) HandleUpdate(ctx context.Context, command core.Command, msg *core.Message) error {
 	cmd, ok := command.(UpdateCommand)
 	if !ok {
 		err := fmt.Errorf("internal error: incorrect command type (%T) passed to HandleUpdate", command)
@@ -92,7 +93,8 @@ func (e *Executor) HandleUpdate(ctx context.Context, command core.Command) error
 	slog.Debug("Applying state change for UpdateCommand", "feature", "petrock_example_feature_name", "id", cmd.ID)
 
 	// Apply the change using the state's Apply method.
-	if err := e.state.Apply(cmd); err != nil {
+	// Pass through the message metadata if available (from replay)
+	if err := e.state.Apply(cmd, msg); err != nil {
 		slog.Error("State Apply failed for UpdateCommand", "error", err, "id", cmd.ID)
 		return fmt.Errorf("state.Apply failed for UpdateCommand: %w", err)
 	}
@@ -102,7 +104,7 @@ func (e *Executor) HandleUpdate(ctx context.Context, command core.Command) error
 }
 
 // HandleDelete applies state changes for DeleteCommand.
-func (e *Executor) HandleDelete(ctx context.Context, command core.Command) error {
+func (e *Executor) HandleDelete(ctx context.Context, command core.Command, msg *core.Message) error {
 	cmd, ok := command.(DeleteCommand)
 	if !ok {
 		err := fmt.Errorf("internal error: incorrect command type (%T) passed to HandleDelete", command)
@@ -113,7 +115,8 @@ func (e *Executor) HandleDelete(ctx context.Context, command core.Command) error
 	slog.Debug("Applying state change for DeleteCommand", "feature", "petrock_example_feature_name", "id", cmd.ID)
 
 	// Apply the change using the state's Apply method.
-	if err := e.state.Apply(cmd); err != nil {
+	// Pass through the message metadata if available (from replay)
+	if err := e.state.Apply(cmd, msg); err != nil {
 		slog.Error("State Apply failed for DeleteCommand", "error", err, "id", cmd.ID)
 		return fmt.Errorf("state.Apply failed for DeleteCommand: %w", err)
 	}

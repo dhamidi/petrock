@@ -22,12 +22,13 @@ This file defines the `serve` subcommand, responsible for starting the HTTP serv
     4. **Initialize Feature States:** Create initial instances of each feature's state (e.g., `posts.NewPostState()`).
     5. **Register Features:** Call `RegisterAllFeatures(...)` (from `cmd/<project>/features.go`), passing registries, log, executor, feature states, etc. This populates the command registry with state update handlers.
     6. **Replay Log & Rebuild State:**
-        - Load all messages: `messages, err := messageLog.Load(ctx)`.
-        - Iterate through messages:
-            - Decode message: `cmdOrQuery, err := messageLog.Decode(msg)`.
+        - Get starting version: `startVersion := uint64(0)` (start from beginning).
+        - Iterate through messages using the iterator: 
+            `for msg := range messageLog.After(ctx, startVersion) {`
+            - Access decoded message directly: `decodedMsg := msg.DecodedPayload`.
             - If it's a command (`core.Command`):
                 - Look up state update handler: `handler, ok := commandRegistry.GetHandler(cmd.CommandName())`.
-                - If handler found, execute it: `err := handler(ctx, cmd)`. **Panic on error here.**
+                - If handler found, execute it with both the payload and message metadata: `err := handler(ctx, decodedMsg, &msg.Message)`. **Panic on error here.**
             - If it's a query or unknown type, ignore for replay.
     7. Creates the main HTTP router (`mux := http.NewServeMux()`).
     8. **Registers core HTTP handlers** (e.g., `/`, `/commands`, `/queries`) using the `executor`, `queryRegistry`, etc.

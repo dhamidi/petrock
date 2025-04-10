@@ -79,7 +79,7 @@ Petrock is about generating the simplest code that could possibly work to achiev
 
 The high-level overview of a Petrock application is this:
 
-1.  **Startup:** The application initializes core components (database connection, message log, command/query registries, application state). It then replays all messages from the persistent log (`messages` table in SQLite) to rebuild the in-memory application state. Finally, it registers all features defined in the project.
+1.  **Startup:** The application initializes core components (database connection, message log, command/query registries, application state). It then replays messages from the persistent log (`messages` table in SQLite) by iterating through them with `messageLog.After(ctx, 0)` to rebuild the in-memory application state. Finally, it registers all features defined in the project.
 2.  **Feature Registration:** When `petrock feature <name>` is run, it automatically adds an import and a registration call (e.g., `posts.RegisterFeature(...)`) to `cmd/<project>/features.go`. During startup, `RegisterAllFeatures` calls each feature's `RegisterFeature` function. This function registers the feature's command handlers, query handlers, and message types (for decoding) with the core registries and message log.
 3.  **API Interaction:** The application exposes a core API for interacting with commands and queries:
     *   `GET /`: Displays an HTML index page listing available commands and queries.
@@ -100,6 +100,6 @@ The high-level overview of a Petrock application is this:
     *   The Executor appends the command to `core.MessageLog`. Fails -> return logging error.
     *   The Executor calls the state update handler (defined in `<feature>/execute.go`). Fails -> **panic**.
 6.  **Query Handling:** Queries (`core.Query`) are dispatched via the `core.QueryRegistry` to the appropriate handler defined in `<feature>/query.go`. These handlers read directly from the feature's in-memory state (`<feature>/state.go`).
-7.  **State Management:** Each feature manages its state in `<feature>/state.go`. State is rebuilt at startup by replaying the `core.MessageLog`: for each logged command, the corresponding *state update handler* (retrieved from `core.CommandRegistry`) is executed. Live updates also happen via these same state update handlers, called by the `core.Executor` after successful validation and logging.
+7.  **State Management:** Each feature manages its state in `<feature>/state.go`. State is rebuilt at startup by replaying the `core.MessageLog` using the iterator pattern: `for msg := range messageLog.After(ctx, 0)`. For each message, the corresponding *state update handler* (retrieved from `core.CommandRegistry`) is executed with both the decoded payload and a pointer to the message metadata (`handler(ctx, msg.DecodedPayload, &msg.Message)`). Live updates also happen via these same state update handlers, called by the `core.Executor` after successful validation and logging, but without message metadata (`handler(ctx, cmd, nil)`).
 
 All commands are serialized with a configurable encoder (JSON by default) and persisted in a SQLite database in a single table called `messages`.

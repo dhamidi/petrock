@@ -42,11 +42,12 @@ func NewState() *State {
 // This is the core logic for state reconstruction during replay and updates during runtime.
 // Note: This example assumes commands are logged directly. If events are logged,
 // the logic here would react to event types instead.
-func (s *State) Apply(msg interface{}) error {
+// The msg parameter is non-nil during replay (providing timestamp and ID) and nil during direct execution.
+func (s *State) Apply(payload interface{}, msg *core.Message) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	switch cmd := msg.(type) {
+	switch cmd := payload.(type) {
 	case CreateCommand:
 		// Check if item already exists (optional, depends on desired idempotency)
 		if _, exists := s.Items[cmd.Name]; exists { // Assuming Name is used as ID for creation simplicity
@@ -57,8 +58,8 @@ func (s *State) Apply(msg interface{}) error {
 			ID:          cmd.Name, // Use Name as ID for simplicity, replace with generated ID if needed
 			Name:        cmd.Name,
 			Description: cmd.Description,
-			CreatedAt:   time.Now().UTC(), // Ideally, timestamp comes from the message log entry
-			UpdatedAt:   time.Now().UTC(),
+			CreatedAt:   getTimestamp(msg), // Use message timestamp if available, otherwise current time
+			UpdatedAt:   getTimestamp(msg),
 			Version:     1,
 		}
 		s.Items[newItem.ID] = newItem
@@ -72,7 +73,7 @@ func (s *State) Apply(msg interface{}) error {
 		}
 		existingItem.Name = cmd.Name
 		existingItem.Description = cmd.Description
-		existingItem.UpdatedAt = time.Now().UTC() // Ideally, timestamp from log
+		existingItem.UpdatedAt = getTimestamp(msg) // Use message timestamp if available, otherwise current time
 		existingItem.Version++
 		slog.Debug("Applied UpdateCommand to state", "id", existingItem.ID, "version", existingItem.Version)
 
@@ -184,6 +185,14 @@ func (s *State) DeleteItem(id string) error {
 	}
 	delete(s.Items, id)
 	return nil
+}
+
+// getTimestamp returns the timestamp from the message metadata if available, otherwise current time
+func getTimestamp(msg *core.Message) time.Time {
+	if msg != nil {
+		return msg.Timestamp
+	}
+	return time.Now().UTC()
 }
 
 // --- Helper to register types with the message log ---

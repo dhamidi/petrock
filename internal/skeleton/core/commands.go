@@ -21,7 +21,8 @@ type Command interface {
 // CommandHandler defines the function signature for handling commands.
 // These handlers are responsible *only* for applying state changes after validation and logging.
 // Returning an error from a CommandHandler will cause the core.Executor to panic.
-type CommandHandler func(ctx context.Context, cmd Command) error
+// The msg parameter is non-nil during replay (providing timestamp and ID) and nil during direct execution.
+type CommandHandler func(ctx context.Context, cmd Command, msg *Message) error
 
 // FeatureExecutor defines an interface that feature-specific executors must implement.
 // This allows the central core.Executor to delegate command validation to the appropriate feature.
@@ -215,7 +216,7 @@ func (e *Executor) Execute(ctx context.Context, cmd Command) error {
 
 	// 4. Execute State Update Handler
 	slog.Debug("Executing state update handler", "name", name)
-	handlerErr := handler(ctx, cmd)
+	handlerErr := handler(ctx, cmd, nil) // Pass nil for message metadata during live execution
 	if handlerErr != nil {
 		// PANIC! If the handler fails *after* the command was logged,
 		// the state is inconsistent with the log. This is unrecoverable

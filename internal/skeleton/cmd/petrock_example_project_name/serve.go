@@ -36,16 +36,17 @@ func NewAppState() *AppState {
 
 // Apply processes a message (typically a command or event) to update the state.
 // This is crucial for rebuilding state from the message log on startup.
-func (s *AppState) Apply(msg interface{}) error {
+// The msgMeta parameter is non-nil during replay, providing access to timestamp and ID.
+func (s *AppState) Apply(msg interface{}, msgMeta *core.Message) error {
 	// In a real app, this would delegate to the appropriate feature state's Apply method
 	// based on the message type.
-	slog.Debug("AppState Apply called (placeholder)", "type", fmt.Sprintf("%T", msg))
+	slog.Debug("AppState Apply called (placeholder)", "type", fmt.Sprintf("%T", msg), "hasMeta", msgMeta != nil)
 	// Example delegation:
 	// switch m := msg.(type) {
 	// case posts.CreateCommand, posts.UpdateCommand, posts.DeleteCommand:
-	//     return s.posts.Apply(m)
+	//     return s.posts.Apply(m, msgMeta)
 	// case users.RegisterCommand:
-	//     return s.users.Apply(m)
+	//     return s.users.Apply(m, msgMeta)
 	// default:
 	//     slog.Warn("AppState.Apply received unhandled message type", "type", fmt.Sprintf("%T", msg))
 	// }
@@ -120,26 +121,28 @@ func runServe(cmd *cobra.Command, args []string) error {
 
 	// 7. Replay Message Log to Build State
 	slog.Info("Replaying message log to build application state...")
-	messages, err := messageLog.Load(context.Background())
-	if err != nil {
-		// Log loading errors can be critical, might indicate corruption
-		return fmt.Errorf("failed to load messages from log for replay: %w", err)
-	}
-	slog.Debug("Loaded messages from log", "count", len(messages))
-	replayErrors := 0                 // Count errors during replay
+	// Get the current log version
+	startVersion := uint64(0) // Start from the beginning
 	replayCtx := context.Background() // Use a background context for replay
+	replayErrors := 0 // Count errors during replay
 
-	for i, msg := range messages {
+	// Use the iterator to process messages one by one
+	messageCount := 0
+	for msg := range messageLog.After(replayCtx, startVersion) {
+		messageCount++
+		// DecodedPayload contains the decoded command or query
+		decodedMsg := msg.DecodedPayload
+
 		// Check if the message is a command
-		cmd, isCommand := msg.(core.Command)
+		cmd, isCommand := decodedMsg.(core.Command)
 		if !isCommand {
 			// If it's not a command (e.g., an event if using event sourcing),
 			// the AppState.Apply should handle it directly if needed.
 			// For now, we assume only commands modify state via handlers.
 			// If AppState needs to react to other message types, add logic here or in AppState.Apply.
-			slog.Debug("Skipping non-command message during handler replay", "index", i, "type", fmt.Sprintf("%T", msg))
+			slog.Debug("Skipping non-command message during handler replay", "id", msg.ID, "type", fmt.Sprintf("%T", decodedMsg))
 			// Example: Apply directly to appState if needed for non-command messages
-			// if err := appState.Apply(msg); err != nil { ... }
+			// if err := appState.Apply(decodedMsg, &msg.Message); err != nil { ... }
 			continue
 		}
 
@@ -148,22 +151,23 @@ func runServe(cmd *cobra.Command, args []string) error {
 		if !found {
 			// This indicates a potential issue: a command was logged but no handler is registered.
 			// This might happen if a feature was removed or a command renamed without migration.
-			slog.Error("Log replay: No state handler found for logged command", "index", i, "name", cmd.CommandName())
+			slog.Error("Log replay: No state handler found for logged command", "id", msg.ID, "name", cmd.CommandName())
 			replayErrors++
 			continue // Skip this command
 		}
 
 		// Execute ONLY the state update handler. DO NOT VALIDATE OR LOG AGAIN.
-		slog.Debug("Log replay: Applying state handler", "index", i, "name", cmd.CommandName())
-		handlerErr := handler(replayCtx, cmd)
+		// Pass the message metadata to provide context like timestamp during replay
+		slog.Debug("Log replay: Applying state handler", "id", msg.ID, "name", cmd.CommandName())
+		handlerErr := handler(replayCtx, cmd, &msg.Message)
 		if handlerErr != nil {
 			// PANIC! If a state handler fails during replay, the state logic is
 			// inconsistent with the previously validated and logged command.
-			slog.Error("Log replay: State update handler failed! PANICKING.", "index", i, "name", cmd.CommandName(), "error", handlerErr)
+			slog.Error("Log replay: State update handler failed! PANICKING.", "id", msg.ID, "name", cmd.CommandName(), "error", handlerErr)
 			panic(fmt.Sprintf("unrecoverable state inconsistency during log replay: handler for %q failed: %v", cmd.CommandName(), handlerErr))
 		}
 	}
-	slog.Info("State replay completed", "message_count", len(messages), "replay_errors", replayErrors)
+	slog.Info("State replay completed", "message_count", messageCount, "replay_errors", replayErrors)
 	if replayErrors > 0 {
 		slog.Warn("Some messages were skipped during state replay due to missing handlers.")
 	}
