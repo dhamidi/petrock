@@ -62,7 +62,11 @@ These routes will be defined:
 
 ### 3. Command/Query Functionality
 
-1. **Update Command Validation in `messages.go`**
+1. **Update Command Structure in `messages.go`**
+   - [ ] Add timestamp fields to all commands (`CreatedAt` in `CreateCommand`, etc.)
+   - [ ] Set timestamp fields in handlers before command execution
+
+2. **Update Command Validation in `messages.go`**
    - [ ] Ensure `CreateCommand.Validate()` trims strings using `strings.TrimSpace()`
    - [ ] Add empty string validation in `CreateCommand.Validate()`
    - [ ] Add ID uniqueness check in state map
