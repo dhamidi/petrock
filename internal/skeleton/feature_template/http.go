@@ -11,9 +11,6 @@ import (
 	"time"
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
-	g "maragu.dev/gomponents"                     // Gomponents import for view functions
-	. "maragu.dev/gomponents/components"          // Components import for DeleteConfirmForm
-	"maragu.dev/gomponents/html"                // HTML import for DeleteConfirmForm
 )
 
 // FeatureServer holds dependencies required by the feature's HTTP handlers.

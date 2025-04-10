@@ -152,7 +152,7 @@ func ItemForm(form *core.Form, item *Result, csrfToken string) g.Node {
 					Classes{"block": true, "text-sm": true, "font-medium": true, "text-gray-700": true, "mb-1": true},
 					g.Text("Description"),
 				),
-				html.TextArea(
+				html.Textarea(
 					g.Attr("name", "description"),
 					g.Attr("id", "description"),
 					Classes{
