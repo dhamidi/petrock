@@ -76,104 +76,28 @@ func runServe(cmd *cobra.Command, args []string) error {
 	dbPath, _ := cmd.Flags().GetString("db-path") // Get db-path flag value
 	addr := fmt.Sprintf("%s:%d", host, port)
 
-	// --- Initialization ---
-	slog.Info("Initializing application...")
-
-	// 1. Initialize Core Registries
-	commandRegistry := core.NewCommandRegistry()
-	queryRegistry := core.NewQueryRegistry()
-	slog.Debug("Initialized command and query registries")
-
-	// 2. Initialize Encoder
-	encoder := &core.JSONEncoder{} // Using JSON encoder
-	slog.Debug("Initialized JSON encoder")
-
-	// 3. Initialize Database Connection
-	slog.Debug("Setting up database connection", "path", dbPath)
-	db, err := core.SetupDatabase(dbPath)
+	// --- Initialization using core.App ---
+	// Initialize the application using the new core.App struct
+	app, err := core.NewApp(dbPath)
 	if err != nil {
-		return fmt.Errorf("failed to setup database at %s: %w", dbPath, err)
+		return fmt.Errorf("failed to initialize application: %w", err)
 	}
-	defer func() {
-		slog.Debug("Closing database connection", "path", dbPath)
-		if err := db.Close(); err != nil {
-			slog.Error("Error closing database", "path", dbPath, "error", err)
-		}
-	}()
+	defer app.Close() // Ensure resources are closed properly
 
-	// 4. Initialize Message Log
-	slog.Debug("Initializing message log")
-	messageLog, err := core.NewMessageLog(db, encoder)
-	if err != nil {
-		// This also runs setupSchema, so errors are possible here
-		return fmt.Errorf("failed to initialize message log: %w", err)
-	}
-	// Note: Message type registration (messageLog.RegisterType) will happen
-	// within feature registration later.
-
-	// 5. Initialize Central Command Executor
-	slog.Debug("Initializing central command executor")
-	executor := core.NewExecutor(messageLog, commandRegistry)
-
-	// 6. Initialize Application State
+	// Initialize Application State
 	slog.Debug("Initializing application state")
 	appState := NewAppState() // Using the placeholder defined above
 
-	// 7. Replay Message Log to Build State
-	slog.Info("Replaying message log to build application state...")
-	// Get the current log version
-	startVersion := uint64(0) // Start from the beginning
-	replayCtx := context.Background() // Use a background context for replay
-	replayErrors := 0 // Count errors during replay
+	// Register features BEFORE replaying the log
+	// Pass all necessary dependencies through RegisterAllFeatures
+	RegisterAllFeatures(nil, app.CommandRegistry, app.QueryRegistry, app.MessageLog, app.Executor, appState, app.DB)
 
-	// Use the iterator to process messages one by one
-	messageCount := 0
-	for msg := range messageLog.After(replayCtx, startVersion) {
-		messageCount++
-		// DecodedPayload contains the decoded command or query
-		decodedMsg := msg.DecodedPayload
-
-		// Check if the message is a command
-		cmd, isCommand := decodedMsg.(core.Command)
-		if !isCommand {
-			// If it's not a command (e.g., an event if using event sourcing),
-			// the AppState.Apply should handle it directly if needed.
-			// For now, we assume only commands modify state via handlers.
-			// If AppState needs to react to other message types, add logic here or in AppState.Apply.
-			slog.Debug("Skipping non-command message during handler replay", "id", msg.ID, "type", fmt.Sprintf("%T", decodedMsg))
-			// Example: Apply directly to appState if needed for non-command messages
-			// if err := appState.Apply(decodedMsg, &msg.Message); err != nil { ... }
-			continue
-		}
-
-		// Get the state update handler for the command
-		handler, found := commandRegistry.GetHandler(cmd.CommandName())
-		if !found {
-			// This indicates a potential issue: a command was logged but no handler is registered.
-			// This might happen if a feature was removed or a command renamed without migration.
-			slog.Error("Log replay: No state handler found for logged command", "id", msg.ID, "name", cmd.CommandName())
-			replayErrors++
-			continue // Skip this command
-		}
-
-		// Execute ONLY the state update handler. DO NOT VALIDATE OR LOG AGAIN.
-		// Pass the message metadata to provide context like timestamp during replay
-		slog.Debug("Log replay: Applying state handler", "id", msg.ID, "name", cmd.CommandName())
-		handlerErr := handler(replayCtx, cmd, &msg.Message)
-		if handlerErr != nil {
-			// PANIC! If a state handler fails during replay, the state logic is
-			// inconsistent with the previously validated and logged command.
-			slog.Error("Log replay: State update handler failed! PANICKING.", "id", msg.ID, "name", cmd.CommandName(), "error", handlerErr)
-			panic(fmt.Sprintf("unrecoverable state inconsistency during log replay: handler for %q failed: %v", cmd.CommandName(), handlerErr))
-		}
-	}
-	slog.Info("State replay completed", "message_count", messageCount, "replay_errors", replayErrors)
-	if replayErrors > 0 {
-		slog.Warn("Some messages were skipped during state replay due to missing handlers.")
+	// Replay the message log to build application state
+	if err := app.ReplayLog(); err != nil {
+		return fmt.Errorf("failed to replay message log: %w", err)
 	}
 
 	// --- HTTP Server Setup ---
-	slog.Info("Setting up HTTP server...")
 	mux := http.NewServeMux()
 
 	// Example: Setup middleware (logging, CSRF)
@@ -185,26 +109,24 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// Example: Setup static file serving (if using embedded assets)
 	// coreAssetsFS := core.GetAssetsFS() // Assuming core has embedded assets
 	// mux.Handle("/assets/core/", http.StripPrefix("/assets/core/", http.FileServer(http.FS(coreAssetsFS))))
-	// TODO: Add similar handlers for feature assets
+	// TODO: Add handlers for feature assets
 
-	// Example: Define HTTP routes/handlers
-	// Note: net/http mux uses pattern-based routing. For path parameters like /posts/{id},
-	// you'd typically check r.URL.Path inside the handler or use a small helper/library.
-	mux.HandleFunc("GET /", core.HandleIndex(commandRegistry, queryRegistry)) // Pass registries to index handler
-	mux.HandleFunc("GET /commands", handleListCommands(commandRegistry))
-	// Pass the executor instance to the handler factory
-	mux.HandleFunc("POST /commands", handleExecuteCommand(executor, commandRegistry))
-	mux.HandleFunc("GET /queries", handleListQueries(queryRegistry))
-	// Route pattern updated to capture feature/kebab-case-query-name structure
-	mux.HandleFunc("GET /queries/{feature}/{queryName}", handleExecuteQuery(queryRegistry))
+	// Setup core HTTP routes
+	slog.Info("Setting up HTTP server routes...")
+	
+	// Setup index route
+	mux.HandleFunc("GET /", core.HandleIndex(app.CommandRegistry, app.QueryRegistry))
+	
+	// Setup core API routes
+	mux.HandleFunc("GET /commands", handleListCommands(app.CommandRegistry))
+	mux.HandleFunc("POST /commands", handleExecuteCommand(app.Executor, app.CommandRegistry))
+	mux.HandleFunc("GET /queries", handleListQueries(app.QueryRegistry))
+	mux.HandleFunc("GET /queries/{feature}/{queryName}", handleExecuteQuery(app.QueryRegistry))
 
-	// 8. Register Feature Handlers and Routes *after* core routes
-	// This allows features to potentially override core routes if needed.
-	slog.Debug("Registering features...")
-	// Pass all necessary dependencies, including the mux, db connection, and the central executor
-	RegisterAllFeatures(mux, commandRegistry, queryRegistry, messageLog, executor, appState, db) // Pass executor here
-	slog.Info("Features registered")
-	// TODO: Add handlers for feature assets (e.g., mux.Handle("/assets/posts/", posts.ServeAssets("/assets/posts/")))
+	// Register feature-specific handlers and routes
+	// The mux is needed here to register HTTP routes
+	// Note: Features were already registered above for command/query handling
+	RegisterFeatureRoutes(mux, appState, app.Executor) // A new function to register only routes
 
 	// --- Server Start and Shutdown ---
 	server := &http.Server{
