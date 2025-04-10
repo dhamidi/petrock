@@ -1,11 +1,5 @@
 # Deficiencies
 
-## cmd/serve.go
-
-- the application intialization logic should move to core/app.go
-- serve.go just uses the logic from core/app.go
-- as for the logic: features need to be registered before replay, as deserializing log entries depends on this
-
 ## feature_template/job.go
 
 - the skeleton is useless and idempotent execution is difficult to achieve with that as a base.

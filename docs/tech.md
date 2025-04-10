@@ -12,16 +12,17 @@
 
 ## Architecture Components
 
-- core/app.go: Central application initialization and coordination
+- core/app.go: Central application initialization and state management (no HTTP concerns)
 - core/commands.go: Command registry and execution
-- core/queries.go: Query registry and execution
+- core/queries.go: Query registry and execution 
 - core/log.go: Persistent event log
+- cmd/<project>/serve.go: HTTP server setup and request handling
 
 ## Application Flow
 
-1. App initialization (core/app.go)
-2. Feature registration (called by app.go before replay)
-3. Log replay to rebuild state (after registration)
+1. App initialization (core/app.go) - creates DB, registries, message log, and executor
+2. Feature registration (called from serve.go but registered with core components)
+3. Log replay to rebuild state (must happen after registration for proper deserialization)
 4. HTTP server setup and lifecycle (cmd/serve.go)
 
 ## For code in use in the petrock project

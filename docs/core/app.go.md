@@ -1,6 +1,6 @@
 # Plan for core/app.go
 
-This file defines the central application initialization logic, handling dependency setup, feature registration, and state replay.
+This file defines the central application initialization logic, handling dependency setup, feature registration, and state replay. The App struct has no HTTP/web server concerns; it focuses solely on core business logic and application state management.
 
 ## Types
 
@@ -15,22 +15,18 @@ This file defines the central application initialization logic, handling depende
   - Initializes encoder
   - Creates message log, command registry, query registry
   - Creates executor
-  - Initializes application state
+  - Returns the initialized app (appState will be set by caller)
 
-- `(a *App) RegisterFeatures()`: Registers all application features
-  - Calls feature registration functions
+- `(a *App) RegisterFeatures(appState interface{})`: Registers all application features
+  - Takes appState as a parameter for features to access
   - Registers message types with the message log
   - Sets up command handlers, query handlers
-  - MUST be called before replay
+  - MUST be called before replay for proper message deserialization
 
 - `(a *App) ReplayLog() error`: Replays the message log to build application state
   - Iterates through all messages starting from version 0
   - Applies commands via registered handlers
   - Panics if a command handler fails during replay (indicates state inconsistency)
-
-- `(a *App) SetupHTTPHandlers(mux *http.ServeMux)`: Registers HTTP handlers for core routes
-  - Sets up /commands, /queries endpoints
-  - Calls feature handler registration functions
 
 - `(a *App) Close() error`: Gracefully closes all resources
   - Closes database connection
