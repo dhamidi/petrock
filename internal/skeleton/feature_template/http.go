@@ -12,6 +12,7 @@ import (
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 	g "maragu.dev/gomponents"                     // For rendering HTML
+	"maragu.dev/gomponents/html"
 )
 
 // FeatureServer holds dependencies required by the feature's HTTP handlers.
@@ -80,7 +81,6 @@ func (fs *FeatureServer) HandleGetItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render the item view HTML
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	// Type assert the result to the appropriate type
 	itemResult, ok := result.(*Result)
 	if !ok {
@@ -92,11 +92,8 @@ func (fs *FeatureServer) HandleGetItem(w http.ResponseWriter, r *http.Request) {
 	// Create page title
 	pageTitle := fmt.Sprintf("%s - Detail", itemResult.Name)
 	
-	// Wrap the component in the Layout
-	page := core.Layout(pageTitle, ItemView(*itemResult))
-	
-	// Render the page
-	if err := page.Render(w); err != nil {
+	// Render the page with our helper
+	if err := RenderPage(w, pageTitle, ItemView(*itemResult)); err != nil {
 		slog.Error("Error rendering item view", "error", err)
 		http.Error(w, "Error rendering view", http.StatusInternalServerError)
 	}
@@ -128,7 +125,6 @@ func (fs *FeatureServer) HandleListItems(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Render the list view HTML
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	// Type assert the result to the appropriate type
 	listResult, ok := result.(*ListResult)
 	if !ok {
@@ -140,11 +136,8 @@ func (fs *FeatureServer) HandleListItems(w http.ResponseWriter, r *http.Request)
 	// Create page title
 	pageTitle := "All Items"
 	
-	// Wrap the component in the Layout
-	page := core.Layout(pageTitle, ItemsListView(*listResult))
-	
-	// Render the page
-	if err := page.Render(w); err != nil {
+	// Render the page with our helper
+	if err := RenderPage(w, pageTitle, ItemsListView(*listResult)); err != nil {
 		slog.Error("Error rendering list view", "error", err)
 		http.Error(w, "Error rendering view", http.StatusInternalServerError)
 	}
@@ -310,16 +303,11 @@ func (fs *FeatureServer) HandleNewForm(w http.ResponseWriter, r *http.Request) {
 	csrfToken := "token" // Replace with actual CSRF token generation
 
 	// Render the form
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	
 	// Create page title
 	pageTitle := "Create New Item"
 	
-	// Wrap the form in the Layout
-	page := core.Layout(pageTitle, ItemForm(form, nil, csrfToken))
-	
-	// Render the page
-	if err := page.Render(w); err != nil {
+	// Render the page with our helper
+	if err := RenderPage(w, pageTitle, ItemForm(form, nil, csrfToken)); err != nil {
 		slog.Error("Error rendering new item form", "error", err)
 		http.Error(w, "Error rendering form", http.StatusInternalServerError)
 	}
@@ -345,17 +333,12 @@ func (fs *FeatureServer) HandleCreateForm(w http.ResponseWriter, r *http.Request
 
 	// If the form has errors, re-render it with validation messages
 	if !form.IsValid() {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		csrfToken := "token" // Replace with actual CSRF token
-		
 		// Create page title for validation error
 		pageTitle := "Create New Item"
-		
-		// Wrap the form in the Layout
-		page := core.Layout(pageTitle, ItemForm(form, nil, csrfToken))
+		csrfToken := "token" // Replace with actual CSRF token
 		
 		// Render the page with validation errors
-		if err := page.Render(w); err != nil {
+		if err := RenderPage(w, pageTitle, ItemForm(form, nil, csrfToken)); err != nil {
 			slog.Error("Error rendering form with validation errors", "error", err)
 			http.Error(w, "Error rendering form", http.StatusInternalServerError)
 		}
@@ -377,17 +360,13 @@ func (fs *FeatureServer) HandleCreateForm(w http.ResponseWriter, r *http.Request
 		if strings.Contains(err.Error(), "validation failed") || strings.Contains(err.Error(), "already exists") {
 			// Add the error to the form and re-render
 			form.AddError("name", err.Error())
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			csrfToken := "token" // Replace with actual CSRF token
 			
 			// Create page title for validation error
 			pageTitle := "Create New Item"
-			
-			// Wrap the form in the Layout
-			page := core.Layout(pageTitle, ItemForm(form, nil, csrfToken))
+			csrfToken := "token" // Replace with actual CSRF token
 			
 			// Render the page with validation errors
-			if err := page.Render(w); err != nil {
+			if err := RenderPage(w, pageTitle, ItemForm(form, nil, csrfToken)); err != nil {
 				slog.Error("Error rendering form with validation errors", "error", err)
 				http.Error(w, "Error rendering form", http.StatusInternalServerError)
 			}
@@ -443,16 +422,11 @@ func (fs *FeatureServer) HandleEditForm(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Render the edit form
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	
 	// Create page title
 	pageTitle := fmt.Sprintf("Edit %s", item.Name)
 	
-	// Wrap the form in the Layout
-	page := core.Layout(pageTitle, ItemForm(form, item, csrfToken))
-	
-	// Render the page
-	if err := page.Render(w); err != nil {
+	// Render the page with our helper
+	if err := RenderPage(w, pageTitle, ItemForm(form, item, csrfToken)); err != nil {
 		slog.Error("Error rendering edit form", "error", err)
 		http.Error(w, "Error rendering form", http.StatusInternalServerError)
 	}
@@ -500,17 +474,12 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		csrfToken := "token" // Replace with actual CSRF token
-		
 		// Create page title for validation error
 		pageTitle := fmt.Sprintf("Edit %s", item.Name)
-		
-		// Wrap the form in the Layout
-		page := core.Layout(pageTitle, ItemForm(form, item, csrfToken))
+		csrfToken := "token" // Replace with actual CSRF token
 		
 		// Render the page with validation errors
-		if err := page.Render(w); err != nil {
+		if err := RenderPage(w, pageTitle, ItemForm(form, item, csrfToken)); err != nil {
 			slog.Error("Error rendering form with validation errors", "error", err)
 			http.Error(w, "Error rendering form", http.StatusInternalServerError)
 		}
@@ -551,17 +520,12 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 				return
 			}
 
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			csrfToken := "token" // Replace with actual CSRF token
-			
 			// Create page title for validation error
 			pageTitle := fmt.Sprintf("Edit %s", item.Name)
-			
-			// Wrap the form in the Layout
-			page := core.Layout(pageTitle, ItemForm(form, item, csrfToken))
+			csrfToken := "token" // Replace with actual CSRF token
 			
 			// Render the page with validation errors
-			if err := page.Render(w); err != nil {
+			if err := RenderPage(w, pageTitle, ItemForm(form, item, csrfToken)); err != nil {
 				slog.Error("Error rendering form with validation errors", "error", err)
 				http.Error(w, "Error rendering form", http.StatusInternalServerError)
 			}
@@ -614,16 +578,11 @@ func (fs *FeatureServer) HandleDeleteForm(w http.ResponseWriter, r *http.Request
 	csrfToken := "token" // Replace with actual CSRF token generation
 
 	// Render the delete confirmation view
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	
 	// Create page title
 	pageTitle := fmt.Sprintf("Delete %s", item.Name)
 	
-	// Wrap the delete confirmation form in the Layout
-	page := core.Layout(pageTitle, DeleteConfirmForm(item, csrfToken))
-	
-	// Render the page
-	if err := page.Render(w); err != nil {
+	// Render the page with our helper
+	if err := RenderPage(w, pageTitle, DeleteConfirmForm(item, csrfToken)); err != nil {
 		slog.Error("Error rendering delete confirmation", "error", err)
 		http.Error(w, "Error rendering confirmation", http.StatusInternalServerError)
 	}
@@ -677,3 +636,38 @@ func (fs *FeatureServer) HandleDeleteConfirm(w http.ResponseWriter, r *http.Requ
 }
 
 // Add more handlers as needed...
+
+// --- View Helper Functions ---
+
+// RenderPage is a helper function to render a complete HTML page with proper layout
+func RenderPage(w http.ResponseWriter, pageTitle string, content g.Node) error {
+	// Set content type for HTML
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	
+	// Create the page using core.Layout
+	html := html.HTML(
+		html.Lang("en"),
+		html.Head(
+			html.Meta(html.Charset("utf-8")),
+			html.Meta(html.Name("viewport"), html.Content("width=device-width, initial-scale=1")),
+			html.TitleEl(g.Text(pageTitle)),
+			// Link to Tailwind CSS (CDN for simplicity)
+			html.Link(
+				html.Rel("stylesheet"),
+				html.Href("https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"),
+			),
+		),
+		html.Body(
+			// Basic styling
+			g.Attr("class", "bg-gray-100 font-sans antialiased"),
+			// Main content
+			html.Main(
+				// Page content
+				content,
+			),
+		),
+	)
+	
+	// Render the HTML
+	return html.Render(w)
+}
