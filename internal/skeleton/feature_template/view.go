@@ -277,19 +277,11 @@ func ItemsListView(result ListResult) g.Node {
 				return html.Div(
 					g.Attr("class", "text-center p-12 border border-dashed border-slate-300 rounded-lg"),
 					html.Div(
-						g.Attr("class", "mx-auto h-12 w-12 text-slate-400"),
-						// Simple placeholder icon
-						html.Svg(
-							g.Attr("fill", "none"),
-							g.Attr("viewBox", "0 0 24 24"),
-							g.Attr("stroke", "currentColor"),
-							g.Attr("aria-hidden", "true"),
-							html.Path(
-								g.Attr("stroke-linecap", "round"),
-								g.Attr("stroke-linejoin", "round"),
-								g.Attr("stroke-width", "2"),
-								g.Attr("d", "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"),
-							),
+						g.Attr("class", "mx-auto h-12 w-12 text-slate-400 flex items-center justify-center border-2 border-dashed border-slate-300 rounded-full"),
+						// Simple placeholder text instead of SVG
+						html.Span(
+							g.Attr("class", "text-2xl font-light"),
+							g.Text("!"),
 						),
 					),
 					html.H3(
@@ -465,23 +457,10 @@ func successAlert(message string) g.Node {
 		html.Div(
 			g.Attr("class", "flex"),
 			html.Div(
-				g.Attr("class", "flex-shrink-0"),
-				html.Svg(
-					g.Attr("class", "h-5 w-5 text-green-400"),
-					g.Attr("viewBox", "0 0 20 20"),
-					g.Attr("fill", "currentColor"),
-					html.Path(
-						g.Attr("fill-rule", "evenodd"),
-						g.Attr("d", "M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"),
-						g.Attr("clip-rule", "evenodd"),
-					),
-				),
-			),
-			html.Div(
 				g.Attr("class", "ml-3"),
 				html.P(
 					g.Attr("class", "text-sm font-medium text-green-800"),
-					g.Text(message),
+					g.Text("✓ " + message),
 				),
 			),
 		),
