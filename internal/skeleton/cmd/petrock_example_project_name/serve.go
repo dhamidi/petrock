@@ -1,18 +1,14 @@
 package main
 
 import (
-	"context"
 	"encoding/json" // Added for JSON handling in API endpoints
 	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url" // Added for parsing query parameters
-	"os"
-	"os/signal"
 	"reflect" // Added for command/query execution handlers
 	"strconv" // Added for converting query parameters
 	"strings" // Added for query parameter population helper
-	"syscall"
 	"time"
 
 	"github.com/petrock/example_module_path/core" // Assuming core package exists
@@ -140,42 +136,14 @@ func runServe(cmd *cobra.Command, args []string) error {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	// Channel to listen for errors starting the server
-	serverErrors := make(chan error, 1)
-
-	// Start the server in a goroutine
-	go func() {
-		slog.Info("Starting server", "address", addr)
-		serverErrors <- server.ListenAndServe()
-	}()
-
-	// Channel to listen for interrupt or terminate signals
-	shutdown := make(chan os.Signal, 1)
-	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
-
-	// Block until we receive a signal or server error
-	select {
-	case err := <-serverErrors:
+	// Start the server
+	slog.Info("Starting server", "address", addr)
+	err = server.ListenAndServe()
+	if err != nil {
 		return fmt.Errorf("server error: %w", err)
-	case sig := <-shutdown:
-		slog.Info("Shutdown signal received", "signal", sig)
-
-		// Graceful shutdown context with timeout
-		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		defer cancel()
-
-		// Attempt to gracefully shut down the server
-		if err := server.Shutdown(ctx); err != nil {
-			slog.Error("Graceful shutdown failed", "error", err)
-			// Force close if shutdown fails
-			if closeErr := server.Close(); closeErr != nil {
-				slog.Error("Failed to close server", "error", closeErr)
-			}
-			return fmt.Errorf("graceful shutdown failed: %w", err)
-		}
-		slog.Info("Server gracefully stopped")
 	}
 
+	// We should never reach here as ListenAndServe blocks until the server closes
 	return nil
 }
 
