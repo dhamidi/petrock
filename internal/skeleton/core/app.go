@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"net/http"
 )
 
 // App is the central struct that holds all application dependencies and state
@@ -14,7 +15,10 @@ type App struct {
 	CommandRegistry *CommandRegistry
 	QueryRegistry   *QueryRegistry
 	Executor        *Executor
-	AppState        interface{} // Generic application state interface
+	Features        []string         // Track registered feature names
+	Routes          []string         // Track registered routes
+	Mux             *http.ServeMux   // Store the HTTP mux
+	AppState        interface{}      // Generic application state interface
 }
 
 // NewApp creates and initializes all core dependencies
@@ -57,6 +61,8 @@ func NewApp(dbPath string) (*App, error) {
 		CommandRegistry: commandRegistry,
 		QueryRegistry:   queryRegistry,
 		Executor:        executor,
+		Features:        []string{},
+		Routes:          []string{},
 		// AppState will be initialized by the caller
 	}, nil
 }
@@ -66,8 +72,27 @@ func NewApp(dbPath string) (*App, error) {
 func (a *App) RegisterFeatures(appState interface{}) {
 	slog.Debug("Registering features...")
 	// The caller should provide this function to register all features
-	// RegisterAllFeatures(mux, a.CommandRegistry, a.QueryRegistry, a.MessageLog, a.Executor, appState, a.DB)
+	// RegisterAllFeatures(a)
+	a.AppState = appState
 	slog.Info("Features registered")
+}
+
+// RegisterFeature registers a feature with the application
+// This method tracks the feature name and calls the provided registration function
+func (a *App) RegisterFeature(name string, registerFn func(app *App, state interface{})) {
+	slog.Debug("Registering feature", "name", name)
+	a.Features = append(a.Features, name)
+	registerFn(a, a.AppState)
+}
+
+// RegisterRoute registers an HTTP route with the application
+// This is a wrapper around mux.HandleFunc that tracks the route
+func (a *App) RegisterRoute(pattern string, handler http.HandlerFunc) {
+	slog.Debug("Registering route", "pattern", pattern)
+	a.Routes = append(a.Routes, pattern)
+	if a.Mux != nil {
+		a.Mux.HandleFunc(pattern, handler)
+	}
 }
 
 // ReplayLog replays the message log to build application state

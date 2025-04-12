@@ -6,7 +6,7 @@ This document outlines the step-by-step implementation plan for adding the `self
 
 ## Implementation Steps
 
-### 1. Update Core `App` Struct
+### 1. Update Core `App` Struct ✅
 
 **Files to modify:**
 - `internal/skeleton/core/app.go`
