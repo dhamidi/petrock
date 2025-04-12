@@ -1,8 +1,8 @@
 package petrock_example_feature_name
 
 import (
-	"errors" // Added for validation errors
-	"fmt"    // Added for validation errors
+	"errors"  // Added for validation errors
+	"fmt"     // Added for validation errors
 	"strings" // Added for string trimming
 	"time"
 
@@ -38,16 +38,16 @@ func (c CreateCommand) Validate(state *State) error {
 	// Trim all string fields
 	trimmedName := strings.TrimSpace(c.Name)
 	trimmedDescription := strings.TrimSpace(c.Description)
-	
+
 	// Basic stateless validation
 	if trimmedName == "" {
 		return errors.New("item name cannot be empty")
 	}
-	
+
 	if trimmedDescription == "" {
 		return errors.New("item description cannot be empty")
 	}
-	
+
 	// Example stateful validation: Check if an item with the same name already exists
 	// Note: state.GetItem currently uses ID, not name. If using name as ID on create,
 	// this check is relevant. Adjust based on actual ID strategy.
@@ -84,20 +84,20 @@ func (c UpdateCommand) Validate(state *State) error {
 	trimmedID := strings.TrimSpace(c.ID)
 	trimmedName := strings.TrimSpace(c.Name)
 	trimmedDescription := strings.TrimSpace(c.Description)
-	
+
 	// Basic stateless validation
 	if trimmedID == "" {
 		return errors.New("item ID cannot be empty for update")
 	}
-	
+
 	if trimmedName == "" {
 		return errors.New("item name cannot be empty")
 	}
-	
+
 	if trimmedDescription == "" {
 		return errors.New("item description cannot be empty")
 	}
-	
+
 	// Example stateful validation: Check if the item exists
 	_, found := state.GetItem(trimmedID) // GetItem handles locking
 	if !found {
@@ -133,12 +133,12 @@ func (c DeleteCommand) CommandName() string {
 func (c DeleteCommand) Validate(state *State) error {
 	// Trim all string fields
 	trimmedID := strings.TrimSpace(c.ID)
-	
+
 	// Basic stateless validation
 	if trimmedID == "" {
 		return errors.New("item ID cannot be empty for deletion")
 	}
-	
+
 	// Example stateful validation: Check if the item exists
 	_, found := state.GetItem(trimmedID) // GetItem handles locking
 	if !found {

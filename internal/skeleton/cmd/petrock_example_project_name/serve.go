@@ -1,18 +1,14 @@
 package main
 
 import (
-	"context"
 	"encoding/json" // Added for JSON handling in API endpoints
 	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url" // Added for parsing query parameters
-	"os"
-	"os/signal"
 	"reflect" // Added for command/query execution handlers
 	"strconv" // Added for converting query parameters
 	"strings" // Added for query parameter population helper
-	"syscall"
 	"time"
 
 	"github.com/petrock/example_module_path/core" // Assuming core package exists
@@ -90,11 +86,13 @@ func runServe(cmd *cobra.Command, args []string) error {
 
 	// --- HTTP Server Setup ---
 	// Create HTTP mux BEFORE registering features
-	mux := http.NewServeMux()
-
+	app.Mux = http.NewServeMux()
+	
+	// Set app state
+	app.AppState = appState
+	
 	// Register features BEFORE replaying the log
-	// Pass all necessary dependencies through RegisterAllFeatures
-	RegisterAllFeatures(mux, app.CommandRegistry, app.QueryRegistry, app.MessageLog, app.Executor, appState, app.DB)
+	RegisterAllFeatures(app)
 
 	// Replay the message log to build application state
 	if err := app.ReplayLog(); err != nil {
@@ -116,13 +114,13 @@ func runServe(cmd *cobra.Command, args []string) error {
 	slog.Info("Setting up HTTP server routes...")
 	
 	// Setup index route
-	mux.HandleFunc("GET /", core.HandleIndex(app.CommandRegistry, app.QueryRegistry))
+	app.RegisterRoute("GET /", core.HandleIndex(app.CommandRegistry, app.QueryRegistry))
 	
 	// Setup core API routes
-	mux.HandleFunc("GET /commands", handleListCommands(app.CommandRegistry))
-	mux.HandleFunc("POST /commands", handleExecuteCommand(app.Executor, app.CommandRegistry))
-	mux.HandleFunc("GET /queries", handleListQueries(app.QueryRegistry))
-	mux.HandleFunc("GET /queries/{feature}/{queryName}", handleExecuteQuery(app.QueryRegistry))
+	app.RegisterRoute("GET /commands", handleListCommands(app.CommandRegistry))
+	app.RegisterRoute("POST /commands", handleExecuteCommand(app.Executor, app.CommandRegistry))
+	app.RegisterRoute("GET /queries", handleListQueries(app.QueryRegistry))
+	app.RegisterRoute("GET /queries/{feature}/{queryName}", handleExecuteQuery(app.QueryRegistry))
 
 	// IMPORTANT: We don't need this anymore since routes are registered during feature registration
 	// RegisterFeatureRoutes was a workaround for when mux was passed as nil to RegisterAllFeatures
@@ -132,48 +130,20 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// --- Server Start and Shutdown ---
 	server := &http.Server{
 		Addr:         addr,
-		Handler:      mux, // Use the configured mux (potentially wrapped in middleware)
+		Handler:      app.Mux, // Use the configured mux (potentially wrapped in middleware)
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	}
 
-	// Channel to listen for errors starting the server
-	serverErrors := make(chan error, 1)
-
-	// Start the server in a goroutine
-	go func() {
-		slog.Info("Starting server", "address", addr)
-		serverErrors <- server.ListenAndServe()
-	}()
-
-	// Channel to listen for interrupt or terminate signals
-	shutdown := make(chan os.Signal, 1)
-	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
-
-	// Block until we receive a signal or server error
-	select {
-	case err := <-serverErrors:
+	// Start the server
+	slog.Info("Starting server", "address", addr)
+	err = server.ListenAndServe()
+	if err != nil {
 		return fmt.Errorf("server error: %w", err)
-	case sig := <-shutdown:
-		slog.Info("Shutdown signal received", "signal", sig)
-
-		// Graceful shutdown context with timeout
-		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		defer cancel()
-
-		// Attempt to gracefully shut down the server
-		if err := server.Shutdown(ctx); err != nil {
-			slog.Error("Graceful shutdown failed", "error", err)
-			// Force close if shutdown fails
-			if closeErr := server.Close(); closeErr != nil {
-				slog.Error("Failed to close server", "error", closeErr)
-			}
-			return fmt.Errorf("graceful shutdown failed: %w", err)
-		}
-		slog.Info("Server gracefully stopped")
 	}
 
+	// We should never reach here as ListenAndServe blocks until the server closes
 	return nil
 }
 

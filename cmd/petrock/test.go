@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -160,6 +161,32 @@ func runTest(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unexpected status code: got %d, want %d", resp.StatusCode, http.StatusOK)
 	}
 	slog.Info("HTTP endpoint test successful", "status", resp.Status)
+
+	// 10. Test the self inspect command
+	slog.Info("Testing 'self inspect' command")
+	selfInspectCmd := exec.Command("go", "run", "./cmd/selftest", "self", "inspect")
+	
+	// Capture the command output
+	selfInspectOutput, err := selfInspectCmd.Output()
+	if err != nil {
+		return fmt.Errorf("failed to run 'self inspect' command: %w", err)
+	}
+
+	// 11. Verify the output is valid JSON
+	slog.Info("Verifying 'self inspect' output is valid JSON")
+	var result map[string]interface{}
+	if err := json.Unmarshal(selfInspectOutput, &result); err != nil {
+		return fmt.Errorf("'self inspect' command did not produce valid JSON: %w", err)
+	}
+
+	// 12. Verify the JSON contains the expected keys
+	expectedKeys := []string{"commands", "queries", "routes", "features"}
+	for _, key := range expectedKeys {
+		if _, ok := result[key]; !ok {
+			return fmt.Errorf("'self inspect' output missing expected key: %s", key)
+		}
+	}
+	slog.Info("'self inspect' command test successful")
 
 	slog.Info("Self-test completed successfully!")
 	fmt.Println("\nSuccess! The generated project builds correctly and serves content.")

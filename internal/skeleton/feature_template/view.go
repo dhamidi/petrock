@@ -17,36 +17,36 @@ func ItemView(item Result) g.Node {
 		// Item information card
 		html.Div(
 			g.Attr("class", "space-y-6"),
-			
+
 			// Item metadata in a grid layout - responsive
 			html.Dl(
 				g.Attr("class", "grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6"),
-				
+
 				// ID field
 				html.Div(
 					g.Attr("class", "col-span-1"),
 					html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("ID")),
 					html.Dd(g.Attr("class", "mt-1 text-sm text-slate-900"), g.Text(item.ID)),
 				),
-				
+
 				// Name field
 				html.Div(
 					g.Attr("class", "col-span-1"),
 					html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("Name")),
 					html.Dd(g.Attr("class", "mt-1 text-sm text-slate-900 font-medium"), g.Text(item.Name)),
 				),
-				
+
 				// Description field - spans full width
 				html.Div(
 					g.Attr("class", "col-span-1 sm:col-span-2"),
 					html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("Description")),
 					html.Dd(
-						g.Attr("class", "mt-1 text-sm text-slate-900 whitespace-pre-wrap"), 
+						g.Attr("class", "mt-1 text-sm text-slate-900 whitespace-pre-wrap"),
 						g.Text(item.Description),
 					),
 				),
-				
-				// Created date 
+
+				// Created date
 				html.Div(
 					g.Attr("class", "col-span-1"),
 					html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("Created")),
@@ -55,7 +55,7 @@ func ItemView(item Result) g.Node {
 						g.Text(item.CreatedAt.Format("Jan 2, 2006 at 15:04")),
 					),
 				),
-				
+
 				// Updated date
 				html.Div(
 					g.Attr("class", "col-span-1"),
@@ -65,7 +65,7 @@ func ItemView(item Result) g.Node {
 						g.Text(item.UpdatedAt.Format("Jan 2, 2006 at 15:04")),
 					),
 				),
-				
+
 				// Version number
 				html.Div(
 					g.Attr("class", "col-span-1 sm:col-span-2"),
@@ -74,7 +74,7 @@ func ItemView(item Result) g.Node {
 				),
 			),
 		),
-		
+
 		// Actions section - responsive
 		html.Div(
 			g.Attr("class", "mt-8 flex flex-col sm:flex-row gap-3"),
@@ -109,11 +109,11 @@ func ItemForm(form *core.Form, item *Result, csrfToken string) g.Node {
 	isEdit := item != nil
 	var title, submitLabel string
 	var actionURL string
-	
+
 	if isEdit {
 		title = "Edit Item"
 		submitLabel = "Update Item"
-		actionURL = fmt.Sprintf("/petrock_example_feature_name/%s/edit", item.ID) 
+		actionURL = fmt.Sprintf("/petrock_example_feature_name/%s/edit", item.ID)
 	} else {
 		title = "Create New Item"
 		submitLabel = "Create Item"
@@ -138,7 +138,7 @@ func ItemForm(form *core.Form, item *Result, csrfToken string) g.Node {
 	return html.Div(
 		// Form container with back link
 		g.Attr("class", "space-y-8"),
-		
+
 		// Back navigation
 		html.Div(
 			g.Attr("class", "flex justify-end"),
@@ -149,7 +149,7 @@ func ItemForm(form *core.Form, item *Result, csrfToken string) g.Node {
 				g.Text(" Back"),
 			),
 		),
-		
+
 		html.Form(
 			g.Attr("class", "bg-white shadow-sm border border-slate-200 rounded-lg overflow-hidden"),
 			// Form attributes
@@ -177,7 +177,7 @@ func ItemForm(form *core.Form, item *Result, csrfToken string) g.Node {
 			// Form body
 			html.Div(
 				g.Attr("class", "px-4 py-5 sm:p-6 space-y-6"),
-				
+
 				// CSRF Token
 				csrfField(csrfToken),
 
@@ -191,12 +191,12 @@ func ItemForm(form *core.Form, item *Result, csrfToken string) g.Node {
 					html.Div(
 						g.Attr("class", "mt-1"),
 						html.Input(
-						g.Attr("type", "text"),
-						g.Attr("name", "name"),
-						g.Attr("id", "name"),
-						g.Attr("value", nameValue),
-						g.Attr("class", formFieldClass(form, "name")),
-					),
+							g.Attr("type", "text"),
+							g.Attr("name", "name"),
+							g.Attr("id", "name"),
+							g.Attr("value", nameValue),
+							g.Attr("class", formFieldClass(form, "name")),
+						),
 						formErrorMessage("name"),
 					),
 				),
@@ -211,12 +211,12 @@ func ItemForm(form *core.Form, item *Result, csrfToken string) g.Node {
 					html.Div(
 						g.Attr("class", "mt-1"),
 						html.Textarea(
-						g.Attr("name", "description"),
-						g.Attr("id", "description"),
-						g.Attr("rows", "4"),
-						g.Attr("class", formFieldClass(form, "description")),
-						g.Text(descriptionValue),
-					),
+							g.Attr("name", "description"),
+							g.Attr("id", "description"),
+							g.Attr("rows", "4"),
+							g.Attr("class", formFieldClass(form, "description")),
+							g.Text(descriptionValue),
+						),
 						formErrorMessage("description"),
 					),
 				),
@@ -245,23 +245,23 @@ func ItemsListView(result ListResult) g.Node {
 
 	return html.Div(
 		g.Attr("class", "space-y-8"),
-		
+
 		// List header with actions
 		html.Div(
 			g.Attr("class", "flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"),
-			
+
 			// Stats section
 			html.Div(
 				g.Attr("class", "text-sm text-slate-500"),
 				g.Textf(
-					"%d item%s • Page %d of %d", 
-					result.TotalCount, 
-					pluralize(result.TotalCount), 
-					result.Page, 
+					"%d item%s • Page %d of %d",
+					result.TotalCount,
+					pluralize(result.TotalCount),
+					result.Page,
 					totalPages,
 				),
 			),
-			
+
 			// Create new button
 			html.A(
 				g.Attr("href", "/petrock_example_feature_name/new"),
@@ -302,13 +302,13 @@ func ItemsListView(result ListResult) g.Node {
 					),
 				)
 			}
-			
+
 			// Items list in a responsive grid
 			items := make([]g.Node, 0, len(result.Items))
 			for _, item := range result.Items {
 				items = append(items, html.Div(
 					g.Attr("class", "bg-white shadow-sm rounded-lg overflow-hidden border border-slate-200 hover:shadow-md transition-shadow duration-200"),
-					
+
 					// Card header with name and created date
 					html.Div(
 						g.Attr("class", "px-4 py-5 sm:px-6 border-b border-slate-200 bg-slate-50"),
@@ -328,7 +328,7 @@ func ItemsListView(result ListResult) g.Node {
 							),
 						),
 					),
-					
+
 					// Card body with description
 					html.Div(
 						g.Attr("class", "px-4 py-5 sm:p-6"),
@@ -337,7 +337,7 @@ func ItemsListView(result ListResult) g.Node {
 							g.Text(item.Description),
 						),
 					),
-					
+
 					// Card footer with actions
 					html.Div(
 						g.Attr("class", "border-t border-slate-200 bg-slate-50 px-4 py-4 sm:px-6 flex justify-end space-x-3"),
@@ -354,7 +354,7 @@ func ItemsListView(result ListResult) g.Node {
 					),
 				))
 			}
-			
+
 			return html.Div(
 				g.Attr("class", "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"),
 				g.Group(items),
@@ -366,11 +366,11 @@ func ItemsListView(result ListResult) g.Node {
 			if totalPages <= 1 {
 				return nil
 			}
-			
+
 			// Simple pagination with prev/next buttons
 			return html.Nav(
 				g.Attr("class", "border-t border-slate-200 px-4 flex items-center justify-between sm:px-0"),
-				
+
 				// Previous page button
 				html.Div(func() g.Node {
 					if result.Page <= 1 {
@@ -379,7 +379,7 @@ func ItemsListView(result ListResult) g.Node {
 							g.Text("Previous"),
 						)
 					}
-					
+
 					prevPage := result.Page - 1
 					prevURL := fmt.Sprintf("/petrock_example_feature_name/?page=%d&pageSize=%d", prevPage, result.PageSize)
 					return html.A(
@@ -388,7 +388,7 @@ func ItemsListView(result ListResult) g.Node {
 						g.Text("Previous"),
 					)
 				}()),
-				
+
 				// Next page button
 				html.Div(func() g.Node {
 					if result.Page >= totalPages {
@@ -397,7 +397,7 @@ func ItemsListView(result ListResult) g.Node {
 							g.Text("Next"),
 						)
 					}
-					
+
 					nextPage := result.Page + 1
 					nextURL := fmt.Sprintf("/petrock_example_feature_name/?page=%d&pageSize=%d", nextPage, result.PageSize)
 					return html.A(
@@ -460,7 +460,7 @@ func successAlert(message string) g.Node {
 				g.Attr("class", "ml-3"),
 				html.P(
 					g.Attr("class", "text-sm font-medium text-green-800"),
-					g.Text("✓ " + message),
+					g.Text("✓ "+message),
 				),
 			),
 		),
@@ -472,7 +472,7 @@ func DeleteConfirmForm(item *Result, csrfToken string) g.Node {
 	return html.Div(
 		// Form container with back link
 		g.Attr("class", "space-y-8"),
-		
+
 		// Back navigation
 		html.Div(
 			g.Attr("class", "flex justify-end"),
@@ -483,7 +483,7 @@ func DeleteConfirmForm(item *Result, csrfToken string) g.Node {
 				g.Text(" Back"),
 			),
 		),
-		
+
 		// Form with warning card
 		html.Form(
 			g.Attr("class", "bg-white shadow-sm border border-slate-200 rounded-lg overflow-hidden"),
@@ -507,40 +507,40 @@ func DeleteConfirmForm(item *Result, csrfToken string) g.Node {
 			// Item details
 			html.Div(
 				g.Attr("class", "px-4 py-5 sm:p-6 border-b border-slate-200"),
-				
+
 				// CSRF Token
 				csrfField(csrfToken),
-				
+
 				// Item details
 				html.Dl(
 					g.Attr("class", "grid grid-cols-1 gap-x-4 gap-y-4"),
-					
+
 					// ID field
 					html.Div(
 						g.Attr("class", "col-span-1"),
 						html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("ID")),
 						html.Dd(g.Attr("class", "mt-1 text-sm text-slate-900"), g.Text(item.ID)),
 					),
-					
+
 					// Name field
 					html.Div(
 						g.Attr("class", "col-span-1"),
 						html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("Name")),
 						html.Dd(g.Attr("class", "mt-1 text-sm text-slate-900 font-medium"), g.Text(item.Name)),
 					),
-					
+
 					// Description field
 					html.Div(
 						g.Attr("class", "col-span-1"),
 						html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("Description")),
 						html.Dd(
-							g.Attr("class", "mt-1 text-sm text-slate-900 whitespace-pre-wrap"), 
+							g.Attr("class", "mt-1 text-sm text-slate-900 whitespace-pre-wrap"),
 							g.Text(item.Description),
 						),
 					),
 				),
 			),
-			
+
 			// Form footer with action buttons
 			html.Div(
 				g.Attr("class", "px-4 py-3 bg-slate-50 sm:px-6 border-t border-slate-200 flex flex-col-reverse sm:flex-row sm:justify-between sm:space-x-4"),
