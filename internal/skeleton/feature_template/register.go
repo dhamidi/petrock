@@ -1,10 +1,9 @@
 package petrock_example_feature_name
 
 import (
-	"database/sql" // Added for db dependency
+	// Added for db dependency
 	"log/slog"
-	"net/http" // Added for mux dependency
-
+	// Added for mux dependency
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 )
 
@@ -14,7 +13,7 @@ import (
 // message types needed for log replay, and sets up feature-specific HTTP routes.
 func RegisterFeature(app *core.App, state *State) {
 	slog.Debug("Registering feature", "feature", "petrock_example_feature_name")
-	
+
 	// Validate required dependencies
 	if app == nil {
 		slog.Error("Cannot register feature: App is nil", "feature", "petrock_example_feature_name")

@@ -1,7 +1,7 @@
 package petrock_example_feature_name
 
 import (
-	"database/sql" // Example: If handlers need direct DB access
+	// Example: If handlers need direct DB access
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -18,9 +18,9 @@ import (
 // FeatureServer holds dependencies required by the feature's HTTP handlers.
 // This struct is initialized in register.go and passed to RegisterRoutes.
 type FeatureServer struct {
-	app      *core.App        // The central App instance with all core dependencies
-	querier  *Querier         // Query execution logic
-	state    *State           // Direct state access (use querier/executor preferably)
+	app     *core.App // The central App instance with all core dependencies
+	querier *Querier  // Query execution logic
+	state   *State    // Direct state access (use querier/executor preferably)
 	// Add other dependencies like config, template renderers, etc.
 }
 
@@ -36,9 +36,9 @@ func NewFeatureServer(
 		panic("missing required dependencies for FeatureServer")
 	}
 	return &FeatureServer{
-		app:      app,
-		querier:  querier,
-		state:    state,
+		app:     app,
+		querier: querier,
+		state:   state,
 	}
 }
 

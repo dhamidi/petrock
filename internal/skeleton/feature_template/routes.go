@@ -2,7 +2,6 @@ package petrock_example_feature_name
 
 import (
 	"log/slog"
-	"net/http"
 
 	"github.com/petrock/example_module_path/core" // Need core for App type
 )
@@ -16,7 +15,7 @@ func RegisterRoutes(app *core.App, deps *FeatureServer) {
 		slog.Error("Error registering routes: nil app or nil HTTP mux provided", "feature", "petrock_example_feature_name")
 		return
 	}
-	
+
 	// Safety check for dependencies
 	if deps == nil {
 		slog.Error("Error registering routes: nil FeatureServer provided", "feature", "petrock_example_feature_name")
@@ -28,7 +27,7 @@ func RegisterRoutes(app *core.App, deps *FeatureServer) {
 	// Example Routes:
 	// It's strongly recommended to prefix feature routes to avoid collisions.
 
-	// GET /petrock_example_feature_name/ - List items 
+	// GET /petrock_example_feature_name/ - List items
 	app.RegisterRoute("GET "+featurePrefix+"/", deps.HandleListItems)
 
 	// GET /petrock_example_feature_name/{id} - View a specific item
