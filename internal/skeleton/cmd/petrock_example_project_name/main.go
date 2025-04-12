@@ -37,6 +37,7 @@ func init() {
 	rootCmd.AddCommand(NewServeCmd())
 	rootCmd.AddCommand(NewBuildCmd())
 	rootCmd.AddCommand(NewDeployCmd())
+	rootCmd.AddCommand(NewSelfCmd())
 }
 
 func main() {

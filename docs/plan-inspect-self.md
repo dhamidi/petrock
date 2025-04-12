@@ -50,7 +50,7 @@ func (a *App) RegisterRoute(pattern string, handler http.HandlerFunc) {
 - [x] `RegisterRoute` method is implemented for route tracking
 - [x] `NewApp` constructor initializes the new fields with empty slices
 
-### 2. Create Core Inspection Logic
+### 2. Create Core Inspection Logic ✅
 
 **Files to create:**
 - `internal/skeleton/core/inspect.go`
@@ -256,7 +256,7 @@ func buildPropertyDef(field reflect.StructField) PropertyDef {
 - [x] `App.GetInspectResult()` method to gather and return inspection data
 - [x] Helper functions for building command/query schemas using reflection
 
-### 3. Create Self Command Templates
+### 3. Create Self Command Templates ✅
 
 **Files to create:**
 - `internal/skeleton/cmd_templates/self.go.tmpl`
@@ -361,7 +361,7 @@ func runSelfInspect(cmd *cobra.Command, args []string) error {
 - [x] Command flags defined (`--format`, `--db-path`)
 - [x] Implementation of `runSelfInspect` to gather and output metadata
 
-### 4. Update Feature Registration Pattern in Templates
+### 4. Update Feature Registration Pattern in Templates ✅
 
 **Files to modify:**
 - `internal/skeleton/cmd_templates/features.go.tmpl`
@@ -393,7 +393,7 @@ func RegisterAllFeatures(app *core.App) {
 - [x] Updated `RegisterAllFeatures` function to accept `app *core.App` instead of individual dependencies
 - [x] Maintained the marker comment for Petrock code generation
 
-### 5. Update Serve Command Template
+### 5. Update Serve Command Template ✅
 
 **Files to modify:**
 - `internal/skeleton/cmd_templates/serve.go.tmpl`
@@ -437,7 +437,7 @@ app.RegisterRoute("GET /commands", handleListCommands(app.CommandRegistry))
 - [x] Updated feature registration to use the `App`-based pattern
 - [x] Changed route registration to use `app.RegisterRoute`
 
-### 6. Update Feature Template Registration
+### 6. Update Feature Template Registration ✅
 
 **Files to modify:**
 - `internal/skeleton/feature_template/register.go`
@@ -485,7 +485,7 @@ func RegisterFeature(app *core.App, state *State) {
 - [x] Modified command/query/message registrations to use the app object
 - [x] Changed route registration to use `app.RegisterRoute`
 
-### 7. Update Petrock Code Generation
+### 7. Update Petrock Code Generation ✅
 
 **Files to modify:**
 - `cmd/petrock/new.go` (or equivalent generator file)
@@ -509,7 +509,7 @@ featureRegistration := fmt.Sprintf(
 - [x] Added code generation for the `self` command in the main package
 - [x] Ensured that the new `App` approach is properly used in generated code
 
-### 8. Update Documentation
+### 8. Update Documentation ✅
 
 **Files to modify/create:**
 - `docs/self-inspect.md` (new file documenting the feature)

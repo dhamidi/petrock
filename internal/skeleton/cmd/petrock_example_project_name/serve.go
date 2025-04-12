@@ -90,11 +90,13 @@ func runServe(cmd *cobra.Command, args []string) error {
 
 	// --- HTTP Server Setup ---
 	// Create HTTP mux BEFORE registering features
-	mux := http.NewServeMux()
-
+	app.Mux = http.NewServeMux()
+	
+	// Set app state
+	app.AppState = appState
+	
 	// Register features BEFORE replaying the log
-	// Pass all necessary dependencies through RegisterAllFeatures
-	RegisterAllFeatures(mux, app.CommandRegistry, app.QueryRegistry, app.MessageLog, app.Executor, appState, app.DB)
+	RegisterAllFeatures(app)
 
 	// Replay the message log to build application state
 	if err := app.ReplayLog(); err != nil {
@@ -116,13 +118,13 @@ func runServe(cmd *cobra.Command, args []string) error {
 	slog.Info("Setting up HTTP server routes...")
 	
 	// Setup index route
-	mux.HandleFunc("GET /", core.HandleIndex(app.CommandRegistry, app.QueryRegistry))
+	app.RegisterRoute("GET /", core.HandleIndex(app.CommandRegistry, app.QueryRegistry))
 	
 	// Setup core API routes
-	mux.HandleFunc("GET /commands", handleListCommands(app.CommandRegistry))
-	mux.HandleFunc("POST /commands", handleExecuteCommand(app.Executor, app.CommandRegistry))
-	mux.HandleFunc("GET /queries", handleListQueries(app.QueryRegistry))
-	mux.HandleFunc("GET /queries/{feature}/{queryName}", handleExecuteQuery(app.QueryRegistry))
+	app.RegisterRoute("GET /commands", handleListCommands(app.CommandRegistry))
+	app.RegisterRoute("POST /commands", handleExecuteCommand(app.Executor, app.CommandRegistry))
+	app.RegisterRoute("GET /queries", handleListQueries(app.QueryRegistry))
+	app.RegisterRoute("GET /queries/{feature}/{queryName}", handleExecuteQuery(app.QueryRegistry))
 
 	// IMPORTANT: We don't need this anymore since routes are registered during feature registration
 	// RegisterFeatureRoutes was a workaround for when mux was passed as nil to RegisterAllFeatures
@@ -132,7 +134,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// --- Server Start and Shutdown ---
 	server := &http.Server{
 		Addr:         addr,
-		Handler:      mux, // Use the configured mux (potentially wrapped in middleware)
+		Handler:      app.Mux, // Use the configured mux (potentially wrapped in middleware)
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,

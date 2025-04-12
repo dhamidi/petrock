@@ -18,34 +18,27 @@ import (
 // FeatureServer holds dependencies required by the feature's HTTP handlers.
 // This struct is initialized in register.go and passed to RegisterRoutes.
 type FeatureServer struct {
-	executor *core.Executor   // Central command executor
+	app      *core.App        // The central App instance with all core dependencies
 	querier  *Querier         // Query execution logic
 	state    *State           // Direct state access (use querier/executor preferably)
-	log      *core.MessageLog // For logging commands/events directly (less common now)
-	db       *sql.DB          // Example: Shared DB connection pool
 	// Add other dependencies like config, template renderers, etc.
 }
 
 // NewFeatureServer creates and initializes the FeatureServer with its dependencies.
-// Note: It now receives the central core.Executor.
+// Note: It now receives the central App instance.
 func NewFeatureServer(
-	executor *core.Executor, // Changed from feature executor to core executor
+	app *core.App, // The central App instance
 	querier *Querier,
 	state *State,
-	log *core.MessageLog, // Keep log if needed for other purposes, but not primary command path
-	db *sql.DB, // Add other dependencies here
 ) *FeatureServer {
 	// Basic validation
-	if executor == nil || querier == nil || state == nil || log == nil {
-		// Depending on requirements, some dependencies might be optional (e.g., db, log)
+	if app == nil || querier == nil || state == nil {
 		panic("missing required dependencies for FeatureServer")
 	}
 	return &FeatureServer{
-		executor: executor, // Store the central executor
+		app:      app,
 		querier:  querier,
 		state:    state,
-		log:      log,
-		db:       db,
 	}
 }
 
@@ -177,7 +170,7 @@ func (fs *FeatureServer) HandleCreateItem(w http.ResponseWriter, r *http.Request
 	defer r.Body.Close()
 
 	// Execute the command using the central executor
-	err := fs.executor.Execute(r.Context(), cmd)
+	err := fs.app.Executor.Execute(r.Context(), cmd)
 	if err != nil {
 		slog.Error("Failed to execute CreateCommand", "error", err)
 		// Distinguish between validation errors (client-side, 400) and other errors (server-side, 500)
@@ -226,7 +219,7 @@ func (fs *FeatureServer) HandleUpdateItem(w http.ResponseWriter, r *http.Request
 	}
 
 	// Execute the command using the central executor
-	err := fs.executor.Execute(r.Context(), cmd)
+	err := fs.app.Executor.Execute(r.Context(), cmd)
 	if err != nil {
 		slog.Error("Failed to execute UpdateCommand", "error", err, "id", itemID)
 		// Distinguish validation (e.g., not found, invalid name) from internal errors
@@ -257,7 +250,7 @@ func (fs *FeatureServer) HandleDeleteItem(w http.ResponseWriter, r *http.Request
 	cmd := DeleteCommand{ID: itemID /* DeletedBy: "user_from_context" */}
 
 	// Execute the command using the central executor
-	err := fs.executor.Execute(r.Context(), cmd)
+	err := fs.app.Executor.Execute(r.Context(), cmd)
 	if err != nil {
 		slog.Error("Failed to execute DeleteCommand", "error", err, "id", itemID)
 		// Distinguish validation (e.g., not found) from internal errors
@@ -373,7 +366,7 @@ func (fs *FeatureServer) HandleCreateForm(w http.ResponseWriter, r *http.Request
 	}
 
 	// Execute the command
-	err := fs.executor.Execute(r.Context(), cmd)
+	err := fs.app.Executor.Execute(r.Context(), cmd)
 	if err != nil {
 		// Check if it's a validation error
 		if strings.Contains(err.Error(), "validation failed") || strings.Contains(err.Error(), "already exists") {
@@ -519,7 +512,7 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 	}
 
 	// Execute the command
-	err := fs.executor.Execute(r.Context(), cmd)
+	err := fs.app.Executor.Execute(r.Context(), cmd)
 	if err != nil {
 		// Check if it's a validation error
 		if strings.Contains(err.Error(), "validation failed") || strings.Contains(err.Error(), "not found") {
@@ -643,7 +636,7 @@ func (fs *FeatureServer) HandleDeleteConfirm(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Execute the command
-	err := fs.executor.Execute(r.Context(), cmd)
+	err := fs.app.Executor.Execute(r.Context(), cmd)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			// Could redirect with a message that the item was already deleted
