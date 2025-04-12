@@ -11,7 +11,7 @@ import (
 )
 
 // ItemView renders the HTML representation of a single item.
-// Adapt the fields and structure based on the 'Result' type in messages.go.
+// Adapt the fields and structure based on the 'Result' type in queries.go.
 func ItemView(item Result) g.Node {
 	return html.Div(
 		// Item information card
