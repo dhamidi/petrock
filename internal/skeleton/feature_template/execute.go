@@ -37,7 +37,7 @@ func NewExecutor(state *State) *Executor {
 func (e *Executor) ValidateCommand(ctx context.Context, cmd core.Command) error {
 	slog.Debug("Feature executor validating command", "feature", "petrock_example_feature_name", "command_type", cmd.CommandName())
 
-	// Check if the command implements the stateful validator interface defined in messages.go
+	// Check if the command implements the stateful validator interface defined in commands.go
 	if validator, ok := cmd.(Validator); ok {
 		slog.Debug("Command implements Validator, calling Validate(state)", "feature", "petrock_example_feature_name", "command_type", cmd.CommandName())
 		// If yes, call the command's Validate method with the feature state

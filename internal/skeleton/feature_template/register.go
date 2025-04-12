@@ -69,7 +69,7 @@ func RegisterFeature(
 	RegisterRoutes(mux, server)
 
 	// --- 4. Register Core Command Handlers ---
-	// Map command message types (from messages.go) to their handler functions (from execute.go).
+	// Map command message types (from commands.go) to their handler functions (from execute.go).
 	// These are used by the central core.Executor.
 	// Register the command type, the state update handler method, and the feature executor instance.
 	slog.Debug("Registering command handlers and feature executor", "feature", "petrock_example_feature_name")
@@ -79,7 +79,7 @@ func RegisterFeature(
 	// Add registrations for other commands specific to this feature...
 
 	// --- 5. Register Core Query Handlers ---
-	// Map query message types (from messages.go) to their handler functions (from query.go).
+	// Map query message types (from queries.go) to their handler functions (from query.go).
 	// These are used by the core /queries API endpoint.
 	slog.Debug("Registering query handlers", "feature", "petrock_example_feature_name")
 	queries.Register(GetQuery{}, querier.HandleGet)   // Map GetQuery to querier.HandleGet
@@ -90,7 +90,7 @@ func RegisterFeature(
 	// Register message types (commands, events) with the MessageLog so it can
 	// decode them correctly during replay.
 	slog.Debug("Registering message types with MessageLog", "feature", "petrock_example_feature_name")
-	RegisterTypes(messageLog) // Assumes messages.go or state.go provides RegisterTypes(*core.MessageLog)
+	RegisterTypes(messageLog) // state.go provides RegisterTypes(*core.MessageLog)
 
 	// --- 7. Register Background Jobs/Workers (Optional) ---
 	// If the feature includes background processes (defined in jobs.go),

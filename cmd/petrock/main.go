@@ -17,7 +17,7 @@ var rootCmd = &cobra.Command{
 and generate feature modules within existing Petrock projects.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		// Skip git check for the 'new' command as it runs before the repo exists.
-		if cmd.Name() == "new" {
+		if cmd.Name() == "new" || cmd.Name() == "test" {
 			return nil
 		}
 		// Check if the Git workspace is clean before running commands other than 'new'
@@ -38,8 +38,8 @@ func Execute() error {
 
 func init() {
 	// Add subcommands defined in other files
-	rootCmd.AddCommand(newCmd)    // From new.go
-	rootCmd.AddCommand(testCmd)   // From test.go
+	rootCmd.AddCommand(newCmd)     // From new.go
+	rootCmd.AddCommand(testCmd)    // From test.go
 	rootCmd.AddCommand(featureCmd) // From feature.go
 
 	// Configure logging level based on environment variable

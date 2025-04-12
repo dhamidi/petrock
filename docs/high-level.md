@@ -60,7 +60,8 @@ This generates a new Go package called "posts", which contains all of the functi
 ```
 posts/            # the package for this feature
 posts/register.go # the entrypoint for the module which registers it with the core
-posts/messages.go # structs for the messages accepted by this feature, and data returned by queries
+posts/commands.go # structs for commands that change the state of this feature
+posts/queries.go  # structs for queries and their result types
 posts/execute.go  # functions for accepting messages that change the state of posts
 posts/query.go    # functions for accepting messages that returns parts of the state of posts
 posts/state.go    # application state that needs to be kept
