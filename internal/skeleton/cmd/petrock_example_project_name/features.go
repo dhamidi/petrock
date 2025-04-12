@@ -1,8 +1,7 @@
 package main
 
 import (
-	"database/sql" // Added for db dependency
-	"net/http"     // Added for mux dependency
+	// Added for db dependency
 
 	"github.com/petrock/example_module_path/core"
 	// petrock:import-feature - Do not remove or modify this line

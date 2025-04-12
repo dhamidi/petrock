@@ -1,8 +1,6 @@
 package main
 
 import (
-	"net/http"
-	
 	"github.com/petrock/example_module_path/core"
 )
 
@@ -11,7 +9,7 @@ import (
 func RegisterFeatureRoutes(app *core.App) {
 	// This function should call each feature's route registration function
 	// Example: posts.RegisterRoutes(app)
-	// 
+	//
 	// Features typically need:
 	// - App to register routes
 	// - App's Executor for command execution
