@@ -17,3 +17,18 @@
 - Error handling: Always check errors and provide contextual messages
 - Logging: Use log/slog package for structured logging
 - Use cobra for CLI commands (see cmd/petrock/*.go for examples)
+
+## Important project idiosyncracies
+
+The project uses template code in internal/skeleton.
+
+This project is a template that needs to be **valid Go code**.
+
+Various placeholders in the code will be replaced via simple string substitution when petrock initializes a new project.
+
+The template should **never** use string-based templating to generate code.
+
+The following replacements are supported:
+
+- `petrock_example_feature_name` – for the name of newly generated features (e.g. `posts`)
+- `github.com/petrock/example_module_path` – the path to the finally generated module when using `petrock feature`.
