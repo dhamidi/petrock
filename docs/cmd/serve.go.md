@@ -1,6 +1,6 @@
 # Plan for cmd/blog/serve.go
 
-This file defines the `serve` subcommand, responsible for starting the HTTP server.
+This file defines the `serve` subcommand, responsible for starting the HTTP server and managing background workers.
 
 ## Types
 
@@ -33,4 +33,6 @@ This file defines the `serve` subcommand, responsible for starting the HTTP serv
     7. Creates the main HTTP router (`mux := http.NewServeMux()`).
     8. **Registers core HTTP handlers** (e.g., `/`, `/commands`, `/queries`) using the `executor`, `queryRegistry`, etc.
     9. **Feature HTTP Routes:** Feature routes were already registered inside `RegisterAllFeatures` by calling each feature's `RegisterRoutes`.
-    10. Sets up and starts the HTTP server.
+    10. **Start Workers:** Call `app.StartWorkers(ctx)` to initialize and start all registered workers.
+    11. Sets up and starts the HTTP server.
+    12. On shutdown signal, calls `app.StopWorkers(ctx)` to gracefully stop all workers.

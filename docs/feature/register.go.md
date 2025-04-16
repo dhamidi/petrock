@@ -24,6 +24,6 @@ This file acts as the entry point for the feature module. Its primary role is to
     - Calls `RegisterTypes(messageLog)` (typically defined in `messages.go` or `state.go`) to register command/query types with the `core.MessageLog` for decoding.
   - **HTTP Route Registration:**
     - Calls `RegisterRoutes(mux, server)` (defined in `routes.go`) to register the feature's specific HTTP routes.
-  - **Background Jobs:** May initialize and start background jobs (from `jobs.go`).
+  - **Workers:** May initialize and register feature workers (from `worker.go`) with the app.
 
 _Note: The `petrock feature <name>` command automatically adds the necessary import and the call to this `RegisterFeature` function (with the updated signature) within the project's `cmd/<project>/features.go` file. The registration happens *after* core routes are registered, allowing features to override core routes._

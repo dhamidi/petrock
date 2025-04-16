@@ -65,7 +65,7 @@ posts/queries.go  # structs for queries and their result types
 posts/execute.go  # functions for accepting messages that change the state of posts
 posts/query.go    # functions for accepting messages that returns parts of the state of posts
 posts/state.go    # application state that needs to be kept
-posts/jobs.go     # long-running processes that
+posts/worker.go   # long-running background processes that react to events in the message log
 posts/view.go     # components for rendering
 posts/assets.go   # a file that builds an in-memory FS using go:embed for the assets directory
 posts/routes.go   # defines feature-specific HTTP routes
@@ -102,5 +102,6 @@ The high-level overview of a Petrock application is this:
     *   The Executor calls the state update handler (defined in `<feature>/execute.go`). Fails -> **panic**.
 6.  **Query Handling:** Queries (`core.Query`) are dispatched via the `core.QueryRegistry` to the appropriate handler defined in `<feature>/query.go`. These handlers read directly from the feature's in-memory state (`<feature>/state.go`).
 7.  **State Management:** Each feature manages its state in `<feature>/state.go`. State is rebuilt at startup by replaying the `core.MessageLog` using the iterator pattern: `for msg := range messageLog.After(ctx, 0)`. For each message, the corresponding *state update handler* (retrieved from `core.CommandRegistry`) is executed with both the decoded payload and a pointer to the message metadata (`handler(ctx, msg.DecodedPayload, &msg.Message)`). Live updates also happen via these same state update handlers, called by the `core.Executor` after successful validation and logging, but without message metadata (`handler(ctx, cmd, nil)`).
+8.  **Workers:** Workers, defined in `<feature>/worker.go`, are long-running background processes that react to events in the message log. Each worker implements the `core.Worker` interface with `Start()`, `Stop()`, and `Work()` methods. Workers maintain their own internal state by tracking events from the message log and perform operations that span multiple events, often interacting with external systems. During application startup, workers are registered with the central `App` instance which manages their lifecycle: starting them in separate goroutines, scheduling their `Work()` method periodically (by default every 1-2 seconds with jitter), and stopping them during shutdown. Workers typically dispatch commands through the central `core.Executor` when they need to update application state.
 
 All commands are serialized with a configurable encoder (JSON by default) and persisted in a SQLite database in a single table called `messages`.

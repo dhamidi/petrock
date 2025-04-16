@@ -4,9 +4,14 @@ This file defines the central application initialization logic, handling depende
 
 ## Types
 
+- `Worker`: Interface for background workers
+  - `Start(context.Context)`: Called to initialize worker state from the message log
+  - `Stop(context.Context)`: Called to clean up resources when shutting down
+  - `Work() error`: Called periodically to process events and perform work
+
 - `App`: Central struct holding all application dependencies and state
-  - Fields: db, messageLog, commandRegistry, queryRegistry, executor, appState
-  - Methods for initialization, registration, and replay
+  - Fields: db, messageLog, commandRegistry, queryRegistry, executor, appState, workers
+  - Methods for initialization, registration, replay, and worker management
 
 ## Functions
 
@@ -28,6 +33,18 @@ This file defines the central application initialization logic, handling depende
   - Applies commands via registered handlers
   - Panics if a command handler fails during replay (indicates state inconsistency)
 
+- `(a *App) RegisterWorker(worker Worker)`: Registers a worker with the application
+  - Adds the worker to the list of managed workers
+
+- `(a *App) StartWorkers(ctx context.Context)`: Starts all registered workers
+  - Initializes each worker by calling its Start method in a separate goroutine
+  - Sets up periodic execution of the Work method with jitter
+
+- `(a *App) StopWorkers(ctx context.Context)`: Stops all workers gracefully
+  - Calls the Stop method on each worker
+  - Waits for all worker goroutines to finish
+
 - `(a *App) Close() error`: Gracefully closes all resources
+  - Stops all workers
   - Closes database connection
   - Any other cleanup needed

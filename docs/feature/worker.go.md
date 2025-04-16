@@ -28,7 +28,29 @@ Every worker needs to comply with the `core.Worker` interface:
     - running queries against the `app` to fetch data,
     - dispatching commands as a result of things happenening
 
-During Sta
+## Example: Post Summarization Worker
+
+A good example of a worker is one that summarizes posts using an external LLM service. This worker would:
+
+1. Track posts needing summaries by monitoring events in the message log
+2. Make API calls to an external service to generate summaries
+3. Dispatch commands to update the post with the generated summary
+
+This would involve the following commands:
+
+- `RequestSummaryGeneration(requestId, postId, content)` (CommandName: `posts/request-summary-generation`)
+- `FailSummaryGeneration(requestId, postId, errorMessage)` (CommandName: `posts/fail-summary-generation`)
+- `SetGeneratedSummary(requestId, postId, summary)` (CommandName: `posts/set-generated-summary`)
+
+During startup the worker would:
+1. Scan the event log for `posts/request-summary-generation` events to build its internal state of posts needing summaries
+2. Filter out posts that already have corresponding `posts/fail-summary-generation` or `posts/set-generated-summary` events with matching requestIds
+
+During operation, the worker would:
+1. Monitor new `posts/create` events and dispatch `posts/request-summary-generation` commands for new posts
+2. Make API calls to the LLM service for pending posts
+3. Dispatch either `posts/set-generated-summary` on success or `posts/fail-summary-generation` on failure
+
 ## Types
 
 - `PostWorker`: A struct holding dependencies needed for background jobs (e.g., the application object and worker specific state).
@@ -36,13 +58,15 @@ During Sta
     - `log *core.MessageLog` 
     - `app *core.App` 
 - `PostWorkerState`: A struct holding worker specific state.
-    - `posts []*Post` // Example state
-    - `lastProcessedID string` // Example state
+    - `pendingSummaries map[string]PendingSummary` // Map of requestId to pending summary requests
+    - `lastProcessedID string` // Last message ID processed from the log
 
 ## Functions
 
-- `NewPostWorker(app *core.App, state *PostWorkerState) *PostWorker`: Constructor for `PostWorker`.
-- `(w *PostWorker) Start(ctx context.Context)`: Example background worker function. Might poll a queue, check new posts in `w.state`, interact with an external moderation service, and potentially dispatch new commands via `w.app.Log`. Should respect the `ctx` for cancellation.
+- `NewPostWorker(app *core.App) *PostWorker`: Constructor for `PostWorker`.
+- `(w *PostWorker) Start(ctx context.Context)`: Initializes the worker by scanning the message log and building internal state of pending summaries.
+- `(w *PostWorker) Stop(ctx context.Context)`: Cleans up any resources and ensures pending operations are appropriately handled.
+- `(w *PostWorker) Work() error`: Processes any pending summaries by calling the external API and dispatches appropriate commands.
 
-*Note: The actual implementation of starting/managing these workers/schedulers often resides in `cmd/serve.go` or a dedicated worker process entry point.*
+*Note: By default, workers poll the event log once per second with a 1s random jitter, as scheduled by core/app.go.*
 

@@ -1,9 +1,10 @@
 # Deficiencies
 
-## feature_template/job.go
+## feature_template/worker.go
 
-- the skeleton is useless and idempotent execution is difficult to achieve with that as a base.
-- I need to think more about a useful pattern here
+- Ensure workers can properly track their position in the event log
+- Define clear patterns for error handling and retry strategies
+- Consider standardizing common worker operations (like making HTTP calls to external services)
 
 ## Design system
 
