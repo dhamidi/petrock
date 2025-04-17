@@ -150,6 +150,58 @@ func (c DeleteCommand) Validate(state *State) error {
 	return nil
 }
 
+// RequestSummaryGenerationCommand requests a summary be generated for an item
+type RequestSummaryGenerationCommand struct {
+	ID        string `json:"id"`         // ID of the item to summarize
+	RequestID string `json:"request_id"` // Unique ID for this summary request
+}
+
+// CommandName returns the unique kebab-case name for this command type
+func (c RequestSummaryGenerationCommand) CommandName() string {
+	return "petrock_example_feature_name/request-summary-generation"
+}
+
+// Validate implements the Validator interface
+func (c RequestSummaryGenerationCommand) Validate(state *State) error {
+	if strings.TrimSpace(c.ID) == "" {
+		return errors.New("item ID cannot be empty")
+	}
+	if strings.TrimSpace(c.RequestID) == "" {
+		return errors.New("request ID cannot be empty")
+	}
+
+	// Verify the item exists
+	_, found := state.GetItem(c.ID)
+	if !found {
+		return fmt.Errorf("item with ID %q not found", c.ID)
+	}
+	return nil
+}
+
+// FailSummaryGenerationCommand indicates a summary generation request failed
+type FailSummaryGenerationCommand struct {
+	ID        string `json:"id"`         // ID of the item
+	RequestID string `json:"request_id"` // References the original request
+	Reason    string `json:"reason"`     // Reason for failure
+}
+
+// CommandName returns the unique kebab-case name for this command type
+func (c FailSummaryGenerationCommand) CommandName() string {
+	return "petrock_example_feature_name/fail-summary-generation"
+}
+
+// SetGeneratedSummaryCommand sets the generated summary for an item
+type SetGeneratedSummaryCommand struct {
+	ID        string `json:"id"`         // ID of the item
+	RequestID string `json:"request_id"` // References the original request
+	Summary   string `json:"summary"`    // The generated summary text
+}
+
+// CommandName returns the unique kebab-case name for this command type
+func (c SetGeneratedSummaryCommand) CommandName() string {
+	return "petrock_example_feature_name/set-generated-summary"
+}
+
 // Ensure commands implement the marker interface (optional) and Validator where applicable
 var _ core.Command = (*CreateCommand)(nil)
 var _ Validator = (*CreateCommand)(nil)
@@ -157,3 +209,7 @@ var _ core.Command = (*UpdateCommand)(nil)
 var _ Validator = (*UpdateCommand)(nil)
 var _ core.Command = (*DeleteCommand)(nil)
 var _ Validator = (*DeleteCommand)(nil)
+var _ core.Command = (*RequestSummaryGenerationCommand)(nil)
+var _ Validator = (*RequestSummaryGenerationCommand)(nil)
+var _ core.Command = (*FailSummaryGenerationCommand)(nil)
+var _ core.Command = (*SetGeneratedSummaryCommand)(nil)
