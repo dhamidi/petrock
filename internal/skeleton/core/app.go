@@ -138,9 +138,9 @@ func (a *App) StartWorkers(ctx context.Context) error {
 			// Replay all messages first (synchronously within this goroutine)
 			slog.Debug("Worker replaying messages", "index", index)
 
-			// Just call Work() for the worker - this will process messages up to the current version
-			// Since we initialized the worker with an empty lastProcessedID, it will process
-			// all messages from the beginning
+			// Worker's lastProcessedID is initialized to 0, so calling Work() will process
+			// all messages from the beginning. Messages are processed in the order they appear
+			// in the log and state is updated.
 			if err := w.Work(); err != nil {
 				slog.Error("Worker message replay failed", "index", index, "error", err)
 			}

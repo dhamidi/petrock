@@ -21,7 +21,7 @@ type PendingSummary struct {
 
 // WorkerState holds worker-specific state
 type WorkerState struct {
-	lastProcessedID  string
+	lastProcessedID  uint64                    // ID of last processed message
 	pendingSummaries map[string]PendingSummary // keyed by RequestID
 }
 
@@ -49,7 +49,7 @@ func NewWorker(app *core.App, state *State, log *core.MessageLog, executor *core
 		state:    state,
 		log:      log,
 		wState: &WorkerState{
-			lastProcessedID:  "",
+			lastProcessedID:  0,
 			pendingSummaries: make(map[string]PendingSummary),
 		},
 		client: &http.Client{
@@ -67,7 +67,7 @@ func (w *Worker) Start(ctx context.Context) error {
 	slog.Info("Starting worker", "feature", "petrock_example_feature_name")
 
 	// Initialize worker state
-	w.wState.lastProcessedID = ""
+	w.wState.lastProcessedID = 0 // Start from the beginning of the message log
 	w.wState.pendingSummaries = make(map[string]PendingSummary)
 
 	slog.Info("Worker initialization complete", "feature", "petrock_example_feature_name")
@@ -89,12 +89,7 @@ func (w *Worker) Work() error {
 	ctx := context.Background()
 
 	// 1. Process any new messages since last run
-	lastID := w.wState.lastProcessedID
-	lastIDNum := uint64(0)
-	if lastID != "" {
-		// Convert lastID to uint64 - handle error in real code
-		fmt.Sscanf(lastID, "%d", &lastIDNum)
-	}
+	lastIDNum := w.wState.lastProcessedID
 
 	// Create a timeout context for message processing
 	timeoutCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
@@ -108,7 +103,7 @@ func (w *Worker) Work() error {
 		w.processMessage(ctx, msg)
 
 		// Update the last processed ID
-		w.wState.lastProcessedID = fmt.Sprintf("%d", msg.ID)
+		w.wState.lastProcessedID = msg.ID
 	}
 
 	if messageCount > 0 {
