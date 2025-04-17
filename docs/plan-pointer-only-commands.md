@@ -66,19 +66,19 @@ The current implementation of Petrock's command pattern supports both value type
 - Tests pass with pointer-only command usage - SKIPPED
 - No test failures related to command type handling - SKIPPED
 
-### T4: CLI Tool Updates
+### T4: CLI Tool Updates - DONE
 
-**T4.1:** Update petrock feature command
-- Modify generated code to use pointer commands
-- Update any examples in generated documentation
+**T4.1:** Update petrock feature command - DONE
+- Modify generated code to use pointer commands - DONE
+- Update any examples in generated documentation - DONE
 
-**T4.2:** Update code generation templates
-- Ensure all command registration uses pointer syntax
-- Update handler implementations to use pointer-only approach
+**T4.2:** Update code generation templates - DONE
+- Ensure all command registration uses pointer syntax - DONE
+- Update handler implementations to use pointer-only approach - DONE
 
-**Definition of Done for T4:**
-- CLI generates code using pointer-only commands
-- Generated code documentation reflects pointer usage
+**Definition of Done for T4: - DONE**
+- CLI generates code using pointer-only commands - DONE
+- Generated code documentation reflects pointer usage - DONE
 
 ### T5: Documentation Updates
 
