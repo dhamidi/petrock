@@ -17,6 +17,8 @@ type Validator interface {
 
 // --- Commands (Implement core.Command) ---
 // Commands represent intentions to change the system state.
+// All commands MUST be created and used as pointer types (*CommandType).
+// Example usage: cmd := &CreateCommand{Name: "example"}
 
 // CreateCommand holds data needed to create a new entity.
 type CreateCommand struct {
@@ -28,13 +30,13 @@ type CreateCommand struct {
 }
 
 // CommandName returns the unique kebab-case name for this command type.
-func (c CreateCommand) CommandName() string {
+func (c *CreateCommand) CommandName() string {
 	return "petrock_example_feature_name/create" // Removed suffix
 }
 
 // Validate implements the Validator interface for CreateCommand.
 // It performs validation checks, potentially using the current state.
-func (c CreateCommand) Validate(state *State) error {
+func (c *CreateCommand) Validate(state *State) error {
 	// Trim all string fields
 	trimmedName := strings.TrimSpace(c.Name)
 	trimmedDescription := strings.TrimSpace(c.Description)
@@ -74,12 +76,12 @@ type UpdateCommand struct {
 }
 
 // CommandName returns the unique kebab-case name for this command type.
-func (c UpdateCommand) CommandName() string {
+func (c *UpdateCommand) CommandName() string {
 	return "petrock_example_feature_name/update" // Removed suffix
 }
 
 // Validate implements the Validator interface for UpdateCommand.
-func (c UpdateCommand) Validate(state *State) error {
+func (c *UpdateCommand) Validate(state *State) error {
 	// Trim all string fields
 	trimmedID := strings.TrimSpace(c.ID)
 	trimmedName := strings.TrimSpace(c.Name)
@@ -125,12 +127,12 @@ type DeleteCommand struct {
 }
 
 // CommandName returns the unique kebab-case name for this command type.
-func (c DeleteCommand) CommandName() string {
+func (c *DeleteCommand) CommandName() string {
 	return "petrock_example_feature_name/delete" // Removed suffix
 }
 
 // Validate implements the Validator interface for DeleteCommand.
-func (c DeleteCommand) Validate(state *State) error {
+func (c *DeleteCommand) Validate(state *State) error {
 	// Trim all string fields
 	trimmedID := strings.TrimSpace(c.ID)
 
@@ -157,12 +159,12 @@ type RequestSummaryGenerationCommand struct {
 }
 
 // CommandName returns the unique kebab-case name for this command type
-func (c RequestSummaryGenerationCommand) CommandName() string {
+func (c *RequestSummaryGenerationCommand) CommandName() string {
 	return "petrock_example_feature_name/request-summary-generation"
 }
 
 // Validate implements the Validator interface
-func (c RequestSummaryGenerationCommand) Validate(state *State) error {
+func (c *RequestSummaryGenerationCommand) Validate(state *State) error {
 	if strings.TrimSpace(c.ID) == "" {
 		return errors.New("item ID cannot be empty")
 	}
@@ -186,7 +188,7 @@ type FailSummaryGenerationCommand struct {
 }
 
 // CommandName returns the unique kebab-case name for this command type
-func (c FailSummaryGenerationCommand) CommandName() string {
+func (c *FailSummaryGenerationCommand) CommandName() string {
 	return "petrock_example_feature_name/fail-summary-generation"
 }
 
@@ -198,7 +200,7 @@ type SetGeneratedSummaryCommand struct {
 }
 
 // CommandName returns the unique kebab-case name for this command type
-func (c SetGeneratedSummaryCommand) CommandName() string {
+func (c *SetGeneratedSummaryCommand) CommandName() string {
 	return "petrock_example_feature_name/set-generated-summary"
 }
 

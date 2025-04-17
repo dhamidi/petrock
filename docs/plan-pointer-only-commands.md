@@ -28,10 +28,10 @@ The current implementation of Petrock's command pattern supports both value type
 
 ### T2: Feature Template Modifications
 
-**T2.1:** Update commands.go template
-- Modify type assertions to use pointer interface
-- Update command registration examples to use pointers
-- Remove value-type handler logic
+**T2.1:** Update commands.go template - DONE
+- Modify type assertions to use pointer interface - DONE
+- Update command registration examples to use pointers - DONE
+- Update method receivers to use pointer types - DONE
 
 **T2.2:** Update state.go template
 - Modify Apply method to accept pointer commands only
