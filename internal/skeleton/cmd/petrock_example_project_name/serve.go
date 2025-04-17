@@ -64,16 +64,46 @@ func NewServeCmd() *cobra.Command {
 	serveCmd.Flags().IntP("port", "p", 8080, "Port to listen on")
 	serveCmd.Flags().String("host", "localhost", "Host to bind to")
 	serveCmd.Flags().String("db-path", "app.db", "Path to the SQLite database file") // Added db-path flag
+	serveCmd.Flags().String("log-level", "", "Log level: debug, info, warn, error (defaults to LOG_LEVEL env var or 'info')")
 
 	return serveCmd
 }
 
 func runServe(cmd *cobra.Command, args []string) error {
-	// Set log level to DEBUG to see detailed worker logs
+	// Configure logging level from environment variable or flag
+	logLevelStr, _ := cmd.Flags().GetString("log-level")
+	if logLevelStr == "" {
+		// Check environment variable if flag is not set
+		logLevelStr = os.Getenv("LOG_LEVEL")
+		if logLevelStr == "" {
+			// Default to info if neither flag nor env var is set
+			logLevelStr = "info"
+		}
+	}
+
+	// Parse log level string to slog.Level
+	var level slog.Level
+	switch strings.ToLower(logLevelStr) {
+	case "debug":
+		level = slog.LevelDebug
+	case "info":
+		level = slog.LevelInfo
+	case "warn", "warning":
+		level = slog.LevelWarn
+	case "error":
+		level = slog.LevelError
+	default:
+		// Invalid log level, default to info and warn
+		fmt.Fprintf(os.Stderr, "Warning: invalid log level '%s', using 'info'\n", logLevelStr)
+		level = slog.LevelInfo
+	}
+
+	// Configure slog with the appropriate level
 	logHandler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
+		Level: level,
 	})
 	slog.SetDefault(slog.New(logHandler))
+	slog.Info("Log level set", "level", logLevelStr)
 
 	port, _ := cmd.Flags().GetInt("port")
 	host, _ := cmd.Flags().GetString("host")
