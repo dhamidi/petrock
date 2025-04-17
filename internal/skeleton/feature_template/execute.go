@@ -125,4 +125,56 @@ func (e *Executor) HandleDelete(ctx context.Context, command core.Command, msg *
 	return nil
 }
 
-// Add more command handlers here...
+// HandleRequestSummaryGeneration applies state changes for RequestSummaryGenerationCommand.
+func (e *Executor) HandleRequestSummaryGeneration(ctx context.Context, command core.Command, msg *core.Message) error {
+	cmd, ok := command.(RequestSummaryGenerationCommand)
+	if !ok {
+		err := fmt.Errorf("internal error: incorrect command type (%T) passed to HandleRequestSummaryGeneration", command)
+		slog.Error("Type assertion failed in HandleRequestSummaryGeneration", "error", err)
+		return err
+	}
+
+	slog.Debug("Applying state change for RequestSummaryGenerationCommand", "feature", "petrock_example_feature_name", "id", cmd.ID, "requestID", cmd.RequestID)
+
+	// Nothing to do here - worker will handle this asynchronously
+	// The command is just a trigger for the worker
+
+	return nil
+}
+
+// HandleFailSummaryGeneration applies state changes for FailSummaryGenerationCommand.
+func (e *Executor) HandleFailSummaryGeneration(ctx context.Context, command core.Command, msg *core.Message) error {
+	cmd, ok := command.(FailSummaryGenerationCommand)
+	if !ok {
+		err := fmt.Errorf("internal error: incorrect command type (%T) passed to HandleFailSummaryGeneration", command)
+		slog.Error("Type assertion failed in HandleFailSummaryGeneration", "error", err)
+		return err
+	}
+
+	slog.Debug("Applying state change for FailSummaryGenerationCommand", "feature", "petrock_example_feature_name", "id", cmd.ID, "requestID", cmd.RequestID)
+
+	// Nothing to do in state - this just tells the worker to stop trying
+
+	return nil
+}
+
+// HandleSetGeneratedSummary applies state changes for SetGeneratedSummaryCommand.
+func (e *Executor) HandleSetGeneratedSummary(ctx context.Context, command core.Command, msg *core.Message) error {
+	cmd, ok := command.(SetGeneratedSummaryCommand)
+	if !ok {
+		err := fmt.Errorf("internal error: incorrect command type (%T) passed to HandleSetGeneratedSummary", command)
+		slog.Error("Type assertion failed in HandleSetGeneratedSummary", "error", err)
+		return err
+	}
+
+	slog.Debug("Applying state change for SetGeneratedSummaryCommand", "feature", "petrock_example_feature_name", "id", cmd.ID, "requestID", cmd.RequestID)
+
+	// Apply the change using the state's Apply method
+	if err := e.state.Apply(cmd, msg); err != nil {
+		slog.Error("State Apply failed for SetGeneratedSummaryCommand", "error", err, "id", cmd.ID)
+		return fmt.Errorf("state.Apply failed for SetGeneratedSummaryCommand: %w", err)
+	}
+
+	slog.Debug("State change applied successfully for SetGeneratedSummaryCommand", "feature", "petrock_example_feature_name", "id", cmd.ID)
+	return nil
+}

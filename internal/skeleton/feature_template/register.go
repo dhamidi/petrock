@@ -69,7 +69,11 @@ func RegisterFeature(app *core.App, state *State) {
 	app.CommandRegistry.Register(CreateCommand{}, featureExecutor.HandleCreate, featureExecutor) // Pass handler AND executor instance
 	app.CommandRegistry.Register(UpdateCommand{}, featureExecutor.HandleUpdate, featureExecutor) // Pass handler AND executor instance
 	app.CommandRegistry.Register(DeleteCommand{}, featureExecutor.HandleDelete, featureExecutor) // Pass handler AND executor instance
-	// Add registrations for other commands specific to this feature...
+	
+	// Register summary-related commands
+	app.CommandRegistry.Register(RequestSummaryGenerationCommand{}, featureExecutor.HandleRequestSummaryGeneration, featureExecutor)
+	app.CommandRegistry.Register(FailSummaryGenerationCommand{}, featureExecutor.HandleFailSummaryGeneration, featureExecutor)
+	app.CommandRegistry.Register(SetGeneratedSummaryCommand{}, featureExecutor.HandleSetGeneratedSummary, featureExecutor)
 
 	// --- 5. Register Core Query Handlers ---
 	// Map query message types (from queries.go) to their handler functions (from query.go).
