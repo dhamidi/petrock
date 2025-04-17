@@ -60,10 +60,10 @@ This plan outlines how to replace the current `jobs.go` pattern with a more robu
 
 ### T3: Feature Template Worker Implementation
 
-**T3.1:** Create worker.go template file
-- Create internal/skeleton/feature_template/worker.go
-- Use correct package declaration: package petrock_example_feature_name
-- Use correct import path: github.com/petrock/example_module_path/core
+**T3.1:** Create worker.go template file - DONE
+- Create internal/skeleton/feature_template/worker.go - DONE
+- Use correct package declaration: package petrock_example_feature_name - DONE
+- Use correct import path: github.com/petrock/example_module_path/core - DONE
 
 **T3.2:** Define worker state struct
 - Create struct for tracking pending operations (like summarization)
