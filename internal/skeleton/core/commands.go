@@ -14,6 +14,8 @@ type NamedMessage interface {
 }
 
 // Command is an interface combining NamedMessage for command messages.
+// Commands MUST be implemented as pointer types (*CommandType) for consistency and performance.
+// This allows commands to be passed without copying and enables more efficient processing.
 type Command interface {
 	CommandName() string // e.g., "feature/create-command"
 }
@@ -53,10 +55,17 @@ func NewCommandRegistry() *CommandRegistry {
 
 // Register associates a command type with its state update handler and the responsible
 // feature executor instance using its CommandName().
+// Commands should be registered as pointer types (*CommandType) for future compatibility.
 // It panics if a handler or executor for the name is already registered.
 func (r *CommandRegistry) Register(cmd Command, handler CommandHandler, featureExecutor FeatureExecutor) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	
+	// Check if command is a pointer type and warn if not
+	if reflect.TypeOf(cmd).Kind() != reflect.Ptr {
+		slog.Warn("Registering non-pointer command", "type", reflect.TypeOf(cmd), "name", cmd.CommandName(), 
+			"message", "Commands should be registered as pointer types (*CommandType) for future compatibility")
+	}
 
 	name := cmd.CommandName() // Use CommandName()
 	if _, exists := r.handlers[name]; exists {
@@ -182,10 +191,17 @@ func NewExecutor(log *MessageLog, registry *CommandRegistry) *Executor {
 // 2. Calls the feature executor's ValidateCommand method.
 // 3. Appends the command to the message log.
 // 4. Executes the state update handler.
+// Commands must be passed as pointer types (*CommandType), not value types.
 // It returns an error if validation or logging fails.
 // It panics if the state update handler returns an error after the command has been logged,
 // indicating an unrecoverable inconsistency.
 func (e *Executor) Execute(ctx context.Context, cmd Command) error {
+	// Check if command is a pointer type
+	if reflect.TypeOf(cmd).Kind() != reflect.Ptr {
+		slog.Warn("Non-pointer command received", "type", reflect.TypeOf(cmd), "name", cmd.CommandName(), 
+			"message", "Commands should be pointer types (*CommandType) for future compatibility")
+	}
+
 	name := cmd.CommandName()
 	slog.Debug("Executing command", "name", name)
 
