@@ -236,6 +236,7 @@ func (l *MessageLog) After(ctx context.Context, startID uint64) iter.Seq[Persist
 // Decode decodes the Data field of a raw Message into a concrete Go command/query type.
 // It uses the message.Type string to look up the reflect.Type in the typeRegistry,
 // creates a new instance, and uses the encoder to deserialize the Data into it.
+// Returns a pointer to the decoded type.
 func (l *MessageLog) Decode(message Message) (interface{}, error) {
 	registeredType, exists := l.typeRegistry[message.Type]
 	if !exists {
@@ -249,8 +250,8 @@ func (l *MessageLog) Decode(message Message) (interface{}, error) {
 		return nil, fmt.Errorf("failed to decode message data for type %s: %w", message.Type, err)
 	}
 
-	// Return the decoded value (dereferenced from the pointer)
-	return reflect.ValueOf(newValue).Elem().Interface(), nil
+	// Return the pointer directly
+	return newValue, nil
 }
 
 // --- Database Setup Helper ---
