@@ -68,25 +68,56 @@ func NewWorker(app *core.App, state *State, log *core.MessageLog, executor *core
 func (w *Worker) Start(ctx context.Context) error {
 	slog.Info("Starting worker", "feature", "petrock_example_feature_name")
 
+	// Create a timeout context for initialization to avoid hanging
+	timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	// Get current highest message ID
+	version, err := w.log.Version(timeoutCtx)
+	if err != nil {
+		return fmt.Errorf("failed to get message log version: %w", err)
+	}
+
+	// Set initial position - we'll perform a full replay in the background
+	// after startup to avoid blocking the application
+	w.wState.mu.Lock()
+	w.wState.lastProcessedID = fmt.Sprintf("%d", version)
+	w.wState.mu.Unlock()
+
+	// Start a background task to process existing messages
+	go w.replayExistingMessages(ctx)
+
+	slog.Info("Worker initialization complete", "feature", "petrock_example_feature_name")
+	return nil
+}
+
+// replayExistingMessages processes all existing messages to rebuild worker state
+// This runs in the background to avoid blocking application startup
+func (w *Worker) replayExistingMessages(ctx context.Context) {
+	slog.Debug("Starting replay of existing messages", "feature", "petrock_example_feature_name")
+	
+	// Create a timeout context
+	timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	
 	// Process all existing messages to rebuild internal state
 	messageCount := 0
-	for msg := range w.log.After(ctx, 0) {
+	for msg := range w.log.After(timeoutCtx, 0) {
 		messageCount++
-
+		
 		// Process the message to update internal state
 		w.processMessage(ctx, msg)
-
+		
 		// Update the last processed ID
 		w.wState.mu.Lock()
 		w.wState.lastProcessedID = fmt.Sprintf("%d", msg.ID)
 		w.wState.mu.Unlock()
 	}
-
-	slog.Info("Worker initialization complete",
-		"feature", "petrock_example_feature_name",
+	
+	slog.Info("Background replay completed", 
+		"feature", "petrock_example_feature_name", 
 		"messages_processed", messageCount,
 		"pending_summaries", len(w.wState.pendingSummaries))
-	return nil
 }
 
 // Stop gracefully shuts down the worker
@@ -102,7 +133,7 @@ func (w *Worker) Stop(ctx context.Context) error {
 // Work performs a single processing cycle of the worker
 func (w *Worker) Work() error {
 	ctx := context.Background()
-
+	
 	// 1. Process any new messages since last run
 	w.wState.mu.Lock()
 	lastID := w.wState.lastProcessedID
@@ -112,14 +143,18 @@ func (w *Worker) Work() error {
 		fmt.Sscanf(lastID, "%d", &lastIDNum)
 	}
 	w.wState.mu.Unlock()
-
+	
+	// Create a timeout context for message processing
+	timeoutCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+	defer cancel()
+	
 	messageCount := 0
-	for msg := range w.log.After(ctx, lastIDNum) {
+	for msg := range w.log.After(timeoutCtx, lastIDNum) {
 		messageCount++
-
+		
 		// Process the message
 		w.processMessage(ctx, msg)
-
+		
 		// Update the last processed ID
 		w.wState.mu.Lock()
 		w.wState.lastProcessedID = fmt.Sprintf("%d", msg.ID)
