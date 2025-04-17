@@ -170,7 +170,7 @@ func (fs *FeatureServer) HandleCreateItem(w http.ResponseWriter, r *http.Request
 	defer r.Body.Close()
 
 	// Execute the command using the central executor
-	err := fs.app.Executor.Execute(r.Context(), cmd)
+	err := fs.app.Executor.Execute(r.Context(), &cmd)
 	if err != nil {
 		slog.Error("Failed to execute CreateCommand", "error", err)
 		// Distinguish between validation errors (client-side, 400) and other errors (server-side, 500)
@@ -219,7 +219,7 @@ func (fs *FeatureServer) HandleUpdateItem(w http.ResponseWriter, r *http.Request
 	}
 
 	// Execute the command using the central executor
-	err := fs.app.Executor.Execute(r.Context(), cmd)
+	err := fs.app.Executor.Execute(r.Context(), &cmd)
 	if err != nil {
 		slog.Error("Failed to execute UpdateCommand", "error", err, "id", itemID)
 		// Distinguish validation (e.g., not found, invalid name) from internal errors
@@ -247,7 +247,7 @@ func (fs *FeatureServer) HandleDeleteItem(w http.ResponseWriter, r *http.Request
 	slog.Debug("HandleDeleteItem called", "feature", "petrock_example_feature_name", "id", itemID)
 
 	// Construct the command
-	cmd := DeleteCommand{ID: itemID /* DeletedBy: "user_from_context" */}
+	cmd := &DeleteCommand{ID: itemID /* DeletedBy: "user_from_context" */}
 
 	// Execute the command using the central executor
 	err := fs.app.Executor.Execute(r.Context(), cmd)
@@ -366,7 +366,7 @@ func (fs *FeatureServer) HandleCreateForm(w http.ResponseWriter, r *http.Request
 	}
 
 	// Execute the command
-	err := fs.app.Executor.Execute(r.Context(), cmd)
+	err := fs.app.Executor.Execute(r.Context(), &cmd)
 	if err != nil {
 		// Check if it's a validation error
 		if strings.Contains(err.Error(), "validation failed") || strings.Contains(err.Error(), "already exists") {
@@ -512,7 +512,7 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 	}
 
 	// Execute the command
-	err := fs.app.Executor.Execute(r.Context(), cmd)
+	err := fs.app.Executor.Execute(r.Context(), &cmd)
 	if err != nil {
 		// Check if it's a validation error
 		if strings.Contains(err.Error(), "validation failed") || strings.Contains(err.Error(), "not found") {
@@ -629,7 +629,7 @@ func (fs *FeatureServer) HandleDeleteConfirm(w http.ResponseWriter, r *http.Requ
 	// ...
 
 	// Create the delete command
-	cmd := DeleteCommand{
+	cmd := &DeleteCommand{
 		ID:        itemID,
 		DeletedBy: "user", // Replace with actual user ID if authentication is implemented
 		DeletedAt: time.Now().UTC(),
