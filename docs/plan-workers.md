@@ -129,15 +129,15 @@ This plan outlines how to replace the current `jobs.go` pattern with a more robu
 - StopWorkers is called during shutdown before server resources are released - DONE
 - Both calls have proper error handling - DONE
 
-### T6: Migration Strategy
+### T6: Migration Strategy - DONE
 
 
-**T6.1:** Update petrock feature command
-- Update feature generation to use worker.go instead of jobs.go
+**T6.1:** Update petrock feature command - DONE
+- Update feature generation to use worker.go instead of jobs.go - DONE
 
-**Definition of Done for T6:**
-- feature command generates worker.go instead of jobs.go
-- Existing applications have a clear path to adopt the new pattern
+**Definition of Done for T6: - DONE**
+- feature command generates worker.go instead of jobs.go - DONE
+- Existing applications have a clear path to adopt the new pattern - DONE
 
 ## Feature Template Worker Implementation Details
 
