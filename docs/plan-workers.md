@@ -30,10 +30,10 @@ This plan outlines how to replace the current `jobs.go` pattern with a more robu
 - Add workers slice to App struct in core/app.go - DONE
 - Add worker control fields (workerCtx, workerCancel, workerWg) - DONE
 
-**T2.2:** Implement RegisterWorker method
-- Add RegisterWorker method to App struct
-- Method should accept Worker interface and add to the workers slice
-- Add appropriate logging
+**T2.2:** Implement RegisterWorker method - DONE
+- Add RegisterWorker method to App struct - DONE
+- Method should accept Worker interface and add to the workers slice - DONE
+- Add appropriate logging - DONE
 
 **T2.3:** Implement StartWorkers method
 - Create StartWorkers method that initializes workers with context

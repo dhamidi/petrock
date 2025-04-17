@@ -102,6 +102,13 @@ func (a *App) RegisterRoute(pattern string, handler http.HandlerFunc) {
 	}
 }
 
+// RegisterWorker registers a background worker with the application
+// Workers are started when StartWorkers is called and stopped during shutdown
+func (a *App) RegisterWorker(worker Worker) {
+	slog.Debug("Registering worker", "type", fmt.Sprintf("%T", worker))
+	a.workers = append(a.workers, worker)
+}
+
 // ReplayLog replays the message log to build application state
 func (a *App) ReplayLog() error {
 	slog.Info("Replaying message log to build application state...")
