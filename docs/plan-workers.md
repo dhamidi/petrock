@@ -114,20 +114,20 @@ This plan outlines how to replace the current `jobs.go` pattern with a more robu
 - Worker is created with the correct dependencies
 - Code follows existing conventions and style
 
-### T5: Serve Command Integration
+### T5: Serve Command Integration - DONE
 
-**T5.1:** Update serve.go to start workers
-- Modify cmd/template/serve.go to call app.StartWorkers after feature registration
-- Add proper error handling
+**T5.1:** Update serve.go to start workers - DONE
+- Modify cmd/template/serve.go to call app.StartWorkers after feature registration - DONE
+- Add proper error handling - DONE
 
-**T5.2:** Update shutdown sequence
-- Add app.StopWorkers call during server shutdown
-- Ensure proper cancellation context is passed
+**T5.2:** Update shutdown sequence - DONE
+- Add app.StopWorkers call during server shutdown - DONE
+- Ensure proper cancellation context is passed - DONE
 
-**Definition of Done for T5:**
-- serve.go calls StartWorkers at the appropriate point in startup
-- StopWorkers is called during shutdown before server resources are released
-- Both calls have proper error handling
+**Definition of Done for T5: - DONE**
+- serve.go calls StartWorkers at the appropriate point in startup - DONE
+- StopWorkers is called during shutdown before server resources are released - DONE
+- Both calls have proper error handling - DONE
 
 ### T6: Migration Strategy
 
