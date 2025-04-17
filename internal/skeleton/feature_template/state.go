@@ -217,13 +217,12 @@ func getTimestamp(msg *core.Message) time.Time {
 // RegisterTypes registers the message types used by this feature's state Apply method.
 // This should be called during application initialization where the message log is configured.
 func RegisterTypes(log *core.MessageLog) {
-	// Register command types - note that we use value types for registration
-	// but all command instances should be created and used as pointers
-	log.RegisterType(CreateCommand{})
-	log.RegisterType(UpdateCommand{})
-	log.RegisterType(DeleteCommand{})
-	log.RegisterType(RequestSummaryGenerationCommand{})
-	log.RegisterType(FailSummaryGenerationCommand{})
-	log.RegisterType(SetGeneratedSummaryCommand{})
+	// Register command types as pointers since CommandName has pointer receivers
+	log.RegisterType(&CreateCommand{})
+	log.RegisterType(&UpdateCommand{})
+	log.RegisterType(&DeleteCommand{})
+	log.RegisterType(&RequestSummaryGenerationCommand{})
+	log.RegisterType(&FailSummaryGenerationCommand{})
+	log.RegisterType(&SetGeneratedSummaryCommand{})
 	// Register any event types here if using event sourcing and Apply reacts to events
 }
