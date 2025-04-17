@@ -44,13 +44,14 @@ func NewState() *State {
 // This is the core logic for state reconstruction during replay and updates during runtime.
 // Note: This example assumes commands are logged directly. If events are logged,
 // the logic here would react to event types instead.
+// Commands MUST be passed as pointer types (*CommandType).
 // The msg parameter is non-nil during replay (providing timestamp and ID) and nil during direct execution.
 func (s *State) Apply(payload interface{}, msg *core.Message) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	switch cmd := payload.(type) {
-	case CreateCommand:
+	case *CreateCommand:
 		// Check if item already exists (optional, depends on desired idempotency)
 		if _, exists := s.Items[cmd.Name]; exists { // Assuming Name is used as ID for creation simplicity
 			slog.Warn("Attempted to create already existing item", "id", cmd.Name)
@@ -69,7 +70,7 @@ func (s *State) Apply(payload interface{}, msg *core.Message) error {
 		s.Items[newItem.ID] = newItem
 		slog.Debug("Applied CreateCommand to state", "id", newItem.ID)
 
-	case UpdateCommand:
+	case *UpdateCommand:
 		existingItem, found := s.Items[cmd.ID]
 		if !found {
 			slog.Warn("Attempted to update non-existent item", "id", cmd.ID)
@@ -81,7 +82,7 @@ func (s *State) Apply(payload interface{}, msg *core.Message) error {
 		existingItem.Version++
 		slog.Debug("Applied UpdateCommand to state", "id", existingItem.ID, "version", existingItem.Version)
 
-	case DeleteCommand:
+	case *DeleteCommand:
 		if _, found := s.Items[cmd.ID]; !found {
 			slog.Warn("Attempted to delete non-existent item", "id", cmd.ID)
 			return fmt.Errorf("item with ID %s not found for deletion", cmd.ID) // Or return nil for idempotency
@@ -89,7 +90,7 @@ func (s *State) Apply(payload interface{}, msg *core.Message) error {
 		delete(s.Items, cmd.ID) // Hard delete for this example
 		slog.Debug("Applied DeleteCommand to state", "id", cmd.ID)
 
-	case SetGeneratedSummaryCommand:
+	case *SetGeneratedSummaryCommand:
 		existingItem, found := s.Items[cmd.ID]
 		if !found {
 			slog.Warn("Attempted to set summary for non-existent item", "id", cmd.ID)
@@ -216,6 +217,8 @@ func getTimestamp(msg *core.Message) time.Time {
 // RegisterTypes registers the message types used by this feature's state Apply method.
 // This should be called during application initialization where the message log is configured.
 func RegisterTypes(log *core.MessageLog) {
+	// Register command types - note that we use value types for registration
+	// but all command instances should be created and used as pointers
 	log.RegisterType(CreateCommand{})
 	log.RegisterType(UpdateCommand{})
 	log.RegisterType(DeleteCommand{})
