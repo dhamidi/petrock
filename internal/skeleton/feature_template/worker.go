@@ -194,7 +194,11 @@ func (w *Worker) handleCreateCommand(ctx context.Context, cmd core.Command) {
 		RequestID: requestID,
 	}
 
-	if err := w.executor.Execute(ctx, summarizeCmd); err != nil {
+	// Use a separate context with longer timeout for command execution
+	execCtx, execCancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer execCancel()
+
+	if err := w.executor.Execute(execCtx, summarizeCmd); err != nil {
 		slog.Error("Failed to request summary generation",
 			"feature", "petrock_example_feature_name",
 			"itemID", createCmd.Name,
@@ -311,12 +315,15 @@ func (w *Worker) processPendingSummaries(ctx context.Context) error {
 				RequestID: summary.RequestID,
 				Reason:    "timeout",
 			}
-			if err := w.executor.Execute(ctx, failCmd); err != nil {
+			// Use a fresh context for command execution
+			execCtx, execCancel := context.WithTimeout(context.Background(), 15*time.Second)
+			if err := w.executor.Execute(execCtx, failCmd); err != nil {
 				slog.Error("Failed to record summary failure",
 					"feature", "petrock_example_feature_name",
 					"itemID", summary.ItemID,
 					"error", err)
 			}
+			execCancel()
 			continue
 		}
 
@@ -394,7 +401,11 @@ func (w *Worker) callSummarizationAPI(ctx context.Context, summary PendingSummar
 		Summary:   fakeSummary,
 	}
 
-	if err := w.executor.Execute(ctx, setCmd); err != nil {
+	// Use a fresh context for command execution
+	execCtx, execCancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer execCancel()
+
+	if err := w.executor.Execute(execCtx, setCmd); err != nil {
 		return fmt.Errorf("failed to update item with summary: %w", err)
 	}
 
