@@ -61,57 +61,17 @@ func NewWorker(app *core.App, state *State, log *core.MessageLog, executor *core
 	}
 }
 
-// Start initializes the worker and rebuilds its internal state
-// by processing existing messages from the message log
+// Start initializes the worker
+// Message replay is now handled directly in App.StartWorkers
 func (w *Worker) Start(ctx context.Context) error {
 	slog.Info("Starting worker", "feature", "petrock_example_feature_name")
 
-	// Create a timeout context for initialization to avoid hanging
-	timeoutCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	// Get current highest message ID
-	version, err := w.log.Version(timeoutCtx)
-	if err != nil {
-		return fmt.Errorf("failed to get message log version: %w", err)
-	}
-
-	// Set initial position - we'll perform a full replay in the background
-	// after startup to avoid blocking the application
-	w.wState.lastProcessedID = fmt.Sprintf("%d", version)
-
-	// Start a background task to process existing messages
-	go w.replayExistingMessages(ctx)
+	// Initialize worker state
+	w.wState.lastProcessedID = ""
+	w.wState.pendingSummaries = make(map[string]PendingSummary)
 
 	slog.Info("Worker initialization complete", "feature", "petrock_example_feature_name")
 	return nil
-}
-
-// replayExistingMessages processes all existing messages to rebuild worker state
-// This runs in the background to avoid blocking application startup
-func (w *Worker) replayExistingMessages(ctx context.Context) {
-	slog.Debug("Starting replay of existing messages", "feature", "petrock_example_feature_name")
-
-	// Create a timeout context
-	timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
-	// Process all existing messages to rebuild internal state
-	messageCount := 0
-	for msg := range w.log.After(timeoutCtx, 0) {
-		messageCount++
-
-		// Process the message to update internal state
-		w.processMessage(ctx, msg)
-
-		// Update the last processed ID
-		w.wState.lastProcessedID = fmt.Sprintf("%d", msg.ID)
-	}
-
-	slog.Info("Background replay completed",
-		"feature", "petrock_example_feature_name",
-		"messages_processed", messageCount,
-		"pending_summaries", len(w.wState.pendingSummaries))
 }
 
 // Stop gracefully shuts down the worker
