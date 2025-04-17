@@ -258,7 +258,9 @@ func (l *MessageLog) Decode(message Message) (interface{}, error) {
 
 // SetupDatabase initializes the SQLite database connection and returns it.
 func SetupDatabase(dataSourceName string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", dataSourceName)
+	// Append SQLite connection parameters to enable WAL mode and immediate transaction locking
+	connString := dataSourceName + "?_journal_mode=WAL&_txlock=IMMEDIATE"
+	db, err := sql.Open("sqlite3", connString)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database %s: %w", dataSourceName, err)
 	}

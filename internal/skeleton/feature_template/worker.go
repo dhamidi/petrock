@@ -86,7 +86,8 @@ func (w *Worker) Stop(ctx context.Context) error {
 
 // Work performs a single processing cycle of the worker
 func (w *Worker) Work() error {
-	ctx := context.Background()
+	// Use background context for overall operation
+	baseCtx := context.Background()
 
 	// Debug log worker state at the beginning of each cycle
 	slog.Debug("Worker state",
@@ -97,30 +98,32 @@ func (w *Worker) Work() error {
 	// 1. Process any new messages since last run
 	lastIDNum := w.wState.lastProcessedID
 
-	// Create a timeout context for message processing
-	timeoutCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
-	defer cancel()
-
-	slog.Debug("Checking for new messages after ID", 
+	slog.Debug("Checking for new messages after ID",
 		"feature", "petrock_example_feature_name",
 		"afterID", lastIDNum)
 
 	messageCount := 0
-	for msg := range w.log.After(timeoutCtx, lastIDNum) {
+	// Create a separate short-lived context for database operations
+	readCtx, readCancel := context.WithTimeout(baseCtx, 5*time.Second)
+	defer readCancel()
+
+	for msg := range w.log.After(readCtx, lastIDNum) {
 		messageCount++
 
 		// Log message being processed
-		slog.Debug("Processing message", 
+		slog.Debug("Processing message",
 			"feature", "petrock_example_feature_name",
 			"messageID", msg.ID,
 			"commandType", fmt.Sprintf("%T", msg.DecodedPayload))
 
-		// Process the message
-		w.processMessage(ctx, msg)
+		// Process the message with a separate context
+		cmdCtx, cmdCancel := context.WithTimeout(baseCtx, 5*time.Second)
+		w.processMessage(cmdCtx, msg)
+		cmdCancel()
 
 		// Update the last processed ID
 		w.wState.lastProcessedID = msg.ID
-		slog.Debug("Updated lastProcessedID", 
+		slog.Debug("Updated lastProcessedID",
 			"feature", "petrock_example_feature_name",
 			"lastProcessedID", w.wState.lastProcessedID)
 	}
@@ -131,8 +134,10 @@ func (w *Worker) Work() error {
 			"count", messageCount)
 	}
 
-	// 2. Process any pending summaries
-	return w.processPendingSummaries(ctx)
+	// 2. Process any pending summaries with a fresh context
+	summaryCtx, summaryCancel := context.WithTimeout(baseCtx, 10*time.Second)
+	defer summaryCancel()
+	return w.processPendingSummaries(summaryCtx)
 }
 
 // processMessage updates worker state based on message type
@@ -146,8 +151,8 @@ func (w *Worker) processMessage(ctx context.Context, msg core.PersistedMessage) 
 			"type", fmt.Sprintf("%T", msg.DecodedPayload))
 		return
 	}
-	
-	slog.Debug("Processing command", 
+
+	slog.Debug("Processing command",
 		"feature", "petrock_example_feature_name",
 		"messageID", msg.ID,
 		"commandName", cmd.CommandName())
