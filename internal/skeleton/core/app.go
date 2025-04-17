@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"net/http"
 	"sync"
+	"time"
 )
 
 // App is the central struct that holds all application dependencies and state
@@ -107,6 +109,60 @@ func (a *App) RegisterRoute(pattern string, handler http.HandlerFunc) {
 func (a *App) RegisterWorker(worker Worker) {
 	slog.Debug("Registering worker", "type", fmt.Sprintf("%T", worker))
 	a.workers = append(a.workers, worker)
+}
+
+// StartWorkers initializes and starts all registered workers
+// Each worker is started in its own goroutine with a ticker for periodic Work() calls
+func (a *App) StartWorkers(ctx context.Context) error {
+	slog.Info("Starting workers...")
+	
+	// Create a cancelable context for worker operations
+	a.workerCtx, a.workerCancel = context.WithCancel(ctx)
+	
+	// Start each worker in its own goroutine
+	for i, worker := range a.workers {
+		// Initialize the worker
+		slog.Debug("Initializing worker", "index", i, "type", fmt.Sprintf("%T", worker))
+		if err := worker.Start(a.workerCtx); err != nil {
+			// If a worker fails to initialize, cancel context and return error
+			a.workerCancel()
+			return &WorkerError{Op: "start", Err: fmt.Errorf("worker %d (%T) failed to initialize: %w", i, worker, err)}
+		}
+		
+		a.workerWg.Add(1)
+		
+		// Start worker goroutine with its own ticker and jitter
+		go func(index int, w Worker) {
+			defer a.workerWg.Done()
+			
+			// Create ticker with jitter (1-2 seconds)
+			baseTick := time.Second
+			jitter := time.Duration(rand.Intn(1000)) * time.Millisecond
+			ticker := time.NewTicker(baseTick + jitter)
+			defer ticker.Stop()
+			
+			slog.Debug("Worker started", "index", index, "interval", baseTick+jitter)
+			
+			for {
+				select {
+				case <-a.workerCtx.Done():
+					// Context was cancelled, exit the goroutine
+					slog.Debug("Worker stopping due to context cancellation", "index", index)
+					return
+					
+				case <-ticker.C:
+					// Time to do work
+					if err := w.Work(); err != nil {
+						// Log error but don't stop worker on work errors
+						slog.Error("Worker cycle failed", "index", index, "error", err)
+					}
+				}
+			}
+		}(i, worker)
+	}
+	
+	slog.Info("All workers started", "count", len(a.workers))
+	return nil
 }
 
 // ReplayLog replays the message log to build application state
