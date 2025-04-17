@@ -46,17 +46,17 @@ This plan outlines how to replace the current `jobs.go` pattern with a more robu
 - Wait for workers to finish with timeout - DONE
 - Handle cleanup failures properly - DONE
 
-**T2.5:** Update Close method
-- Modify existing Close method to call StopWorkers
-- Ensure proper error handling during shutdown
+**T2.5:** Update Close method - DONE
+- Modify existing Close method to call StopWorkers - DONE
+- Ensure proper error handling during shutdown - DONE
 
-**Definition of Done for T2:**
-- App struct has worker management fields
-- RegisterWorker correctly adds workers to the app
-- StartWorkers successfully starts workers in goroutines with randomized intervals
-- StopWorkers gracefully shuts down workers and handles timeouts
-- Close method properly includes worker shutdown in its sequence
-- Logging statements exist for major state changes
+**Definition of Done for T2: - DONE**
+- App struct has worker management fields - DONE
+- RegisterWorker correctly adds workers to the app - DONE
+- StartWorkers successfully starts workers in goroutines with randomized intervals - DONE
+- StopWorkers gracefully shuts down workers and handles timeouts - DONE
+- Close method properly includes worker shutdown in its sequence - DONE
+- Logging statements exist for major state changes - DONE
 
 ### T3: Feature Template Worker Implementation
 

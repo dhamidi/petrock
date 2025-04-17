@@ -281,6 +281,18 @@ func (a *App) ReplayLog() error {
 func (a *App) Close() error {
 	slog.Debug("Closing application resources")
 	
+	// First stop all workers with a timeout
+	if len(a.workers) > 0 {
+		slog.Debug("Stopping workers")
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		
+		if err := a.StopWorkers(ctx); err != nil {
+			slog.Warn("Error stopping workers", "error", err)
+			// Continue with cleanup despite worker errors
+		}
+	}
+	
 	// Close the database connection
 	if a.DB != nil {
 		slog.Debug("Closing database connection")
