@@ -85,15 +85,12 @@ func RegisterFeature(app *core.App, state *State) {
 	slog.Debug("Registering message types with MessageLog", "feature", "petrock_example_feature_name")
 	RegisterTypes(app.MessageLog) // state.go provides RegisterTypes(*core.MessageLog)
 
-	// --- 7. Register Background Jobs/Workers (Optional) ---
-	// If the feature includes background processes (defined in jobs.go),
-	// initialize them here. The actual launching (e.g., starting goroutines)
-	// launching (e.g., starting goroutines) is typically done in the main application
-	// entry point (e.g., cmd/serve.go) to manage their lifecycle.
-	// Example:
-	// jobs := NewJobs(state, messageLog)
-	// // Register jobs with a scheduler or worker pool if applicable
-	// // scheduler.Register(jobs.SomeScheduledTask, "*/5 * * * *")
+	// --- 7. Register Worker (replacing jobs registration) ---
+	// Initialize and register the worker with the app
+	// The worker lifecycle (starting/stopping) is managed by the App
+	slog.Debug("Registering worker", "feature", "petrock_example_feature_name")
+	worker := NewWorker(app, state, app.MessageLog, app.Executor)
+	app.RegisterWorker(worker)
 
 	slog.Info("Feature registered successfully", "feature", "petrock_example_feature_name")
 }

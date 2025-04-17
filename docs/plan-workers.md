@@ -102,17 +102,17 @@ This plan outlines how to replace the current `jobs.go` pattern with a more robu
 - Code follows project's conventions and uses appropriate placeholders - DONE
 - File has proper documentation for all methods and types - DONE
 
-### T4: Feature Template Registration
+### T4: Feature Template Registration - DONE
 
-**T4.1:** Update RegisterFeature in register.go
-- Modify internal/skeleton/feature_template/register.go
-- Add worker initialization code in the RegisterFeature function
-- Ensure worker is registered with the app
+**T4.1:** Update RegisterFeature in register.go - DONE
+- Modify internal/skeleton/feature_template/register.go - DONE
+- Add worker initialization code in the RegisterFeature function - DONE
+- Ensure worker is registered with the app - DONE
 
-**Definition of Done for T4:**
-- RegisterFeature in register.go initializes and registers the worker
-- Worker is created with the correct dependencies
-- Code follows existing conventions and style
+**Definition of Done for T4: - DONE**
+- RegisterFeature in register.go initializes and registers the worker - DONE
+- Worker is created with the correct dependencies - DONE
+- Code follows existing conventions and style - DONE
 
 ### T5: Serve Command Integration - DONE
 
