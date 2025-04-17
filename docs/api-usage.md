@@ -37,6 +37,8 @@ The API follows a Command Query Responsibility Segregation (CQRS) pattern:
 *   `type`: (String, Required) The unique identifier for the command (e.g., `petrock_example_feature_name/create`).
 *   `payload`: (Object, Required) An object containing the data required by the specific command. The fields within `payload` depend on the command definition.
 
+**Note**: All commands are processed as pointer types internally. When implementing your own commands, always create them as pointers (`&CommandName{}`) for consistency and best performance.
+
 ### Query Request (GET `/queries/{feature-name}/{query-name}`)
 
 Queries are invoked via GET requests, and their parameters are passed in the URL query string.
@@ -68,6 +70,8 @@ curl http://localhost:8080/queries
 ### 3. Execute a Command (Create Example)
 
 This example executes the `petrock_example_feature_name/create` command. Replace the `payload` fields with the actual fields required by your command.
+
+Commands will be processed as pointer types (*CommandType) internally for optimal performance.
 
 ```bash
 curl -X POST -H "Content-Type: application/json" \

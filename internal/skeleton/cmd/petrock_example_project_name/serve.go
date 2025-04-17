@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json" // Added for JSON handling in API endpoints
 	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url" // Added for parsing query parameters
+	"os"
 	"reflect" // Added for command/query execution handlers
 	"strconv" // Added for converting query parameters
 	"strings" // Added for query parameter population helper
@@ -62,11 +64,47 @@ func NewServeCmd() *cobra.Command {
 	serveCmd.Flags().IntP("port", "p", 8080, "Port to listen on")
 	serveCmd.Flags().String("host", "localhost", "Host to bind to")
 	serveCmd.Flags().String("db-path", "app.db", "Path to the SQLite database file") // Added db-path flag
+	serveCmd.Flags().String("log-level", "", "Log level: debug, info, warn, error (defaults to LOG_LEVEL env var or 'info')")
 
 	return serveCmd
 }
 
 func runServe(cmd *cobra.Command, args []string) error {
+	// Configure logging level from environment variable or flag
+	logLevelStr, _ := cmd.Flags().GetString("log-level")
+	if logLevelStr == "" {
+		// Check environment variable if flag is not set
+		logLevelStr = os.Getenv("LOG_LEVEL")
+		if logLevelStr == "" {
+			// Default to info if neither flag nor env var is set
+			logLevelStr = "info"
+		}
+	}
+
+	// Parse log level string to slog.Level
+	var level slog.Level
+	switch strings.ToLower(logLevelStr) {
+	case "debug":
+		level = slog.LevelDebug
+	case "info":
+		level = slog.LevelInfo
+	case "warn", "warning":
+		level = slog.LevelWarn
+	case "error":
+		level = slog.LevelError
+	default:
+		// Invalid log level, default to info and warn
+		fmt.Fprintf(os.Stderr, "Warning: invalid log level '%s', using 'info'\n", logLevelStr)
+		level = slog.LevelInfo
+	}
+
+	// Configure slog with the appropriate level
+	logHandler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: level,
+	})
+	slog.SetDefault(slog.New(logHandler))
+	slog.Info("Log level set", "level", logLevelStr)
+
 	port, _ := cmd.Flags().GetInt("port")
 	host, _ := cmd.Flags().GetString("host")
 	dbPath, _ := cmd.Flags().GetString("db-path") // Get db-path flag value
@@ -78,7 +116,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize application: %w", err)
 	}
-	defer app.Close() // Ensure resources are closed properly
+	// Don't use defer app.Close() - we'll handle shutdown more carefully below
 
 	// Initialize Application State
 	slog.Debug("Initializing application state")
@@ -97,6 +135,12 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// Replay the message log to build application state
 	if err := app.ReplayLog(); err != nil {
 		return fmt.Errorf("failed to replay message log: %w", err)
+	}
+	
+	// Start workers after log replay
+	slog.Info("Starting background workers...")
+	if err := app.StartWorkers(context.Background()); err != nil {
+		return fmt.Errorf("failed to start workers: %w", err)
 	}
 
 	// Example: Setup middleware (logging, CSRF)
@@ -136,14 +180,48 @@ func runServe(cmd *cobra.Command, args []string) error {
 		IdleTimeout:  120 * time.Second,
 	}
 
+	// Set up graceful shutdown with signal handling
+	stopCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	
+	// Handle shutdown in a goroutine
+	go func() {
+		// Here you would typically use signal.Notify to capture SIGINT, SIGTERM
+		// But for simplicity in this template, we'll just wait for context cancellation
+		<-stopCtx.Done()
+		slog.Info("Shutting down server...")
+		
+		// Create shutdown context with timeout
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer shutdownCancel()
+		
+		// First gracefully stop all workers
+		slog.Info("Stopping background workers...")
+		if err := app.StopWorkers(shutdownCtx); err != nil {
+			slog.Warn("Error stopping workers", "error", err)
+		}
+		
+		// Then gracefully shut down the HTTP server
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			slog.Error("Error during server shutdown", "error", err)
+		}
+		
+		// Close all remaining resources
+		if err := app.Close(); err != nil {
+			slog.Error("Error closing application resources", "error", err)
+		}
+	}()
+	
 	// Start the server
 	slog.Info("Starting server", "address", addr)
 	err = server.ListenAndServe()
-	if err != nil {
+	if err != http.ErrServerClosed {
+		// Only return an error if it's not due to graceful shutdown
+		cancel() // Signal shutdown to the goroutine
 		return fmt.Errorf("server error: %w", err)
 	}
-
-	// We should never reach here as ListenAndServe blocks until the server closes
+	
+	slog.Info("Server shut down successfully")
 	return nil
 }
 

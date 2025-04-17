@@ -68,10 +68,46 @@ build_skeleton() {
 build_petrock() {
   rm -f internal/skeleton/go.mod # to allow go:embed to do its work
   go build ./cmd/...
+  go install ./cmd/petrock
 }
 
 test_petrock() {
   ./petrock test
+}
+
+test_project() {
+  build_petrock
+  cd tmp
+  [[ -d blog ]] && { yes | rm -rf ./blog; }
+  petrock new blog github.com/dhamidi/blog
+  cd blog
+  petrock feature posts
+  go run ./cmd/blog serve --log-level=debug &
+  sleep 1
+  test_project_create_post
+  wait %1
+}
+
+test_project_create_post() {
+  curl 'http://localhost:8080/posts/new' \
+    -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7' \
+    -H 'Accept-Language: en-US,en;q=0.9' \
+    -H 'Cache-Control: max-age=0' \
+    -H 'Connection: keep-alive' \
+    -H 'Content-Type: application/x-www-form-urlencoded' \
+    -H 'DNT: 1' \
+    -H 'Origin: http://localhost:8080' \
+    -H 'Referer: http://localhost:8080/posts/new' \
+    -H 'Sec-Fetch-Dest: document' \
+    -H 'Sec-Fetch-Mode: navigate' \
+    -H 'Sec-Fetch-Site: same-origin' \
+    -H 'Sec-Fetch-User: ?1' \
+    -H 'Upgrade-Insecure-Requests: 1' \
+    -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36' \
+    -H 'sec-ch-ua: "Google Chrome";v="135", "Not-A.Brand";v="8", "Chromium";v="135"' \
+    -H 'sec-ch-ua-mobile: ?0' \
+    -H 'sec-ch-ua-platform: "macOS"' \
+    --data-raw 'csrf_token=token&name=Test&description=Test'
 }
 
 main "$@"

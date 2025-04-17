@@ -36,6 +36,7 @@ func NewSelfInspectCmd() *cobra.Command {
 	// Add flags
 	inspectCmd.Flags().String("format", "json", "Output format: json")
 	inspectCmd.Flags().String("db-path", "app.db", "Path to the SQLite database file")
+	inspectCmd.Flags().Bool("debug", false, "Show debug information on stderr")
 
 	return inspectCmd
 }

@@ -45,6 +45,32 @@ func ItemView(item Result) g.Node {
 						g.Text(item.Description),
 					),
 				),
+				
+				// Content field - spans full width
+				html.Div(
+					g.Attr("class", "col-span-1 sm:col-span-2"),
+					html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("Content")),
+					html.Dd(
+						g.Attr("class", "mt-1 text-sm text-slate-900 whitespace-pre-wrap p-3 bg-slate-50 rounded border border-slate-100"),
+						g.Text(item.Content),
+					),
+				),
+				
+				// Summary field (if available) - spans full width
+				func() g.Node {
+					if item.Summary == "" {
+						return nil
+					}
+					return html.Div(
+						g.Attr("class", "col-span-1 sm:col-span-2"),
+						html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("Summary")),
+						html.Dd(
+							g.Attr("class", "mt-1 text-sm italic text-slate-700 whitespace-pre-wrap p-3 bg-indigo-50 rounded border border-indigo-100"),
+							g.Text(item.Summary),
+						),
+					)
+				}(),
+				
 
 				// Created date
 				html.Div(
@@ -329,13 +355,31 @@ func ItemsListView(result ListResult) g.Node {
 						),
 					),
 
-					// Card body with description
+					// Card body with description and summary
 					html.Div(
-						g.Attr("class", "px-4 py-5 sm:p-6"),
+						g.Attr("class", "px-4 py-5 sm:p-6 space-y-3"),
+						// Description
 						html.P(
 							g.Attr("class", "text-sm text-slate-700 break-words line-clamp-3"),
 							g.Text(item.Description),
 						),
+						// Summary (if available)
+						func() g.Node {
+							if item.Summary == "" {
+								return nil
+							}
+							return html.Div(
+								g.Attr("class", "mt-2 border-t border-slate-100 pt-2"),
+								html.H4(
+									g.Attr("class", "text-xs font-medium text-slate-500 mb-1"),
+									g.Text("Summary"),
+								),
+								html.P(
+									g.Attr("class", "text-sm italic text-slate-600 break-words"),
+									g.Text(item.Summary),
+								),
+							)
+						}(),
 					),
 
 					// Card footer with actions

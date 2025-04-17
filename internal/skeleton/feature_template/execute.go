@@ -58,19 +58,17 @@ func (e *Executor) ValidateCommand(ctx context.Context, cmd core.Command) error 
 
 // HandleCreate applies state changes for CreateCommand.
 func (e *Executor) HandleCreate(ctx context.Context, command core.Command, msg *core.Message) error {
-	cmd, ok := command.(CreateCommand)
+	// Type assertion for pointer type
+	cmd, ok := command.(*CreateCommand)
 	if !ok {
-		// This should ideally not happen if registration is correct, but check defensively.
-		err := fmt.Errorf("internal error: incorrect command type (%T) passed to HandleCreate", command)
+		err := fmt.Errorf("internal error: incorrect command type (%T) passed to HandleCreate, expected *CreateCommand", command)
 		slog.Error("Type assertion failed in HandleCreate", "error", err)
 		return err // Returning error causes panic in core.Executor
 	}
 
 	slog.Debug("Applying state change for CreateCommand", "feature", "petrock_example_feature_name", "name", cmd.Name)
 
-	// Apply the change using the state's Apply method or direct state modification.
-	// The state.Apply method (in state.go) contains the actual logic.
-	// Pass through the message metadata if available (from replay)
+	// Apply the change using the state's Apply method
 	if err := e.state.Apply(cmd, msg); err != nil {
 		// Log the error, but return it to trigger panic in core.Executor
 		slog.Error("State Apply failed for CreateCommand", "error", err, "name", cmd.Name)
@@ -83,17 +81,17 @@ func (e *Executor) HandleCreate(ctx context.Context, command core.Command, msg *
 
 // HandleUpdate applies state changes for UpdateCommand.
 func (e *Executor) HandleUpdate(ctx context.Context, command core.Command, msg *core.Message) error {
-	cmd, ok := command.(UpdateCommand)
+	// Type assertion for pointer type
+	cmd, ok := command.(*UpdateCommand)
 	if !ok {
-		err := fmt.Errorf("internal error: incorrect command type (%T) passed to HandleUpdate", command)
+		err := fmt.Errorf("internal error: incorrect command type (%T) passed to HandleUpdate, expected *UpdateCommand", command)
 		slog.Error("Type assertion failed in HandleUpdate", "error", err)
 		return err // Returning error causes panic in core.Executor
 	}
 
 	slog.Debug("Applying state change for UpdateCommand", "feature", "petrock_example_feature_name", "id", cmd.ID)
 
-	// Apply the change using the state's Apply method.
-	// Pass through the message metadata if available (from replay)
+	// Apply the change using the state's Apply method
 	if err := e.state.Apply(cmd, msg); err != nil {
 		slog.Error("State Apply failed for UpdateCommand", "error", err, "id", cmd.ID)
 		return fmt.Errorf("state.Apply failed for UpdateCommand: %w", err)
@@ -105,17 +103,17 @@ func (e *Executor) HandleUpdate(ctx context.Context, command core.Command, msg *
 
 // HandleDelete applies state changes for DeleteCommand.
 func (e *Executor) HandleDelete(ctx context.Context, command core.Command, msg *core.Message) error {
-	cmd, ok := command.(DeleteCommand)
+	// Type assertion for pointer type
+	cmd, ok := command.(*DeleteCommand)
 	if !ok {
-		err := fmt.Errorf("internal error: incorrect command type (%T) passed to HandleDelete", command)
+		err := fmt.Errorf("internal error: incorrect command type (%T) passed to HandleDelete, expected *DeleteCommand", command)
 		slog.Error("Type assertion failed in HandleDelete", "error", err)
 		return err // Returning error causes panic in core.Executor
 	}
 
 	slog.Debug("Applying state change for DeleteCommand", "feature", "petrock_example_feature_name", "id", cmd.ID)
 
-	// Apply the change using the state's Apply method.
-	// Pass through the message metadata if available (from replay)
+	// Apply the change using the state's Apply method
 	if err := e.state.Apply(cmd, msg); err != nil {
 		slog.Error("State Apply failed for DeleteCommand", "error", err, "id", cmd.ID)
 		return fmt.Errorf("state.Apply failed for DeleteCommand: %w", err)
@@ -125,4 +123,55 @@ func (e *Executor) HandleDelete(ctx context.Context, command core.Command, msg *
 	return nil
 }
 
-// Add more command handlers here...
+// HandleRequestSummaryGeneration applies state changes for RequestSummaryGenerationCommand.
+func (e *Executor) HandleRequestSummaryGeneration(ctx context.Context, command core.Command, msg *core.Message) error {
+	// Type assertion for pointer type
+	cmd, ok := command.(*RequestSummaryGenerationCommand)
+	if !ok {
+		err := fmt.Errorf("internal error: incorrect command type (%T) passed to HandleRequestSummaryGeneration, expected *RequestSummaryGenerationCommand", command)
+		slog.Error("Type assertion failed in HandleRequestSummaryGeneration", "error", err)
+		return err // Returning error causes panic in core.Executor
+	}
+
+	slog.Debug("Applying state change for RequestSummaryGenerationCommand", "feature", "petrock_example_feature_name", "id", cmd.ID, "requestID", cmd.RequestID)
+	// Nothing to do here - worker will handle this asynchronously
+	// The command is just a trigger for the worker
+	return nil
+}
+
+// HandleFailSummaryGeneration applies state changes for FailSummaryGenerationCommand.
+func (e *Executor) HandleFailSummaryGeneration(ctx context.Context, command core.Command, msg *core.Message) error {
+	// Type assertion for pointer type
+	cmd, ok := command.(*FailSummaryGenerationCommand)
+	if !ok {
+		err := fmt.Errorf("internal error: incorrect command type (%T) passed to HandleFailSummaryGeneration, expected *FailSummaryGenerationCommand", command)
+		slog.Error("Type assertion failed in HandleFailSummaryGeneration", "error", err)
+		return err // Returning error causes panic in core.Executor
+	}
+
+	slog.Debug("Applying state change for FailSummaryGenerationCommand", "feature", "petrock_example_feature_name", "id", cmd.ID, "requestID", cmd.RequestID)
+	// Nothing to do in state - this just tells the worker to stop trying
+	return nil
+}
+
+// HandleSetGeneratedSummary applies state changes for SetGeneratedSummaryCommand.
+func (e *Executor) HandleSetGeneratedSummary(ctx context.Context, command core.Command, msg *core.Message) error {
+	// Type assertion for pointer type
+	cmd, ok := command.(*SetGeneratedSummaryCommand)
+	if !ok {
+		err := fmt.Errorf("internal error: incorrect command type (%T) passed to HandleSetGeneratedSummary, expected *SetGeneratedSummaryCommand", command)
+		slog.Error("Type assertion failed in HandleSetGeneratedSummary", "error", err)
+		return err // Returning error causes panic in core.Executor
+	}
+
+	slog.Debug("Applying state change for SetGeneratedSummaryCommand", "feature", "petrock_example_feature_name", "id", cmd.ID, "requestID", cmd.RequestID)
+
+	// Apply the change using the state's Apply method
+	if err := e.state.Apply(cmd, msg); err != nil {
+		slog.Error("State Apply failed for SetGeneratedSummaryCommand", "error", err, "id", cmd.ID)
+		return fmt.Errorf("state.Apply failed for SetGeneratedSummaryCommand: %w", err)
+	}
+
+	slog.Debug("State change applied successfully for SetGeneratedSummaryCommand", "feature", "petrock_example_feature_name", "id", cmd.ID)
+	return nil
+}

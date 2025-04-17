@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"time"
@@ -11,7 +12,7 @@ type CommandSchema struct {
 	Name        string                 `json:"name"`        // Command name (e.g., "posts/create")
 	Description string                 `json:"description"` // Command description if available
 	Type        string                 `json:"type"`        // Go type name
-	Properties  map[string]PropertyDef `json:"properties"` // Field definitions
+	Properties  map[string]PropertyDef `json:"properties"`  // Field definitions
 	Required    []string               `json:"required"`    // Required field names
 }
 
@@ -20,7 +21,7 @@ type QuerySchema struct {
 	Name        string                 `json:"name"`        // Query name (e.g., "posts/list")
 	Description string                 `json:"description"` // Query description if available
 	Type        string                 `json:"type"`        // Go type name
-	Properties  map[string]PropertyDef `json:"properties"` // Field definitions
+	Properties  map[string]PropertyDef `json:"properties"`  // Field definitions
 	Required    []string               `json:"required"`    // Required field names
 	Result      ResultDef              `json:"result"`      // Schema of the query result
 }
@@ -41,12 +42,21 @@ type ResultDef struct {
 	Properties  map[string]PropertyDef `json:"properties"`            // Result fields
 }
 
+// WorkerSchema represents metadata about a registered worker
+type WorkerSchema struct {
+	Name        string   `json:"name"`        // Worker name or type
+	Description string   `json:"description"` // Worker description if available
+	Type        string   `json:"type"`        // Go type name
+	Methods     []string `json:"methods"`     // Available methods
+}
+
 // InspectResult holds application metadata
 type InspectResult struct {
 	Commands []CommandSchema `json:"commands"` // Schema of all registered commands
-	Queries  []QuerySchema  `json:"queries"`  // Schema of all registered queries
-	Routes   []string       `json:"routes"`   // List of all registered HTTP routes
-	Features []string       `json:"features"` // List of all registered features
+	Queries  []QuerySchema   `json:"queries"`  // Schema of all registered queries
+	Routes   []string        `json:"routes"`   // List of all registered HTTP routes
+	Features []string        `json:"features"` // List of all registered features
+	Workers  []WorkerSchema  `json:"workers"`  // Schema of all registered workers
 }
 
 // GetInspectResult gathers metadata about the application
@@ -55,7 +65,7 @@ func (a *App) GetInspectResult() *InspectResult {
 		Routes:   a.Routes,
 		Features: a.Features,
 	}
-	
+
 	// Build command schemas
 	commandNames := a.CommandRegistry.RegisteredCommandNames()
 	result.Commands = make([]CommandSchema, 0, len(commandNames))
@@ -66,7 +76,7 @@ func (a *App) GetInspectResult() *InspectResult {
 			result.Commands = append(result.Commands, schema)
 		}
 	}
-	
+
 	// Build query schemas
 	queryNames := a.QueryRegistry.RegisteredQueryNames()
 	result.Queries = make([]QuerySchema, 0, len(queryNames))
@@ -77,7 +87,14 @@ func (a *App) GetInspectResult() *InspectResult {
 			result.Queries = append(result.Queries, schema)
 		}
 	}
-	
+
+	// Build worker schemas
+	result.Workers = make([]WorkerSchema, 0, len(a.workers))
+	for _, worker := range a.workers {
+		schema := buildWorkerSchema(worker)
+		result.Workers = append(result.Workers, schema)
+	}
+
 	return result
 }
 
@@ -89,14 +106,14 @@ func buildCommandSchema(name string, cmdType reflect.Type) CommandSchema {
 		Properties: make(map[string]PropertyDef),
 		Required:   []string{},
 	}
-	
+
 	// Extract fields using reflection
 	for i := 0; i < cmdType.NumField(); i++ {
 		field := cmdType.Field(i)
 		if field.PkgPath != "" { // Skip unexported fields
 			continue
 		}
-		
+
 		// Get field name from JSON tag if available
 		fieldName := field.Name
 		if jsonTag := field.Tag.Get("json"); jsonTag != "" {
@@ -107,15 +124,15 @@ func buildCommandSchema(name string, cmdType reflect.Type) CommandSchema {
 				continue // Skip fields with json:"-"
 			}
 		}
-		
+
 		// Extract property definition
 		propDef := buildPropertyDef(field)
 		schema.Properties[fieldName] = propDef
-		
+
 		// Mark required fields (simplified approach - all fields are required)
 		schema.Required = append(schema.Required, fieldName)
 	}
-	
+
 	return schema
 }
 
@@ -127,14 +144,14 @@ func buildQuerySchema(name string, queryType reflect.Type) QuerySchema {
 		Properties: make(map[string]PropertyDef),
 		Required:   []string{},
 	}
-	
+
 	// Extract fields using reflection
 	for i := 0; i < queryType.NumField(); i++ {
 		field := queryType.Field(i)
 		if field.PkgPath != "" { // Skip unexported fields
 			continue
 		}
-		
+
 		fieldName := field.Name
 		if jsonTag := field.Tag.Get("json"); jsonTag != "" {
 			parts := strings.Split(jsonTag, ",")
@@ -144,19 +161,75 @@ func buildQuerySchema(name string, queryType reflect.Type) QuerySchema {
 				continue
 			}
 		}
-		
+
 		propDef := buildPropertyDef(field)
 		schema.Properties[fieldName] = propDef
 		schema.Required = append(schema.Required, fieldName)
 	}
-	
+
 	// For now, we'll add a placeholder result schema
 	// In a real implementation, this would be derived from the query result type
 	schema.Result = ResultDef{
 		Type:       "object",
 		Properties: make(map[string]PropertyDef),
 	}
-	
+
+	return schema
+}
+
+// buildWorkerSchema creates a schema from a worker instance
+func buildWorkerSchema(worker Worker) WorkerSchema {
+	schema := WorkerSchema{
+		Type: fmt.Sprintf("%T", worker),
+	}
+
+	// Try to get WorkerInfo if implemented
+	if info := worker.WorkerInfo(); info != nil {
+		schema.Name = info.Name
+		schema.Description = info.Description
+	}
+
+	// Try to get worker name from type if not provided via WorkerInfo
+	if schema.Name == "" {
+		// Extract type name from the fully qualified type
+		typeName := schema.Type
+		// Find the last dot in the type name (package separator)
+		if lastDot := strings.LastIndex(typeName, "."); lastDot != -1 {
+			// Extract the type name after the last dot
+			typeName = typeName[lastDot+1:]
+		}
+		// Remove any *pointer prefix
+		typeName = strings.TrimPrefix(typeName, "*")
+		schema.Name = typeName
+	}
+
+	// Extract methods using reflection
+	methods := []string{}
+	workerType := reflect.TypeOf(worker)
+	workerValue := reflect.ValueOf(worker)
+
+	// If it's a pointer, get the element type
+	if workerType.Kind() == reflect.Ptr {
+		workerType = workerType.Elem()
+	}
+
+	// Add the standard Worker interface methods
+	methods = append(methods, "Start", "Stop", "Work")
+
+	// Look for additional exported methods
+	for i := 0; i < workerValue.Type().NumMethod(); i++ {
+		method := workerValue.Type().Method(i)
+		// Skip the standard Worker interface methods we already added
+		if method.Name == "Start" || method.Name == "Stop" || method.Name == "Work" {
+			continue
+		}
+		// Only include exported methods
+		if method.PkgPath == "" {
+			methods = append(methods, method.Name)
+		}
+	}
+
+	schema.Methods = methods
 	return schema
 }
 
@@ -165,13 +238,13 @@ func buildPropertyDef(field reflect.StructField) PropertyDef {
 	propDef := PropertyDef{
 		Description: field.Tag.Get("description"),
 	}
-	
+
 	// Map Go types to JSON Schema types
 	switch field.Type.Kind() {
 	case reflect.String:
 		propDef.Type = "string"
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		 reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		propDef.Type = "integer"
 	case reflect.Float32, reflect.Float64:
 		propDef.Type = "number"
@@ -189,6 +262,6 @@ func buildPropertyDef(field reflect.StructField) PropertyDef {
 	default:
 		propDef.Type = "object"
 	}
-	
+
 	return propDef
 }

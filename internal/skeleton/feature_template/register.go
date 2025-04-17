@@ -66,10 +66,14 @@ func RegisterFeature(app *core.App, state *State) {
 	// These are used by the central core.Executor.
 	// Register the command type, the state update handler method, and the feature executor instance.
 	slog.Debug("Registering command handlers and feature executor", "feature", "petrock_example_feature_name")
-	app.CommandRegistry.Register(CreateCommand{}, featureExecutor.HandleCreate, featureExecutor) // Pass handler AND executor instance
-	app.CommandRegistry.Register(UpdateCommand{}, featureExecutor.HandleUpdate, featureExecutor) // Pass handler AND executor instance
-	app.CommandRegistry.Register(DeleteCommand{}, featureExecutor.HandleDelete, featureExecutor) // Pass handler AND executor instance
-	// Add registrations for other commands specific to this feature...
+	app.CommandRegistry.Register(&CreateCommand{}, featureExecutor.HandleCreate, featureExecutor) // Pass handler AND executor instance
+	app.CommandRegistry.Register(&UpdateCommand{}, featureExecutor.HandleUpdate, featureExecutor) // Pass handler AND executor instance
+	app.CommandRegistry.Register(&DeleteCommand{}, featureExecutor.HandleDelete, featureExecutor) // Pass handler AND executor instance
+	
+	// Register summary-related commands
+	app.CommandRegistry.Register(&RequestSummaryGenerationCommand{}, featureExecutor.HandleRequestSummaryGeneration, featureExecutor)
+	app.CommandRegistry.Register(&FailSummaryGenerationCommand{}, featureExecutor.HandleFailSummaryGeneration, featureExecutor)
+	app.CommandRegistry.Register(&SetGeneratedSummaryCommand{}, featureExecutor.HandleSetGeneratedSummary, featureExecutor)
 
 	// --- 5. Register Core Query Handlers ---
 	// Map query message types (from queries.go) to their handler functions (from query.go).
@@ -85,15 +89,12 @@ func RegisterFeature(app *core.App, state *State) {
 	slog.Debug("Registering message types with MessageLog", "feature", "petrock_example_feature_name")
 	RegisterTypes(app.MessageLog) // state.go provides RegisterTypes(*core.MessageLog)
 
-	// --- 7. Register Background Jobs/Workers (Optional) ---
-	// If the feature includes background processes (defined in jobs.go),
-	// initialize them here. The actual launching (e.g., starting goroutines)
-	// launching (e.g., starting goroutines) is typically done in the main application
-	// entry point (e.g., cmd/serve.go) to manage their lifecycle.
-	// Example:
-	// jobs := NewJobs(state, messageLog)
-	// // Register jobs with a scheduler or worker pool if applicable
-	// // scheduler.Register(jobs.SomeScheduledTask, "*/5 * * * *")
+	// --- 7. Register Worker (replacing jobs registration) ---
+	// Initialize and register the worker with the app
+	// The worker lifecycle (starting/stopping) is managed by the App
+	slog.Debug("Registering worker", "feature", "petrock_example_feature_name")
+	worker := NewWorker(app, state, app.MessageLog, app.Executor)
+	app.RegisterWorker(worker)
 
 	slog.Info("Feature registered successfully", "feature", "petrock_example_feature_name")
 }
