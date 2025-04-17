@@ -8,27 +8,27 @@ This plan outlines how to replace the current `jobs.go` pattern with a more robu
 
 ## Detailed Task Breakdown
 
-### T1: Core Worker Interface
+### T1: Core Worker Interface - DONE
 
-**T1.1:** Define the Worker interface in core/worker.go
-- Create new file core/worker.go with Context import
-- Define Worker interface with Start, Stop, and Work methods
-- Add documentation comments for each method
+**T1.1:** Define the Worker interface in core/worker.go - DONE
+- Create new file core/worker.go with Context import - DONE
+- Define Worker interface with Start, Stop, and Work methods - DONE
+- Add documentation comments for each method - DONE
 
-**T1.2:** Create error types for worker operations
-- Define appropriate error types for worker initialization and processing failures
-- Add documentation for error handling
+**T1.2:** Create error types for worker operations - DONE
+- Define appropriate error types for worker initialization and processing failures - DONE
+- Add documentation for error handling - DONE
 
 **Definition of Done for T1:**
-- File core/worker.go exists with properly documented Worker interface
-- All methods have proper documentation with usage examples
-- Interface is in line with the event sourcing architecture in core/
+- File core/worker.go exists with properly documented Worker interface - DONE
+- All methods have proper documentation with usage examples - DONE
+- Interface is in line with the event sourcing architecture in core/ - DONE
 
 ### T2: App Worker Management
 
-**T2.1:** Add worker tracking to App struct
-- Add workers slice to App struct in core/app.go
-- Add worker control fields (workerCtx, workerCancel, workerWg)
+**T2.1:** Add worker tracking to App struct - DONE
+- Add workers slice to App struct in core/app.go - DONE
+- Add worker control fields (workerCtx, workerCancel, workerWg) - DONE
 
 **T2.2:** Implement RegisterWorker method
 - Add RegisterWorker method to App struct

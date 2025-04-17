@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"sync"
 )
 
 // App is the central struct that holds all application dependencies and state
@@ -19,6 +20,12 @@ type App struct {
 	Routes          []string         // Track registered routes
 	Mux             *http.ServeMux   // Store the HTTP mux
 	AppState        interface{}      // Generic application state interface
+	
+	// Worker management
+	workers         []Worker         // Registered background workers
+	workerCtx       context.Context  // Context for worker goroutines
+	workerCancel    context.CancelFunc // Function to cancel worker context
+	workerWg        sync.WaitGroup   // WaitGroup for worker goroutines
 }
 
 // NewApp creates and initializes all core dependencies
