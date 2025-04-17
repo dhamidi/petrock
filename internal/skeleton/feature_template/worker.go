@@ -88,6 +88,12 @@ func (w *Worker) Stop(ctx context.Context) error {
 func (w *Worker) Work() error {
 	ctx := context.Background()
 
+	// Debug log worker state at the beginning of each cycle
+	slog.Debug("Worker state",
+		"feature", "petrock_example_feature_name",
+		"lastProcessedID", w.wState.lastProcessedID,
+		"pendingSummaries", len(w.wState.pendingSummaries))
+
 	// 1. Process any new messages since last run
 	lastIDNum := w.wState.lastProcessedID
 
@@ -95,15 +101,28 @@ func (w *Worker) Work() error {
 	timeoutCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
 
+	slog.Debug("Checking for new messages after ID", 
+		"feature", "petrock_example_feature_name",
+		"afterID", lastIDNum)
+
 	messageCount := 0
 	for msg := range w.log.After(timeoutCtx, lastIDNum) {
 		messageCount++
+
+		// Log message being processed
+		slog.Debug("Processing message", 
+			"feature", "petrock_example_feature_name",
+			"messageID", msg.ID,
+			"commandType", fmt.Sprintf("%T", msg.DecodedPayload))
 
 		// Process the message
 		w.processMessage(ctx, msg)
 
 		// Update the last processed ID
 		w.wState.lastProcessedID = msg.ID
+		slog.Debug("Updated lastProcessedID", 
+			"feature", "petrock_example_feature_name",
+			"lastProcessedID", w.wState.lastProcessedID)
 	}
 
 	if messageCount > 0 {
@@ -121,8 +140,17 @@ func (w *Worker) processMessage(ctx context.Context, msg core.PersistedMessage) 
 	// Skip if not a command
 	cmd, ok := msg.DecodedPayload.(core.Command)
 	if !ok {
+		slog.Debug("Skipping non-command message",
+			"feature", "petrock_example_feature_name",
+			"messageID", msg.ID,
+			"type", fmt.Sprintf("%T", msg.DecodedPayload))
 		return
 	}
+	
+	slog.Debug("Processing command", 
+		"feature", "petrock_example_feature_name",
+		"messageID", msg.ID,
+		"commandName", cmd.CommandName())
 
 	switch cmd.CommandName() {
 	case "petrock_example_feature_name/create":
