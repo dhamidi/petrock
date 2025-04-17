@@ -180,12 +180,38 @@ func runTest(cmd *cobra.Command, args []string) error {
 	}
 
 	// 12. Verify the JSON contains the expected keys
-	expectedKeys := []string{"commands", "queries", "routes", "features"}
+	expectedKeys := []string{"commands", "queries", "routes", "features", "workers"}
 	for _, key := range expectedKeys {
 		if _, ok := result[key]; !ok {
 			return fmt.Errorf("'self inspect' output missing expected key: %s", key)
 		}
 	}
+
+	// 13. Verify workers are included in the output
+	workers, ok := result["workers"].([]interface{})
+	if !ok {
+		return fmt.Errorf("'workers' key doesn't contain an array of workers")
+	}
+	
+	// Check that we have at least one worker
+	if len(workers) == 0 {
+		return fmt.Errorf("no workers found in self-inspect output")
+	}
+	
+	// Check the first worker has the expected fields
+	worker, ok := workers[0].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("worker is not properly structured")
+	}
+	
+	// Verify worker fields
+	workerFields := []string{"name", "type", "methods"}
+	for _, field := range workerFields {
+		if _, ok := worker[field]; !ok {
+			return fmt.Errorf("worker missing expected field: %s", field)
+		}
+	}
+	
 	slog.Info("'self inspect' command test successful")
 
 	slog.Info("Self-test completed successfully!")

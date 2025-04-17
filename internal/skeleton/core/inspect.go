@@ -41,12 +41,21 @@ type ResultDef struct {
 	Properties  map[string]PropertyDef `json:"properties"`            // Result fields
 }
 
+// WorkerSchema represents metadata about a registered worker
+type WorkerSchema struct {
+	Name        string   `json:"name"`        // Worker name or type
+	Description string   `json:"description"` // Worker description if available
+	Type        string   `json:"type"`        // Go type name
+	Methods     []string `json:"methods"`     // Available methods
+}
+
 // InspectResult holds application metadata
 type InspectResult struct {
 	Commands []CommandSchema `json:"commands"` // Schema of all registered commands
 	Queries  []QuerySchema  `json:"queries"`  // Schema of all registered queries
 	Routes   []string       `json:"routes"`   // List of all registered HTTP routes
 	Features []string       `json:"features"` // List of all registered features
+	Workers  []WorkerSchema `json:"workers"`  // Schema of all registered workers
 }
 
 // GetInspectResult gathers metadata about the application
@@ -76,6 +85,13 @@ func (a *App) GetInspectResult() *InspectResult {
 			schema := buildQuerySchema(name, queryType)
 			result.Queries = append(result.Queries, schema)
 		}
+	}
+	
+	// Build worker schemas
+	result.Workers = make([]WorkerSchema, 0, len(a.workers))
+	for _, worker := range a.workers {
+		schema := buildWorkerSchema(worker)
+		result.Workers = append(result.Workers, schema)
 	}
 	
 	return result
@@ -157,6 +173,62 @@ func buildQuerySchema(name string, queryType reflect.Type) QuerySchema {
 		Properties: make(map[string]PropertyDef),
 	}
 	
+	return schema
+}
+
+// buildWorkerSchema creates a schema from a worker instance
+func buildWorkerSchema(worker Worker) WorkerSchema {
+	schema := WorkerSchema{
+		Type: fmt.Sprintf("%T", worker),
+	}
+	
+	// Try to get WorkerInfo if implemented
+	if info := worker.WorkerInfo(); info != nil {
+		schema.Name = info.Name
+		schema.Description = info.Description
+	}
+	
+	// Try to get worker name from type if not provided via WorkerInfo
+	if schema.Name == "" {
+		// Extract type name from the fully qualified type
+		typeName := schema.Type
+		// Find the last dot in the type name (package separator)
+		if lastDot := strings.LastIndex(typeName, "."); lastDot != -1 {
+			// Extract the type name after the last dot
+			typeName = typeName[lastDot+1:]
+		}
+		// Remove any *pointer prefix
+		typeName = strings.TrimPrefix(typeName, "*")
+		schema.Name = typeName
+	}
+	
+	// Extract methods using reflection
+	methods := []string{}
+	workerType := reflect.TypeOf(worker)
+	workerValue := reflect.ValueOf(worker)
+	
+	// If it's a pointer, get the element type
+	if workerType.Kind() == reflect.Ptr {
+		workerType = workerType.Elem()
+	}
+	
+	// Add the standard Worker interface methods
+	methods = append(methods, "Start", "Stop", "Work")
+	
+	// Look for additional exported methods
+	for i := 0; i < workerValue.Type().NumMethod(); i++ {
+		method := workerValue.Type().Method(i)
+		// Skip the standard Worker interface methods we already added
+		if method.Name == "Start" || method.Name == "Stop" || method.Name == "Work" {
+			continue
+		}
+		// Only include exported methods
+		if method.PkgPath == "" {
+			methods = append(methods, method.Name)
+		}
+	}
+	
+	schema.Methods = methods
 	return schema
 }
 

@@ -6,6 +6,7 @@ Petrock applications include a `self inspect` command that provides detailed inf
 - All registered queries with their JSON schema
 - All HTTP routes
 - All features
+- All background workers
 
 ## Usage
 
@@ -67,6 +68,14 @@ The command outputs structured JSON that describes the application. Here's an ex
   ],
   "features": [
     "posts"
+  ],
+  "workers": [
+    {
+      "name": "Posts Worker",
+      "description": "Handles background processing for the posts feature",
+      "type": "*posts.Worker",
+      "methods": ["Start", "Stop", "Work", "WorkerInfo"]
+    }
   ]
 }
 ```
@@ -80,6 +89,7 @@ The self-inspection feature is implemented using the following components:
 3. **Query Registry**: Provides information about registered queries
 4. **Route Tracking**: Routes are tracked when registered via `app.RegisterRoute`
 5. **Feature Tracking**: Features are tracked when registered via `app.RegisterFeature`
+6. **Worker Tracking**: Workers are tracked when registered via `app.RegisterWorker`
 
 ### Command Schema Generation
 
@@ -98,6 +108,15 @@ Query schemas include both input parameters and result schema:
 2. Result type is included to describe the expected response format
 3. Field types are converted to appropriate JSON Schema types
 
+### Worker Schema Generation
+
+Worker schemas provide information about background workers:
+
+1. Worker metadata is extracted via the WorkerInfo() method if implemented
+2. For workers without WorkerInfo(), information is extracted via reflection
+3. Available methods are determined using reflection
+4. Basic information like type name is always included
+
 ## Use Cases
 
 - **API Discovery**: Understand available commands and queries
@@ -105,3 +124,5 @@ Query schemas include both input parameters and result schema:
 - **Documentation**: Generate up-to-date API documentation
 - **Testing**: Generate test cases for commands and queries
 - **Validation**: Verify application structure and dependencies
+- **Debugging**: Identify and inspect registered workers
+- **Monitoring**: Foundation for worker monitoring and health checking

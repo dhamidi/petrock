@@ -84,6 +84,14 @@ func (w *Worker) Stop(ctx context.Context) error {
 	return nil
 }
 
+// WorkerInfo provides self-description information for introspection
+func (w *Worker) WorkerInfo() *core.WorkerInfo {
+	return &core.WorkerInfo{
+		Name:        "petrock_example_feature_name Worker",
+		Description: "Handles background processing for the petrock_example_feature_name feature, including content summarization",
+	}
+}
+
 // Work performs a single processing cycle of the worker
 func (w *Worker) Work() error {
 	// Use background context for overall operation

@@ -26,6 +26,12 @@ var ErrWorkerStopped = errors.New("worker has been stopped")
 // ErrWorkerAlreadyStarted is returned when attempting to start an already running worker.
 var ErrWorkerAlreadyStarted = errors.New("worker is already started")
 
+// WorkerInfo provides optional self-description for workers
+type WorkerInfo struct {
+	Name        string // Name of the worker
+	Description string // Description of the worker's purpose
+}
+
 // Worker defines the interface for background processes that react to events
 // in the message log. Workers are responsible for maintaining their own internal
 // state by tracking events and performing operations that may span multiple events,
@@ -69,4 +75,19 @@ type Worker interface {
 	//     log.Printf("worker cycle failed: %v", err)
 	//   }
 	Work() error
+
+	// WorkerInfo is an optional method that provides self-description information
+	// for introspection and debugging purposes. If not implemented, information
+	// will be extracted via reflection.
+	//
+	// Example implementation:
+	//   func (w *MyWorker) WorkerInfo() *WorkerInfo {
+	//     return &WorkerInfo{
+	//       Name: "MyWorker",
+	//       Description: "Processes background tasks for my feature",
+	//     }
+	//   }
+	//
+	// Note: This method is optional. Workers don't need to implement it.
+	WorkerInfo() *WorkerInfo
 }
