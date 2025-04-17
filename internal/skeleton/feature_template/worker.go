@@ -2,7 +2,6 @@ package petrock_example_feature_name
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -78,7 +77,7 @@ func (w *Worker) Start(ctx context.Context) error {
 		
 		// Update the last processed ID
 		w.wState.mu.Lock()
-		w.wState.lastProcessedID = msg.ID
+		w.wState.lastProcessedID = fmt.Sprintf("%d", msg.ID)
 		w.wState.mu.Unlock()
 	}
 	
@@ -106,10 +105,15 @@ func (w *Worker) Work() error {
 	// 1. Process any new messages since last run
 	w.wState.mu.Lock()
 	lastID := w.wState.lastProcessedID
+	lastIDNum := uint64(0)
+	if lastID != "" {
+		// Convert lastID to uint64 - handle error in real code
+		fmt.Sscanf(lastID, "%d", &lastIDNum)
+	}
 	w.wState.mu.Unlock()
 	
 	messageCount := 0
-	for msg := range w.log.After(ctx, lastID) {
+	for msg := range w.log.After(ctx, lastIDNum) {
 		messageCount++
 		
 		// Process the message
@@ -117,7 +121,7 @@ func (w *Worker) Work() error {
 		
 		// Update the last processed ID
 		w.wState.mu.Lock()
-		w.wState.lastProcessedID = msg.ID
+		w.wState.lastProcessedID = fmt.Sprintf("%d", msg.ID)
 		w.wState.mu.Unlock()
 	}
 	
@@ -132,7 +136,7 @@ func (w *Worker) Work() error {
 }
 
 // processMessage updates worker state based on message type
-func (w *Worker) processMessage(ctx context.Context, msg core.LogMessage) {
+func (w *Worker) processMessage(ctx context.Context, msg core.PersistedMessage) {
 	// Skip if not a command
 	cmd, ok := msg.DecodedPayload.(core.Command)
 	if !ok {
@@ -341,13 +345,11 @@ func (w *Worker) callSummarizationAPI(ctx context.Context, summary PendingSummar
 	// }
 	
 	// For demo purposes, generate a fake summary
-	generatedSummary := fmt.Sprintf("This is a generated summary for content ID %s", summary.ItemID)
-	
 	// Update the application state with the summary
 	// setCmd := &SetGeneratedSummaryCommand{
 	// 	ID:        summary.ItemID,
 	// 	RequestID: summary.RequestID,
-	// 	Summary:   generatedSummary,
+	// 	Summary:   fmt.Sprintf("This is a generated summary for content ID %s", summary.ItemID),
 	// }
 	// 
 	// if err := w.executor.Execute(ctx, setCmd); err != nil {
