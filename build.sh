@@ -68,10 +68,20 @@ build_skeleton() {
 build_petrock() {
   rm -f internal/skeleton/go.mod # to allow go:embed to do its work
   go build ./cmd/...
+  go install ./cmd/petrock
 }
 
 test_petrock() {
   ./petrock test
+}
+
+test_project() {
+  cd tmp
+  [[ -d blog ]] && { yes | rm -rf ./blog; }
+  petrock new blog github.com/dhamidi/blog
+  cd blog
+  petrock feature posts
+  go run ./cmd/blog serve
 }
 
 main "$@"
