@@ -165,6 +165,63 @@ func (a *App) StartWorkers(ctx context.Context) error {
 	return nil
 }
 
+// StopWorkers gracefully shuts down all workers
+// This method signals workers to stop and waits for them to finish with timeout
+func (a *App) StopWorkers(ctx context.Context) error {
+	if a.workerCancel == nil {
+		// No workers were started
+		return nil
+	}
+	
+	slog.Info("Stopping workers...")
+	
+	// Signal all workers to stop by canceling the worker context
+	a.workerCancel()
+	
+	// Create a channel to signal when all workers have stopped
+	done := make(chan struct{})
+	
+	// Wait for workers to finish in a goroutine
+	go func() {
+		a.workerWg.Wait()
+		close(done)
+	}()
+	
+	// Wait for workers to finish or timeout
+	select {
+	case <-done:
+		// All workers finished successfully
+		slog.Info("All workers stopped successfully")
+		return nil
+		
+	case <-ctx.Done():
+		// Timeout or parent context canceled
+		slog.Warn("Timed out waiting for workers to stop")
+		return &WorkerError{Op: "stop", Err: ctx.Err()}
+	}
+
+	// Explicitly call Stop() on each worker with a separate context
+	var stopErrors []error
+	for i, worker := range a.workers {
+		// Create a short timeout for stopping each worker
+		stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		err := worker.Stop(stopCtx)
+		cancel()
+		
+		if err != nil {
+			slog.Error("Failed to stop worker", "index", i, "type", fmt.Sprintf("%T", worker), "error", err)
+			stopErrors = append(stopErrors, fmt.Errorf("worker %d (%T): %w", i, worker, err))
+		}
+	}
+	
+	if len(stopErrors) > 0 {
+		// Return a combined error if any workers failed to stop
+		return &WorkerError{Op: "stop", Err: fmt.Errorf("%d worker(s) failed to stop properly", len(stopErrors))}
+	}
+	
+	return nil
+}
+
 // ReplayLog replays the message log to build application state
 func (a *App) ReplayLog() error {
 	slog.Info("Replaying message log to build application state...")

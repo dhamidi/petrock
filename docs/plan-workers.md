@@ -41,10 +41,10 @@ This plan outlines how to replace the current `jobs.go` pattern with a more robu
 - Implement ticker with jitter for periodic Work() calls - DONE
 - Handle initialization errors properly - DONE
 
-**T2.4:** Implement StopWorkers method
-- Create StopWorkers method that signals workers to stop
-- Wait for workers to finish with timeout
-- Handle cleanup failures properly
+**T2.4:** Implement StopWorkers method - DONE
+- Create StopWorkers method that signals workers to stop - DONE
+- Wait for workers to finish with timeout - DONE
+- Handle cleanup failures properly - DONE
 
 **T2.5:** Update Close method
 - Modify existing Close method to call StopWorkers
