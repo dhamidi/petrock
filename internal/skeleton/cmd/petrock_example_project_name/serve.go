@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url" // Added for parsing query parameters
+	"os"
 	"reflect" // Added for command/query execution handlers
 	"strconv" // Added for converting query parameters
 	"strings" // Added for query parameter population helper
@@ -68,6 +69,12 @@ func NewServeCmd() *cobra.Command {
 }
 
 func runServe(cmd *cobra.Command, args []string) error {
+	// Set log level to DEBUG to see detailed worker logs
+	logHandler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})
+	slog.SetDefault(slog.New(logHandler))
+
 	port, _ := cmd.Flags().GetInt("port")
 	host, _ := cmd.Flags().GetString("host")
 	dbPath, _ := cmd.Flags().GetString("db-path") // Get db-path flag value
