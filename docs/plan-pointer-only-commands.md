@@ -52,19 +52,19 @@ The current implementation of Petrock's command pattern supports both value type
 - No duplicate handling code for value types exists - DONE
 - All command creations use consistent pointer syntax - DONE
 
-### T3: Testing Infrastructure
+### T3: Testing Infrastructure - SKIPPED
 
-**T3.1:** Create migration test
-- Create test that verifies pointer commands work correctly
-- Add test cases for all command types
+**T3.1:** Create migration test - SKIPPED
+- Create test that verifies pointer commands work correctly - SKIPPED
+- Add test cases for all command types - SKIPPED
 
-**T3.2:** Update existing tests
-- Modify any tests that use value commands
-- Ensure all test assertions work with pointer types
+**T3.2:** Update existing tests - SKIPPED
+- Modify any tests that use value commands - SKIPPED
+- Ensure all test assertions work with pointer types - SKIPPED
 
-**Definition of Done for T3:**
-- Tests pass with pointer-only command usage
-- No test failures related to command type handling
+**Definition of Done for T3: - SKIPPED**
+- Tests pass with pointer-only command usage - SKIPPED
+- No test failures related to command type handling - SKIPPED
 
 ### T4: CLI Tool Updates
 
