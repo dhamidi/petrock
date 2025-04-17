@@ -61,10 +61,10 @@ func (r *CommandRegistry) Register(cmd Command, handler CommandHandler, featureE
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	
-	// Check if command is a pointer type and warn if not
+	// Check if command is a pointer type and panic if not
 	if reflect.TypeOf(cmd).Kind() != reflect.Ptr {
-		slog.Warn("Registering non-pointer command", "type", reflect.TypeOf(cmd), "name", cmd.CommandName(), 
-			"message", "Commands should be registered as pointer types (*CommandType) for future compatibility")
+		panic(fmt.Sprintf("Cannot register non-pointer command %q of type %T. All commands must be registered as pointer types (*CommandType).", 
+			cmd.CommandName(), cmd))
 	}
 
 	name := cmd.CommandName() // Use CommandName()
