@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"math/rand"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
@@ -22,7 +21,6 @@ type PendingSummary struct {
 
 // WorkerState holds worker-specific state
 type WorkerState struct {
-	mu               sync.Mutex
 	lastProcessedID  string
 	pendingSummaries map[string]PendingSummary // keyed by RequestID
 }
@@ -80,9 +78,7 @@ func (w *Worker) Start(ctx context.Context) error {
 
 	// Set initial position - we'll perform a full replay in the background
 	// after startup to avoid blocking the application
-	w.wState.mu.Lock()
 	w.wState.lastProcessedID = fmt.Sprintf("%d", version)
-	w.wState.mu.Unlock()
 
 	// Start a background task to process existing messages
 	go w.replayExistingMessages(ctx)
@@ -109,9 +105,7 @@ func (w *Worker) replayExistingMessages(ctx context.Context) {
 		w.processMessage(ctx, msg)
 		
 		// Update the last processed ID
-		w.wState.mu.Lock()
 		w.wState.lastProcessedID = fmt.Sprintf("%d", msg.ID)
-		w.wState.mu.Unlock()
 	}
 	
 	slog.Info("Background replay completed", 
@@ -135,14 +129,12 @@ func (w *Worker) Work() error {
 	ctx := context.Background()
 	
 	// 1. Process any new messages since last run
-	w.wState.mu.Lock()
 	lastID := w.wState.lastProcessedID
 	lastIDNum := uint64(0)
 	if lastID != "" {
 		// Convert lastID to uint64 - handle error in real code
 		fmt.Sscanf(lastID, "%d", &lastIDNum)
 	}
-	w.wState.mu.Unlock()
 	
 	// Create a timeout context for message processing
 	timeoutCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
@@ -156,9 +148,7 @@ func (w *Worker) Work() error {
 		w.processMessage(ctx, msg)
 		
 		// Update the last processed ID
-		w.wState.mu.Lock()
 		w.wState.lastProcessedID = fmt.Sprintf("%d", msg.ID)
-		w.wState.mu.Unlock()
 	}
 
 	if messageCount > 0 {
@@ -243,14 +233,12 @@ func (w *Worker) handleSummaryRequestCommand(ctx context.Context, cmd core.Comma
 	}
 
 	// Add to pending summaries
-	w.wState.mu.Lock()
 	w.wState.pendingSummaries[requestCmd.RequestID] = PendingSummary{
 		RequestID: requestCmd.RequestID,
 		ItemID:    requestCmd.ID,
 		Content:   item.Content,
 		CreatedAt: time.Now(),
 	}
-	w.wState.mu.Unlock()
 
 	slog.Info("Added content to pending summarization queue",
 		"feature", "petrock_example_feature_name",
@@ -269,9 +257,7 @@ func (w *Worker) handleSummaryFailCommand(ctx context.Context, cmd core.Command)
 	}
 
 	// Remove from pending summaries
-	w.wState.mu.Lock()
 	delete(w.wState.pendingSummaries, failCmd.RequestID)
-	w.wState.mu.Unlock()
 
 	slog.Info("Removed failed summary request from queue",
 		"feature", "petrock_example_feature_name",
@@ -291,9 +277,7 @@ func (w *Worker) handleSummarySetCommand(ctx context.Context, cmd core.Command) 
 	}
 
 	// Remove from pending summaries
-	w.wState.mu.Lock()
 	delete(w.wState.pendingSummaries, setCmd.RequestID)
-	w.wState.mu.Unlock()
 
 	slog.Info("Summary successfully set for item",
 		"feature", "petrock_example_feature_name",
@@ -303,7 +287,6 @@ func (w *Worker) handleSummarySetCommand(ctx context.Context, cmd core.Command) 
 
 // processPendingSummaries calls external API for pending summaries
 func (w *Worker) processPendingSummaries(ctx context.Context) error {
-	w.wState.mu.Lock()
 	pendingCount := len(w.wState.pendingSummaries)
 
 	// Make a copy of pending summaries to process
@@ -311,7 +294,6 @@ func (w *Worker) processPendingSummaries(ctx context.Context) error {
 	for _, summary := range w.wState.pendingSummaries {
 		summariesToProcess = append(summariesToProcess, summary)
 	}
-	w.wState.mu.Unlock()
 
 	if pendingCount == 0 {
 		return nil
