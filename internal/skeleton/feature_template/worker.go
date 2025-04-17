@@ -91,25 +91,25 @@ func (w *Worker) Start(ctx context.Context) error {
 // This runs in the background to avoid blocking application startup
 func (w *Worker) replayExistingMessages(ctx context.Context) {
 	slog.Debug("Starting replay of existing messages", "feature", "petrock_example_feature_name")
-	
+
 	// Create a timeout context
 	timeoutCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
-	
+
 	// Process all existing messages to rebuild internal state
 	messageCount := 0
 	for msg := range w.log.After(timeoutCtx, 0) {
 		messageCount++
-		
+
 		// Process the message to update internal state
 		w.processMessage(ctx, msg)
-		
+
 		// Update the last processed ID
 		w.wState.lastProcessedID = fmt.Sprintf("%d", msg.ID)
 	}
-	
-	slog.Info("Background replay completed", 
-		"feature", "petrock_example_feature_name", 
+
+	slog.Info("Background replay completed",
+		"feature", "petrock_example_feature_name",
 		"messages_processed", messageCount,
 		"pending_summaries", len(w.wState.pendingSummaries))
 }
@@ -127,7 +127,7 @@ func (w *Worker) Stop(ctx context.Context) error {
 // Work performs a single processing cycle of the worker
 func (w *Worker) Work() error {
 	ctx := context.Background()
-	
+
 	// 1. Process any new messages since last run
 	lastID := w.wState.lastProcessedID
 	lastIDNum := uint64(0)
@@ -135,18 +135,18 @@ func (w *Worker) Work() error {
 		// Convert lastID to uint64 - handle error in real code
 		fmt.Sscanf(lastID, "%d", &lastIDNum)
 	}
-	
+
 	// Create a timeout context for message processing
 	timeoutCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
 	defer cancel()
-	
+
 	messageCount := 0
 	for msg := range w.log.After(timeoutCtx, lastIDNum) {
 		messageCount++
-		
+
 		// Process the message
 		w.processMessage(ctx, msg)
-		
+
 		// Update the last processed ID
 		w.wState.lastProcessedID = fmt.Sprintf("%d", msg.ID)
 	}
@@ -190,99 +190,160 @@ func (w *Worker) processMessage(ctx context.Context, msg core.PersistedMessage) 
 
 // handleCreateCommand processes new item creation commands
 func (w *Worker) handleCreateCommand(ctx context.Context, cmd core.Command) {
-	createCmd, ok := cmd.(CreateCommand)
-	if !ok {
+	// Use type switch for more robust type handling with both value and pointer types
+	switch createCmd := cmd.(type) {
+	case CreateCommand:
+		// Request summarization for the new item's content
+		requestID := fmt.Sprintf("req-%d", time.Now().UnixNano())
+		summarizeCmd := &RequestSummaryGenerationCommand{
+			ID:        createCmd.Name, // Using name as ID from our CreateCommand
+			RequestID: requestID,
+		}
+
+		if err := w.executor.Execute(ctx, summarizeCmd); err != nil {
+			slog.Error("Failed to request summary generation",
+				"feature", "petrock_example_feature_name",
+				"itemID", createCmd.Name,
+				"error", err)
+		}
+		
+	case *CreateCommand:
+		// Request summarization for the new item's content
+		requestID := fmt.Sprintf("req-%d", time.Now().UnixNano())
+		summarizeCmd := &RequestSummaryGenerationCommand{
+			ID:        createCmd.Name, // Using name as ID from our CreateCommand
+			RequestID: requestID,
+		}
+
+		if err := w.executor.Execute(ctx, summarizeCmd); err != nil {
+			slog.Error("Failed to request summary generation",
+				"feature", "petrock_example_feature_name",
+				"itemID", createCmd.Name,
+				"error", err)
+		}
+		
+	default:
 		slog.Warn("Expected CreateCommand but got different type",
 			"feature", "petrock_example_feature_name",
 			"type", fmt.Sprintf("%T", cmd))
-		return
-	}
-
-	// Request summarization for the new item's content
-	requestID := fmt.Sprintf("req-%d", time.Now().UnixNano())
-	summarizeCmd := &RequestSummaryGenerationCommand{
-		ID:        createCmd.Name, // Using name as ID from our CreateCommand
-		RequestID: requestID,
-	}
-
-	if err := w.executor.Execute(ctx, summarizeCmd); err != nil {
-		slog.Error("Failed to request summary generation",
-			"feature", "petrock_example_feature_name",
-			"itemID", createCmd.Name,
-			"error", err)
 	}
 }
 
 // handleSummaryRequestCommand tracks summary generation requests
 func (w *Worker) handleSummaryRequestCommand(ctx context.Context, cmd core.Command) {
-	requestCmd, ok := cmd.(RequestSummaryGenerationCommand)
-	if !ok {
+	// Use type switch for more robust type handling with both value and pointer types
+	switch requestCmd := cmd.(type) {
+	case RequestSummaryGenerationCommand:
+		// Retrieve the content to summarize from state
+		item, found := w.state.GetItem(requestCmd.ID)
+		if !found {
+			slog.Error("Cannot find item to summarize",
+				"feature", "petrock_example_feature_name",
+				"itemID", requestCmd.ID)
+			return
+		}
+
+		// Add to pending summaries
+		w.wState.pendingSummaries[requestCmd.RequestID] = PendingSummary{
+			RequestID: requestCmd.RequestID,
+			ItemID:    requestCmd.ID,
+			Content:   item.Content,
+			CreatedAt: time.Now(),
+		}
+
+		slog.Info("Added content to pending summarization queue",
+			"feature", "petrock_example_feature_name",
+			"itemID", requestCmd.ID,
+			"requestID", requestCmd.RequestID)
+		
+	case *RequestSummaryGenerationCommand:
+		// Retrieve the content to summarize from state
+		item, found := w.state.GetItem(requestCmd.ID)
+		if !found {
+			slog.Error("Cannot find item to summarize",
+				"feature", "petrock_example_feature_name",
+				"itemID", requestCmd.ID)
+			return
+		}
+
+		// Add to pending summaries
+		w.wState.pendingSummaries[requestCmd.RequestID] = PendingSummary{
+			RequestID: requestCmd.RequestID,
+			ItemID:    requestCmd.ID,
+			Content:   item.Content,
+			CreatedAt: time.Now(),
+		}
+
+		slog.Info("Added content to pending summarization queue",
+			"feature", "petrock_example_feature_name",
+			"itemID", requestCmd.ID,
+			"requestID", requestCmd.RequestID)
+		
+	default:
 		slog.Warn("Expected RequestSummaryGenerationCommand but got different type",
 			"feature", "petrock_example_feature_name",
 			"type", fmt.Sprintf("%T", cmd))
-		return
 	}
-
-	// Retrieve the content to summarize from state
-	item, found := w.state.GetItem(requestCmd.ID)
-	if !found {
-		slog.Error("Cannot find item to summarize",
-			"feature", "petrock_example_feature_name",
-			"itemID", requestCmd.ID)
-		return
-	}
-
-	// Add to pending summaries
-	w.wState.pendingSummaries[requestCmd.RequestID] = PendingSummary{
-		RequestID: requestCmd.RequestID,
-		ItemID:    requestCmd.ID,
-		Content:   item.Content,
-		CreatedAt: time.Now(),
-	}
-
-	slog.Info("Added content to pending summarization queue",
-		"feature", "petrock_example_feature_name",
-		"itemID", requestCmd.ID,
-		"requestID", requestCmd.RequestID)
 }
 
 // handleSummaryFailCommand removes failed summary requests from pending
 func (w *Worker) handleSummaryFailCommand(ctx context.Context, cmd core.Command) {
-	failCmd, ok := cmd.(FailSummaryGenerationCommand)
-	if !ok {
+	// Use type switch for more robust type handling with both value and pointer types
+	switch failCmd := cmd.(type) {
+	case FailSummaryGenerationCommand:
+		// Remove from pending summaries
+		delete(w.wState.pendingSummaries, failCmd.RequestID)
+
+		slog.Info("Removed failed summary request from queue",
+			"feature", "petrock_example_feature_name",
+			"itemID", failCmd.ID,
+			"requestID", failCmd.RequestID,
+			"reason", failCmd.Reason)
+		
+	case *FailSummaryGenerationCommand:
+		// Remove from pending summaries
+		delete(w.wState.pendingSummaries, failCmd.RequestID)
+
+		slog.Info("Removed failed summary request from queue",
+			"feature", "petrock_example_feature_name",
+			"itemID", failCmd.ID,
+			"requestID", failCmd.RequestID,
+			"reason", failCmd.Reason)
+		
+	default:
 		slog.Warn("Expected FailSummaryGenerationCommand but got different type",
 			"feature", "petrock_example_feature_name",
 			"type", fmt.Sprintf("%T", cmd))
-		return
 	}
-
-	// Remove from pending summaries
-	delete(w.wState.pendingSummaries, failCmd.RequestID)
-
-	slog.Info("Removed failed summary request from queue",
-		"feature", "petrock_example_feature_name",
-		"itemID", failCmd.ID,
-		"requestID", failCmd.RequestID,
-		"reason", failCmd.Reason)
 }
 
 // handleSummarySetCommand removes completed summary requests from pending
 func (w *Worker) handleSummarySetCommand(ctx context.Context, cmd core.Command) {
-	setCmd, ok := cmd.(SetGeneratedSummaryCommand)
-	if !ok {
+	// Use type switch for more robust type handling with both value and pointer types
+	switch setCmd := cmd.(type) {
+	case SetGeneratedSummaryCommand:
+		// Remove from pending summaries
+		delete(w.wState.pendingSummaries, setCmd.RequestID)
+
+		slog.Info("Summary successfully set for item",
+			"feature", "petrock_example_feature_name",
+			"itemID", setCmd.ID,
+			"requestID", setCmd.RequestID)
+		
+	case *SetGeneratedSummaryCommand:
+		// Remove from pending summaries
+		delete(w.wState.pendingSummaries, setCmd.RequestID)
+
+		slog.Info("Summary successfully set for item",
+			"feature", "petrock_example_feature_name",
+			"itemID", setCmd.ID,
+			"requestID", setCmd.RequestID)
+		
+	default:
 		slog.Warn("Expected SetGeneratedSummaryCommand but got different type",
 			"feature", "petrock_example_feature_name",
 			"type", fmt.Sprintf("%T", cmd))
-		return
 	}
-
-	// Remove from pending summaries
-	delete(w.wState.pendingSummaries, setCmd.RequestID)
-
-	slog.Info("Summary successfully set for item",
-		"feature", "petrock_example_feature_name",
-		"itemID", setCmd.ID,
-		"requestID", setCmd.RequestID)
 }
 
 // processPendingSummaries calls external API for pending summaries
@@ -314,17 +375,17 @@ func (w *Worker) processPendingSummaries(ctx context.Context) error {
 				"age", time.Since(summary.CreatedAt))
 
 			// Send a failure command
-			// failCmd := &FailSummaryGenerationCommand{
-			// 	ID:        summary.ItemID,
-			// 	RequestID: summary.RequestID,
-			// 	Reason:    "timeout",
-			// }
-			// if err := w.executor.Execute(ctx, failCmd); err != nil {
-			// 	slog.Error("Failed to record summary failure",
-			// 		"feature", "petrock_example_feature_name",
-			// 		"itemID", summary.ItemID,
-			// 		"error", err)
-			// }
+			failCmd := &FailSummaryGenerationCommand{
+				ID:        summary.ItemID,
+				RequestID: summary.RequestID,
+				Reason:    "timeout",
+			}
+			if err := w.executor.Execute(ctx, failCmd); err != nil {
+				slog.Error("Failed to record summary failure",
+					"feature", "petrock_example_feature_name",
+					"itemID", summary.ItemID,
+					"error", err)
+			}
 			continue
 		}
 
