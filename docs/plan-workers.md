@@ -65,42 +65,42 @@ This plan outlines how to replace the current `jobs.go` pattern with a more robu
 - Use correct package declaration: package petrock_example_feature_name - DONE
 - Use correct import path: github.com/petrock/example_module_path/core - DONE
 
-**T3.2:** Define worker state struct
-- Create struct for tracking pending operations (like summarization)
-- Include lastProcessedID field for tracking message log position
-- Include mutex for thread safety
+**T3.2:** Define worker state struct - DONE
+- Create struct for tracking pending operations (like summarization) - DONE
+- Include lastProcessedID field for tracking message log position - DONE
+- Include mutex for thread safety - DONE
 
-**T3.3:** Define worker struct
-- Create worker struct with app, executor, state, log dependencies
-- Include internal state reference
+**T3.3:** Define worker struct - DONE
+- Create worker struct with app, executor, state, log dependencies - DONE
+- Include internal state reference - DONE
 
-**T3.4:** Implement Start method
-- Add Start method that scans message log from beginning
-- Process messages to rebuild internal state
-- Update lastProcessedID as messages are processed
-- Return appropriate errors
+**T3.4:** Implement Start method - DONE
+- Add Start method that scans message log from beginning - DONE
+- Process messages to rebuild internal state - DONE
+- Update lastProcessedID as messages are processed - DONE
+- Return appropriate errors - DONE
 
-**T3.5:** Implement Stop method
-- Add Stop method for graceful shutdown
-- Clean up any resources used by the worker
-- Return appropriate errors
+**T3.5:** Implement Stop method - DONE
+- Add Stop method for graceful shutdown - DONE
+- Clean up any resources used by the worker - DONE
+- Return appropriate errors - DONE
 
-**T3.6:** Implement Work method
-- Add Work method that processes new messages since lastProcessedID
-- Update worker state based on messages
-- Perform any pending tasks
-- Return appropriate errors
+**T3.6:** Implement Work method - DONE
+- Add Work method that processes new messages since lastProcessedID - DONE
+- Update worker state based on messages - DONE
+- Perform any pending tasks - DONE
+- Return appropriate errors - DONE
 
-**T3.7:** Add helper methods
-- Create processMessage method for handling different command types
-- Create utility methods for worker-specific tasks
+**T3.7:** Add helper methods - DONE
+- Create processMessage method for handling different command types - DONE
+- Create utility methods for worker-specific tasks - DONE
 
-**Definition of Done for T3:**
-- worker.go exists in feature template directory
-- All worker methods are properly implemented with correct error handling
-- Worker correctly tracks its position in the message log
-- Code follows project's conventions and uses appropriate placeholders
-- File has proper documentation for all methods and types
+**Definition of Done for T3: - DONE**
+- worker.go exists in feature template directory - DONE
+- All worker methods are properly implemented with correct error handling - DONE
+- Worker correctly tracks its position in the message log - DONE
+- Code follows project's conventions and uses appropriate placeholders - DONE
+- File has proper documentation for all methods and types - DONE
 
 ### T4: Feature Template Registration
 
