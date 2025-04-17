@@ -190,160 +190,103 @@ func (w *Worker) processMessage(ctx context.Context, msg core.PersistedMessage) 
 
 // handleCreateCommand processes new item creation commands
 func (w *Worker) handleCreateCommand(ctx context.Context, cmd core.Command) {
-	// Use type switch for more robust type handling with both value and pointer types
-	switch createCmd := cmd.(type) {
-	case CreateCommand:
-		// Request summarization for the new item's content
-		requestID := fmt.Sprintf("req-%d", time.Now().UnixNano())
-		summarizeCmd := &RequestSummaryGenerationCommand{
-			ID:        createCmd.Name, // Using name as ID from our CreateCommand
-			RequestID: requestID,
-		}
-
-		if err := w.executor.Execute(ctx, summarizeCmd); err != nil {
-			slog.Error("Failed to request summary generation",
-				"feature", "petrock_example_feature_name",
-				"itemID", createCmd.Name,
-				"error", err)
-		}
-		
-	case *CreateCommand:
-		// Request summarization for the new item's content
-		requestID := fmt.Sprintf("req-%d", time.Now().UnixNano())
-		summarizeCmd := &RequestSummaryGenerationCommand{
-			ID:        createCmd.Name, // Using name as ID from our CreateCommand
-			RequestID: requestID,
-		}
-
-		if err := w.executor.Execute(ctx, summarizeCmd); err != nil {
-			slog.Error("Failed to request summary generation",
-				"feature", "petrock_example_feature_name",
-				"itemID", createCmd.Name,
-				"error", err)
-		}
-		
-	default:
-		slog.Warn("Expected CreateCommand but got different type",
+	// Type assertion for pointer type
+	createCmd, ok := cmd.(*CreateCommand)
+	if !ok {
+		slog.Warn("Expected *CreateCommand but got different type",
 			"feature", "petrock_example_feature_name",
 			"type", fmt.Sprintf("%T", cmd))
+		return
+	}
+
+	// Request summarization for the new item's content
+	requestID := fmt.Sprintf("req-%d", time.Now().UnixNano())
+	summarizeCmd := &RequestSummaryGenerationCommand{
+		ID:        createCmd.Name, // Using name as ID from our CreateCommand
+		RequestID: requestID,
+	}
+
+	if err := w.executor.Execute(ctx, summarizeCmd); err != nil {
+		slog.Error("Failed to request summary generation",
+			"feature", "petrock_example_feature_name",
+			"itemID", createCmd.Name,
+			"error", err)
 	}
 }
 
 // handleSummaryRequestCommand tracks summary generation requests
 func (w *Worker) handleSummaryRequestCommand(ctx context.Context, cmd core.Command) {
-	// Use type switch for more robust type handling with both value and pointer types
-	switch requestCmd := cmd.(type) {
-	case RequestSummaryGenerationCommand:
-		// Retrieve the content to summarize from state
-		item, found := w.state.GetItem(requestCmd.ID)
-		if !found {
-			slog.Error("Cannot find item to summarize",
-				"feature", "petrock_example_feature_name",
-				"itemID", requestCmd.ID)
-			return
-		}
-
-		// Add to pending summaries
-		w.wState.pendingSummaries[requestCmd.RequestID] = PendingSummary{
-			RequestID: requestCmd.RequestID,
-			ItemID:    requestCmd.ID,
-			Content:   item.Content,
-			CreatedAt: time.Now(),
-		}
-
-		slog.Info("Added content to pending summarization queue",
-			"feature", "petrock_example_feature_name",
-			"itemID", requestCmd.ID,
-			"requestID", requestCmd.RequestID)
-		
-	case *RequestSummaryGenerationCommand:
-		// Retrieve the content to summarize from state
-		item, found := w.state.GetItem(requestCmd.ID)
-		if !found {
-			slog.Error("Cannot find item to summarize",
-				"feature", "petrock_example_feature_name",
-				"itemID", requestCmd.ID)
-			return
-		}
-
-		// Add to pending summaries
-		w.wState.pendingSummaries[requestCmd.RequestID] = PendingSummary{
-			RequestID: requestCmd.RequestID,
-			ItemID:    requestCmd.ID,
-			Content:   item.Content,
-			CreatedAt: time.Now(),
-		}
-
-		slog.Info("Added content to pending summarization queue",
-			"feature", "petrock_example_feature_name",
-			"itemID", requestCmd.ID,
-			"requestID", requestCmd.RequestID)
-		
-	default:
-		slog.Warn("Expected RequestSummaryGenerationCommand but got different type",
+	// Type assertion for pointer type
+	requestCmd, ok := cmd.(*RequestSummaryGenerationCommand)
+	if !ok {
+		slog.Warn("Expected *RequestSummaryGenerationCommand but got different type",
 			"feature", "petrock_example_feature_name",
 			"type", fmt.Sprintf("%T", cmd))
+		return
 	}
+
+	// Retrieve the content to summarize from state
+	item, found := w.state.GetItem(requestCmd.ID)
+	if !found {
+		slog.Error("Cannot find item to summarize",
+			"feature", "petrock_example_feature_name",
+			"itemID", requestCmd.ID)
+		return
+	}
+
+	// Add to pending summaries
+	w.wState.pendingSummaries[requestCmd.RequestID] = PendingSummary{
+		RequestID: requestCmd.RequestID,
+		ItemID:    requestCmd.ID,
+		Content:   item.Content,
+		CreatedAt: time.Now(),
+	}
+
+	slog.Info("Added content to pending summarization queue",
+		"feature", "petrock_example_feature_name",
+		"itemID", requestCmd.ID,
+		"requestID", requestCmd.RequestID)
 }
 
 // handleSummaryFailCommand removes failed summary requests from pending
 func (w *Worker) handleSummaryFailCommand(ctx context.Context, cmd core.Command) {
-	// Use type switch for more robust type handling with both value and pointer types
-	switch failCmd := cmd.(type) {
-	case FailSummaryGenerationCommand:
-		// Remove from pending summaries
-		delete(w.wState.pendingSummaries, failCmd.RequestID)
-
-		slog.Info("Removed failed summary request from queue",
-			"feature", "petrock_example_feature_name",
-			"itemID", failCmd.ID,
-			"requestID", failCmd.RequestID,
-			"reason", failCmd.Reason)
-		
-	case *FailSummaryGenerationCommand:
-		// Remove from pending summaries
-		delete(w.wState.pendingSummaries, failCmd.RequestID)
-
-		slog.Info("Removed failed summary request from queue",
-			"feature", "petrock_example_feature_name",
-			"itemID", failCmd.ID,
-			"requestID", failCmd.RequestID,
-			"reason", failCmd.Reason)
-		
-	default:
-		slog.Warn("Expected FailSummaryGenerationCommand but got different type",
+	// Type assertion for pointer type
+	failCmd, ok := cmd.(*FailSummaryGenerationCommand)
+	if !ok {
+		slog.Warn("Expected *FailSummaryGenerationCommand but got different type",
 			"feature", "petrock_example_feature_name",
 			"type", fmt.Sprintf("%T", cmd))
+		return
 	}
+
+	// Remove from pending summaries
+	delete(w.wState.pendingSummaries, failCmd.RequestID)
+
+	slog.Info("Removed failed summary request from queue",
+		"feature", "petrock_example_feature_name",
+		"itemID", failCmd.ID,
+		"requestID", failCmd.RequestID,
+		"reason", failCmd.Reason)
 }
 
 // handleSummarySetCommand removes completed summary requests from pending
 func (w *Worker) handleSummarySetCommand(ctx context.Context, cmd core.Command) {
-	// Use type switch for more robust type handling with both value and pointer types
-	switch setCmd := cmd.(type) {
-	case SetGeneratedSummaryCommand:
-		// Remove from pending summaries
-		delete(w.wState.pendingSummaries, setCmd.RequestID)
-
-		slog.Info("Summary successfully set for item",
-			"feature", "petrock_example_feature_name",
-			"itemID", setCmd.ID,
-			"requestID", setCmd.RequestID)
-		
-	case *SetGeneratedSummaryCommand:
-		// Remove from pending summaries
-		delete(w.wState.pendingSummaries, setCmd.RequestID)
-
-		slog.Info("Summary successfully set for item",
-			"feature", "petrock_example_feature_name",
-			"itemID", setCmd.ID,
-			"requestID", setCmd.RequestID)
-		
-	default:
-		slog.Warn("Expected SetGeneratedSummaryCommand but got different type",
+	// Type assertion for pointer type
+	setCmd, ok := cmd.(*SetGeneratedSummaryCommand)
+	if !ok {
+		slog.Warn("Expected *SetGeneratedSummaryCommand but got different type",
 			"feature", "petrock_example_feature_name",
 			"type", fmt.Sprintf("%T", cmd))
+		return
 	}
+
+	// Remove from pending summaries
+	delete(w.wState.pendingSummaries, setCmd.RequestID)
+
+	slog.Info("Summary successfully set for item",
+		"feature", "petrock_example_feature_name",
+		"itemID", setCmd.ID,
+		"requestID", setCmd.RequestID)
 }
 
 // processPendingSummaries calls external API for pending summaries
