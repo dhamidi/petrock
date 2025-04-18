@@ -29,7 +29,7 @@ After this change, the feature template will use a hierarchical directory struct
 **T1.2:** Create subdirectory structure
 
 - Create ui/components/, ui/layouts/, ui/pages/ directories
-- Create handlers/create/, handlers/read/, handlers/update/ directories
+- No subdirectories for handlers - use descriptive file names instead
 
 **Definition of Done for T1:**
 
@@ -70,13 +70,13 @@ After this change, the feature template will use a hierarchical directory struct
 **T3.1:** Create base files in queries/ directory
 
 - Create queries/base.go with common interfaces and types
-- Create queries/list.go and queries/detail.go files
+- Create queries/get.go and queries/list.go files
 
-**T3.2:** Extract query definitions from queries.go
+**T3.2:** Extract query definitions and result types from queries.go
 
-- Move list-related queries to queries/list.go
-- Move detail-related queries to queries/detail.go
-- Move other domain-specific queries to appropriate files
+- Move list query and list result types to queries/list.go
+- Move get query and item result type to queries/get.go
+- Include result type definitions in the same file as their corresponding queries
 
 **T3.3:** Extract query handlers from query.go
 
@@ -113,15 +113,17 @@ After this change, the feature template will use a hierarchical directory struct
 
 **T5.1:** Create base files in handlers/ directory
 
+- Create handlers/base.go for common utilities and types
 - Create handlers/middleware.go for common middleware
-- Create handlers/create/, handlers/read/, handlers/update/ subdirectories with respective files
+- Create individual handler files with descriptive names (e.g., create_item.go, read_list.go)
 
 **T5.2:** Extract HTTP handlers from http.go
 
-- Move create handlers to handlers/create/
-- Move read/list handlers to handlers/read/
-- Move update handlers to handlers/update/
-- Move middleware to handlers/middleware.go
+- Move create handlers to create_item.go and create_form.go
+- Move read/list handlers to read_item.go and read_list.go
+- Move update handlers to update_item.go and update_form.go
+- Move delete handlers to delete_item.go and delete_form.go
+- Move middleware functions to middleware.go
 
 **T5.3:** Update imports and references
 
@@ -160,19 +162,15 @@ After this change, the feature template will use a hierarchical directory struct
 
 **T7.1:** Create base files in workers/ directory
 
-- Create workers/main.go with Worker struct and interfaces
-- Create workers/state.go for worker state types
-- Create workers/api.go for external API interactions
-- Create workers/handlers.go for command handlers
-- Create workers/processing.go for processing logic
+- Create workers/main.go with common worker interfaces and building blocks
+- Create workers/summary_worker.go for the complete summary generation worker
+- Create workers/types.go for shared worker type definitions
 
 **T7.2:** Extract worker code from worker.go
 
-- Move Worker struct and constructor to workers/main.go
-- Move WorkerState and PendingSummary to workers/state.go
-- Move API interaction methods to workers/api.go
-- Move command handler methods to workers/handlers.go
-- Move processing logic to workers/processing.go
+- Move common interfaces and building blocks to workers/main.go
+- Move complete summary worker implementation to workers/summary_worker.go
+- Move shared type definitions to workers/types.go
 
 **T7.3:** Update imports and references
 
