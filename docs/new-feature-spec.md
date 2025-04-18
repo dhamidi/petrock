@@ -21,21 +21,21 @@ feature_template/
 │   └── fail_summary.go             # Failed summary generation commands
 │
 ├── handlers/
-│   ├── middleware.go  # Common middleware
-│   ├── create/
-│   │   ├── item.go
-│   │   └── batch.go
-│   ├── read/
-│   │   ├── item.go
-│   │   └── list.go
-│   └── update/
-│       ├── item.go
-│       └── status.go
+│   ├── base.go              # Common handler utilities and types
+│   ├── middleware.go         # Common middleware functions
+│   ├── create_item.go        # Item creation handlers (API)
+│   ├── create_form.go        # Form handlers for item creation (UI)
+│   ├── read_item.go          # Single item detail handlers
+│   ├── read_list.go          # List view handlers
+│   ├── update_item.go        # Item update handlers (API)
+│   ├── update_form.go        # Form handlers for item updates (UI)
+│   ├── delete_item.go        # Item deletion handlers (API)
+│   └── delete_form.go        # Confirmation forms for deletion (UI)
 │
 ├── queries/
-│   ├── base.go        # Common query interfaces
-│   ├── list.go        # List queries
-│   └── detail.go      # Detail queries
+│   ├── base.go        # Common query interfaces and types
+│   ├── get.go         # Query and result type for single items
+│   └── list.go        # Query and result types for item lists
 │
 ├── state/
 │   ├── main.go        # Main state container and interfaces
@@ -44,30 +44,31 @@ feature_template/
 │
 ├── ui/
 │   ├── components/    # Reusable UI components
-│   │   ├── buttons.go
-│   │   ├── forms.go
-│   │   └── tables.go
+│   │   ├── buttons.go  # Button components and actions
+│   │   ├── forms.go    # Form input components
+│   │   ├── tables.go   # Table and list components
+│   │   └── alerts.go   # Alert and notification components
 │   ├── layouts/       # Page layouts
-│   │   ├── main.go
-│   │   └── modal.go
+│   │   ├── main.go     # Standard page layout
+│   │   └── modal.go    # Modal dialog layouts
 │   ├── pages/         # Complete page views
-│   │   ├── list.go
-│   │   ├── detail.go
-│   │   └── edit.go
-│   └── view.go        # Main view exports
+│   │   ├── list.go     # List view for multiple items
+│   │   ├── detail.go   # Detail view for single item
+│   │   ├── edit.go     # Edit form view
+│   │   ├── new.go      # New item form view
+│   │   └── delete.go   # Delete confirmation view
+│   └── helpers.go     # View helper functions and utilities
 │
 ├── routes/
-│   ├── main.go        # Route registration
-│   ├── api.go         # API routes
-│   ├── web.go         # Web UI routes
-│   └── webhooks.go    # Webhook routes
+│   ├── main.go        # Central route registration
+│   ├── api.go         # API routes (REST endpoints)
+│   ├── web.go         # Web UI routes (HTML pages)
+│   └── webhooks.go    # Webhook routes (external integrations)
 │
 └── workers/
-    ├── main.go        # Worker struct, registration and interfaces
-    ├── state.go       # Worker state types and management
-    ├── api.go         # External API interactions
-    ├── handlers.go    # Command handlers
-    └── processing.go  # Background processing logic
+    ├── main.go           # Common worker interfaces and building blocks
+    ├── summary_worker.go  # Complete worker for handling summary generation
+    └── types.go          # Shared worker type definitions
 ```
 
 ## Rationale
@@ -130,10 +131,12 @@ Here's how the files in the current structure map to the new structure:
 
 The key differences are:
 
-1. **Flat vs. Hierarchical**: The current structure uses a flat organization with all files in the root directory, while the new structure introduces a hierarchy.
+1. **Flat vs. Hierarchical**: The current structure uses a flat organization with all files in the root directory, while the new structure introduces a hierarchy that better reflects the feature's architecture.
 
-2. **File Size Management**: The current structure tends to produce large files as features grow (e.g., http.go at 784 lines, view.go at 623 lines). The new structure distributes this code across multiple smaller files.
+2. **File Size Management**: The current structure tends to produce large files as features grow (e.g., http.go at 784 lines, view.go at 623 lines, worker.go at 426 lines). The new structure distributes this code across multiple smaller, focused files.
 
-3. **Domain Organization**: The new structure allows for domain-specific organization within each subsystem (commands, queries, etc.), making it easier to locate related functionality.
+3. **Domain Organization**: The new structure allows for domain-specific organization within each subsystem (commands, queries, etc.), making it easier to locate related functionality and understand the relationships between components.
 
-4. **Discoverability**: The directory structure itself communicates the architecture more clearly than the flat file structure.
+4. **Discoverability**: The directory structure itself communicates the architecture more clearly than the flat file structure, making it easier for new developers to understand the codebase.
+
+5. **Maintenance**: With smaller, more focused files, maintenance becomes easier as changes are more isolated and have clearer boundaries.
