@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/petrock/example_module_path/core"
+	"github.com/petrock/example_module_path/petrock_example_feature_name/queries"
 )
 
 // HandleEditForm handles requests to display a form for editing an existing item.
@@ -21,7 +22,7 @@ func (fs *FeatureServer) HandleEditForm(w http.ResponseWriter, r *http.Request) 
 	slog.Debug("HandleEditForm called", "feature", "petrock_example_feature_name", "id", itemID)
 
 	// Retrieve the item to edit
-	query := GetQuery{ID: itemID}
+	query := queries.GetQuery{ID: itemID}
 	result, err := fs.querier.HandleGet(r.Context(), query)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
@@ -84,7 +85,7 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 	// If the form has errors, re-render it with validation messages
 	if !form.IsValid() {
 		// Retrieve the original item to re-render the form with both the item and errors
-		query := GetQuery{ID: itemID}
+		query := queries.GetQuery{ID: itemID}
 		result, err := fs.querier.HandleGet(r.Context(), query)
 		if err != nil {
 			slog.Error("Error retrieving item for form re-render", "error", err, "id", itemID)
@@ -130,7 +131,7 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 			form.AddError("name", err.Error())
 
 			// Retrieve the original item to re-render the form
-			query := GetQuery{ID: itemID}
+			query := queries.GetQuery{ID: itemID}
 			result, getErr := fs.querier.HandleGet(r.Context(), query)
 			if getErr != nil {
 				slog.Error("Error retrieving item for form re-render", "error", getErr, "id", itemID)

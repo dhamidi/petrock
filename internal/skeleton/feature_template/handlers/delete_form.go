@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/petrock/example_module_path/petrock_example_feature_name/queries"
 )
 
 // HandleDeleteForm handles requests to display a confirmation form for deleting an item.
@@ -19,7 +21,7 @@ func (fs *FeatureServer) HandleDeleteForm(w http.ResponseWriter, r *http.Request
 	slog.Debug("HandleDeleteForm called", "feature", "petrock_example_feature_name", "id", itemID)
 
 	// Retrieve the item to confirm deletion
-	query := GetQuery{ID: itemID}
+	query := queries.GetQuery{ID: itemID}
 	result, err := fs.querier.HandleGet(r.Context(), query)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
