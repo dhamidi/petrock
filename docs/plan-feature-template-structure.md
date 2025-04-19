@@ -182,13 +182,13 @@ After this change, the feature template will use a hierarchical directory struct
 - Original worker.go is removed
 - Code compiles successfully
 
-### T8: Create Main Package File
+### T8: Create Main Package File - DONE
 
-**T8.1:** Create main.go in feature_template/ root
+**T8.1:** Create main.go in feature_template/ root - DONE
 
 - Create main.go file with imports for all subpackages
 
-**T8.2:** Migrate registration logic from register.go
+**T8.2:** Migrate registration logic from register.go - DONE
 
 - Move feature registration logic to main.go
 - Update imports and references
