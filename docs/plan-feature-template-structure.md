@@ -19,14 +19,14 @@ After this change, the feature template will use a hierarchical directory struct
 
 ## Detailed Task Breakdown
 
-### T1: Create Directory Structure
+### T1: Create Directory Structure - DONE
 
-**T1.1:** Create the base directories for the new structure
+**T1.1:** Create the base directories for the new structure - DONE
 
 - Create directories in internal/skeleton/feature_template/: commands/, handlers/, queries/, state/, ui/, routes/, workers/
 - Add .keep files in each directory to ensure they're tracked by git
 
-**T1.2:** Create subdirectory structure
+**T1.2:** Create subdirectory structure - DONE
 
 - Create ui/components/, ui/layouts/, ui/pages/ directories
 - No subdirectories for handlers - use descriptive file names instead
