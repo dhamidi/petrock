@@ -153,7 +153,11 @@ func RenderPageWithSuccess(w http.ResponseWriter, pageTitle string, content g.No
 									g.Attr("class", "ml-3"),
 									html.P(
 										g.Attr("class", "text-sm font-medium text-green-800"),
-										g.Text("u2713 "+successMsg),
+										html.Span(
+											g.Attr("class", "inline-block mr-1"),
+											g.Raw(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`),
+										),
+										g.Text(successMsg),
 									),
 								),
 							),
@@ -173,8 +177,20 @@ func RenderPageWithSuccess(w http.ResponseWriter, pageTitle string, content g.No
 				html.Div(
 					g.Attr("class", "container mx-auto px-4 sm:px-6 lg:px-8 py-4"),
 					html.Div(
-						g.Attr("class", "text-center text-sm text-slate-500"),
-						g.Text("u00a9 2025 Petrock App - Built with petrock"),
+						g.Attr("class", "justify-center items-center flex flex-row gap-2 text-sm text-slate-500"),
+						html.SVG(
+							g.Attr("xmlns", "http://www.w3.org/2000/svg"),
+							g.Attr("width", "14"),
+							g.Attr("height", "14"),
+							g.Attr("viewBox", "0 0 24 24"),
+							g.Attr("fill", "none"),
+							g.Attr("stroke", "currentColor"),
+							g.Attr("stroke-width", "2"),
+							g.Attr("stroke-linecap", "round"),
+							g.Attr("stroke-linejoin", "round"),
+							g.Raw(`<circle cx="12" cy="12" r="10"></circle><path d="M14.83 14.83a4 4 0 1 1 0-5.66"></path>`),
+						),
+						g.Text("2025 Petrock App - Built with petrock"),
 					),
 				),
 			),

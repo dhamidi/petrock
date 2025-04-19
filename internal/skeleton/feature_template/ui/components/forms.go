@@ -52,7 +52,11 @@ func SuccessAlert(message string) g.Node {
 				g.Attr("class", "ml-3"),
 				html.P(
 					g.Attr("class", "text-sm font-medium text-green-800"),
-					g.Text("✓ "+message),
+					html.Span(
+						g.Attr("class", "inline-block mr-1"),
+						g.Raw(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`),
+					),
+					g.Text(message),
 				),
 			),
 		),
@@ -113,7 +117,7 @@ func ItemForm(form *core.Form, item *state.Item, csrfToken string) g.Node {
 			html.A(
 				g.Attr("href", backLink(isEdit, item)),
 				g.Attr("class", "text-sm font-medium text-indigo-600 hover:text-indigo-500"),
-				html.Span(g.Attr("aria-hidden", "true"), g.Text("u2190")),
+				html.Span(g.Attr("aria-hidden", "true"), g.Raw(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>`)),
 				g.Text(" Back"),
 			),
 		),
@@ -215,7 +219,7 @@ func DeleteConfirmForm(item *state.Item, csrfToken string) g.Node {
 			html.A(
 				g.Attr("href", "/petrock_example_feature_name/"+item.ID),
 				g.Attr("class", "text-sm font-medium text-indigo-600 hover:text-indigo-500"),
-				html.Span(g.Attr("aria-hidden", "true"), g.Text("←")),
+				html.Span(g.Attr("aria-hidden", "true"), g.Raw(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>`)),
 				g.Text(" Back"),
 			),
 		),
