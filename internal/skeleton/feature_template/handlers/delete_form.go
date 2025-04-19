@@ -35,7 +35,7 @@ func (fs *FeatureServer) HandleDeleteForm(w http.ResponseWriter, r *http.Request
 	}
 
 	// Cast the result to the correct type
-	item, ok := result.(*Result)
+	item, ok := result.(*queries.GetQueryResult)
 	if !ok {
 		slog.Error("Invalid result type for delete confirmation", "type", fmt.Sprintf("%T", result))
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -47,10 +47,10 @@ func (fs *FeatureServer) HandleDeleteForm(w http.ResponseWriter, r *http.Request
 
 	// Render the delete confirmation view
 	// Create page title
-	pageTitle := fmt.Sprintf("Delete %s", item.Name)
+	pageTitle := fmt.Sprintf("Delete %s", item.Item.Name)
 
 	// Render the page with our helper
-	if err := RenderPage(w, pageTitle, DeleteConfirmForm(item, csrfToken)); err != nil {
+	if err := RenderPage(w, pageTitle, DeleteConfirmForm(&item.Item, csrfToken)); err != nil {
 		slog.Error("Error rendering delete confirmation", "error", err)
 		http.Error(w, "Error rendering confirmation", http.StatusInternalServerError)
 	}

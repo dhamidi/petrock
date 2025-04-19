@@ -3,17 +3,18 @@ package handlers
 import (
 	g "maragu.dev/gomponents"
 	
+	"github.com/petrock/example_module_path/petrock_example_feature_name/queries"
 	"github.com/petrock/example_module_path/petrock_example_feature_name/ui/pages"
 )
 
 // ItemView renders the HTML representation of a single item.
-func ItemView(item Result) g.Node {
+func ItemView(item queries.ItemResult) g.Node {
 	return pages.ItemView(pages.Result(item))
 }
 
 // ItemsListView renders a list of items, potentially with pagination.
-func ItemsListView(result ListResult) g.Node {
-	// Convert from handlers.ListResult to pages.ListResult
+func ItemsListView(result queries.ListQueryResult) g.Node {
+	// Convert from queries.ListQueryResult to pages.ListResult
 	pageResult := pages.ListResult{
 		Page:       result.Page,
 		PageSize:   result.PageSize,
@@ -30,7 +31,7 @@ func ItemsListView(result ListResult) g.Node {
 }
 
 // ItemForm renders an HTML <form> for creating or editing an item.
-func ItemForm(form interface{}, item *Result, csrfToken string) g.Node {
+func ItemForm(form interface{}, item *queries.ItemResult, csrfToken string) g.Node {
 	var pageItem *pages.Result
 	if item != nil {
 		converted := pages.Result(*item)
@@ -40,7 +41,7 @@ func ItemForm(form interface{}, item *Result, csrfToken string) g.Node {
 }
 
 // DeleteConfirmForm renders a form to confirm deletion of an item.
-func DeleteConfirmForm(item *Result, csrfToken string) g.Node {
+func DeleteConfirmForm(item *queries.ItemResult, csrfToken string) g.Node {
 	var pageItem *pages.Result
 	if item != nil {
 		converted := pages.Result(*item)

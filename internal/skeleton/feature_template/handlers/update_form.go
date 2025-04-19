@@ -42,7 +42,7 @@ func (fs *FeatureServer) HandleEditForm(w http.ResponseWriter, r *http.Request) 
 	csrfToken := "token" // Replace with actual CSRF token generation
 
 	// Cast the result to the correct type
-	item, ok := result.(*Result)
+	item, ok := result.(*queries.GetQueryResult)
 	if !ok {
 		slog.Error("Invalid result type for edit form", "type", fmt.Sprintf("%T", result))
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -51,10 +51,10 @@ func (fs *FeatureServer) HandleEditForm(w http.ResponseWriter, r *http.Request) 
 
 	// Render the edit form
 	// Create page title
-	pageTitle := fmt.Sprintf("Edit %s", item.Name)
+	pageTitle := fmt.Sprintf("Edit %s", item.Item.Name)
 
 	// Render the page with our helper
-	if err := RenderPage(w, pageTitle, ItemForm(form, item, csrfToken)); err != nil {
+	if err := RenderPage(w, pageTitle, ItemForm(form, &item.Item, csrfToken)); err != nil {
 		slog.Error("Error rendering edit form", "error", err)
 		http.Error(w, "Error rendering form", http.StatusInternalServerError)
 	}
@@ -95,7 +95,7 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 		}
 
 		// Cast the result and render the form with errors
-		item, ok := result.(*Result)
+		item, ok := result.(*queries.GetQueryResult)
 		if !ok {
 			slog.Error("Invalid result type for edit form", "type", fmt.Sprintf("%T", result))
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -103,11 +103,11 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 		}
 
 		// Create page title for validation error
-		pageTitle := fmt.Sprintf("Edit %s", item.Name)
+		pageTitle := fmt.Sprintf("Edit %s", item.Item.Name)
 		csrfToken := "token" // Replace with actual CSRF token
 
 		// Render the page with validation errors
-		if err := RenderPage(w, pageTitle, ItemForm(form, item, csrfToken)); err != nil {
+		if err := RenderPage(w, pageTitle, ItemForm(form, &item.Item, csrfToken)); err != nil {
 			slog.Error("Error rendering form with validation errors", "error", err)
 			http.Error(w, "Error rendering form", http.StatusInternalServerError)
 		}
@@ -141,7 +141,7 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 			}
 
 			// Cast the result and render
-			item, ok := result.(*Result)
+			item, ok := result.(*queries.GetQueryResult)
 			if !ok {
 				slog.Error("Invalid result type for edit form", "type", fmt.Sprintf("%T", result))
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -149,11 +149,11 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 			}
 
 			// Create page title for validation error
-			pageTitle := fmt.Sprintf("Edit %s", item.Name)
+			pageTitle := fmt.Sprintf("Edit %s", item.Item.Name)
 			csrfToken := "token" // Replace with actual CSRF token
 
 			// Render the page with validation errors
-			if err := RenderPage(w, pageTitle, ItemForm(form, item, csrfToken)); err != nil {
+			if err := RenderPage(w, pageTitle, ItemForm(form, &item.Item, csrfToken)); err != nil {
 				slog.Error("Error rendering form with validation errors", "error", err)
 				http.Error(w, "Error rendering form", http.StatusInternalServerError)
 			}
