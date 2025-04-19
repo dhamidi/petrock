@@ -4,39 +4,37 @@ import (
 	"context"
 )
 
-// Core application dependencies
-type core struct {}
-
-// Form represents a form with validation capabilities
-type core.Form struct{}
+// CoreAppForms represents a set of stub form utilities for the template
+// This is just a sketch that will be replaced by proper imports
+type Form struct{}
 
 // NewForm creates a new form instance
-func core.NewForm(data interface{}) *core.Form {
+func NewForm(data interface{}) *Form {
 	return nil
 }
 
 // Get retrieves a form field value
-func (f *core.Form) Get(field string) string {
+func (f *Form) Get(field string) string {
 	return ""
 }
 
 // ValidateRequired validates required fields
-func (f *core.Form) ValidateRequired(fields ...string) {}
+func (f *Form) ValidateRequired(fields ...string) {}
 
 // IsValid checks if the form is valid
-func (f *core.Form) IsValid() bool {
+func (f *Form) IsValid() bool {
 	return true
 }
 
 // AddError adds an error to a field
-func (f *core.Form) AddError(field string, message string) {}
+func (f *Form) AddError(field string, message string) {}
 
 // HasError checks if a field has an error
-func (f *core.Form) HasError(field string) bool {
+func (f *Form) HasError(field string) bool {
 	return false
 }
 
 // GetError gets the error message for a field
-func (f *core.Form) GetError(field string) string {
+func (f *Form) GetError(field string) string {
 	return ""
 }

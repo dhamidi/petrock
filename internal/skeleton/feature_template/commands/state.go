@@ -32,3 +32,8 @@ func (s *State) GetItem(id string) (*Item, bool) {
 	item, found := s.Items[id]
 	return item, found
 }
+
+// Apply is a stub method to make the commands work with the State
+func (s *State) Apply(cmd interface{}, msg interface{}) error {
+	return nil
+}

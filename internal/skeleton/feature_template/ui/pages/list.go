@@ -3,9 +3,9 @@ package pages
 import (
 	"fmt"
 
-	"github.com/petrock/example_module_path/core" 
+	// "github.com/petrock/example_module_path/core"
 	g "maragu.dev/gomponents"
-	. "maragu.dev/gomponents/components"
+	// . "maragu.dev/gomponents/components"
 	"maragu.dev/gomponents/html"
 
 	"github.com/petrock/example_module_path/petrock_example_feature_name/ui"

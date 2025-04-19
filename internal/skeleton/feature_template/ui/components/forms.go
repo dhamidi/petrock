@@ -71,7 +71,7 @@ func NewItemButton() g.Node {
 // It uses core.Form for data and error handling.
 // 'item' can be nil when creating a new item.
 // 'csrfToken' should be provided by the handler.
-func ItemForm(form *core.Form, item *Result, csrfToken string) g.Node {
+func ItemForm(form *core.Form, item interface{}, csrfToken string) g.Node {
 	// Determine if we're creating or editing
 	isEdit := item != nil
 	var title, submitLabel string
@@ -203,7 +203,7 @@ func ItemForm(form *core.Form, item *Result, csrfToken string) g.Node {
 }
 
 // DeleteConfirmForm renders a form to confirm deletion of an item.
-func DeleteConfirmForm(item *Result, csrfToken string) g.Node {
+func DeleteConfirmForm(item interface{}, csrfToken string) g.Node {
 	return html.Div(
 		// Form container with back link
 		g.Attr("class", "space-y-8"),

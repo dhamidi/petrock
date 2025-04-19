@@ -2,7 +2,7 @@ package commands
 
 import (
 	"context"
-	"fmt"
+	// "fmt" - Will be used in implementation
 	"log/slog"
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
