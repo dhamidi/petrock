@@ -143,6 +143,15 @@ func (l *MessageLog) RegisterType(instance interface{}) {
 // Append encodes the given message, determines its registered name string,
 // and inserts it as a new row into the 'messages' table.
 func (l *MessageLog) Append(ctx context.Context, msg interface{}) error {
+	// If no timeout set, create a context with sufficient timeout for database operations
+	var appendCtx context.Context
+	var cancel context.CancelFunc
+	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+		appendCtx, cancel = context.WithTimeout(ctx, 60*time.Second)
+		defer cancel()
+	} else {
+		appendCtx = ctx // Use the provided context if it already has a deadline
+	}
 	var typeName string
 
 	// Get the registered name from the message
@@ -171,7 +180,7 @@ func (l *MessageLog) Append(ctx context.Context, msg interface{}) error {
 	}
 
 	query := `INSERT INTO messages (timestamp, type, data) VALUES (?, ?, ?)`
-	_, err = l.db.ExecContext(ctx, query, time.Now().UTC(), typeName, data)
+	_, err = l.db.ExecContext(appendCtx, query, time.Now().UTC(), typeName, data)
 	if err != nil {
 		return fmt.Errorf("failed to insert message type %s into log: %w", typeName, err)
 	}
@@ -199,7 +208,11 @@ func (l *MessageLog) After(ctx context.Context, startID uint64) iter.Seq[Persist
 		query := `SELECT id, timestamp, type, data FROM messages WHERE id > ? ORDER BY id ASC`
 		rows, err := l.db.QueryContext(ctx, query, startID)
 		if err != nil {
-			slog.Error("Failed to query messages after version", "error", err, "startID", startID)
+			if err == context.DeadlineExceeded || err == context.Canceled {
+				slog.Warn("Context deadline exceeded during message query", "startID", startID)
+			} else {
+				slog.Error("Failed to query messages after version", "error", err, "startID", startID)
+			}
 			return
 		}
 		defer rows.Close()
@@ -228,7 +241,11 @@ func (l *MessageLog) After(ctx context.Context, startID uint64) iter.Seq[Persist
 		}
 
 		if err := rows.Err(); err != nil {
-			slog.Error("Error iterating message rows", "error", err)
+			if err == context.DeadlineExceeded || err == context.Canceled {
+				slog.Warn("Context cancelled during message iteration", "error", err)
+			} else {
+				slog.Error("Error iterating message rows", "error", err)
+			}
 		}
 	}
 }
@@ -259,15 +276,16 @@ func (l *MessageLog) Decode(message Message) (interface{}, error) {
 // SetupDatabase initializes the SQLite database connection and returns it.
 func SetupDatabase(dataSourceName string) (*sql.DB, error) {
 	// Append SQLite connection parameters to enable WAL mode and immediate transaction locking
-	connString := dataSourceName + "?_journal_mode=WAL&_txlock=IMMEDIATE"
+	// Add busy_timeout to wait for locks to be released rather than immediately failing
+	connString := dataSourceName + "?_journal_mode=WAL&_txlock=IMMEDIATE&_busy_timeout=10000"
 	db, err := sql.Open("sqlite3", connString)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database %s: %w", dataSourceName, err)
 	}
 
-	// Basic connection pool settings
-	db.SetMaxOpenConns(1) // SQLite is often best with a single writer
-	db.SetMaxIdleConns(1)
+	// SQLite connections are essentially free, so don't limit connections
+	db.SetMaxOpenConns(0) // No limit on concurrent connections
+	db.SetMaxIdleConns(0) // No limit on idle connections
 	db.SetConnMaxLifetime(0) // Connections don't expire
 
 	// Check the connection

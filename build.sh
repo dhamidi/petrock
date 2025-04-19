@@ -83,7 +83,7 @@ test_project() {
   cd blog
   petrock feature posts
   go run ./cmd/blog serve --log-level=debug &
-  sleep 1
+  sleep 5
   test_project_create_post
   wait %1
 }

@@ -84,18 +84,26 @@ petrock feature posts
 This command will:
 1. Check if the Git workspace is clean.
 2. Generate a new Go package directory named `posts`.
-3. Populate the `posts/` directory with template files for:
-    - `register.go`: Feature registration logic.
-    - `messages.go`: Command and Query structs.
-    - `execute.go`: Command handlers.
-    - `query.go`: Query handlers.
-    - `state.go`: In-memory state management.
-    - `jobs.go`: Background job definitions (optional).
-    - `view.go`: Gomponent views specific to the feature.
-    - `routes.go`: Feature-specific HTTP route definitions.
-    - `http.go`: Feature-specific HTTP handlers.
-    - `assets.go`: Embedding static assets.
+3. Populate the `posts/` directory with a modular, organized structure:
+    - `main.go`: Main feature package exports and initialization.
+    - `assets.go`: Asset registration and embedding.
     - `assets/`: Directory for static assets.
+    - `commands/`: Command definitions and handlers:
+      - Command interfaces, creation, update, deletion commands
+      - Registration logic and command execution
+    - `handlers/`: HTTP and command handling:
+      - API endpoints and form handlers
+      - Middleware and core handler functionality
+    - `queries/`: Query definitions and handlers:
+      - Query interfaces, single item and list queries
+    - `state/`: In-memory state management:
+      - Core item state and related metadata
+    - `ui/`: UI components and templates:
+      - Form, table, and layout components
+      - Page views for listing, detail, and forms
+    - `routes/`: Feature-specific HTTP route definitions:
+      - API and web UI routes
+    - `workers/`: Background job definitions and workers.
 4. Automatically update `cmd/myblog/features.go` to import and register the new `posts` feature.
 5. Create a Git commit with the newly added feature files and modifications.
 

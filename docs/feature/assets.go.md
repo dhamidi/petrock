@@ -1,16 +1,19 @@
-# Plan for posts/assets.go (Example Feature)
+# Assets
 
-This file uses `go:embed` to bundle feature-specific static assets (like CSS, JavaScript, images) directly into the Go binary.
+The `assets.go` file handles the registration and management of static assets required by the feature.
 
-## Types
+## Responsibilities
 
-- None specific to this file.
+- Register static assets with the application
+- Provide access to feature-specific static files
+- Handle asset embedding and loading
 
-## Variables
+## Key Components
 
-- `//go:embed assets`
-- `Assets embed.FS`: This declares a variable `Assets` of type `embed.FS` and the `//go:embed assets` directive instructs the Go compiler to embed the contents of the `posts/assets/` directory into this variable.
+- Asset registration functions
+- Path management for static resources
+- File handling utilities
 
-## Functions
+## Usage
 
-- `GetAssetsFS() fs.FS`: Returns the embedded filesystem (`Assets`) wrapped as an `fs.FS`. This allows the rest of the application (e.g., the HTTP server setup in `cmd/serve.go`) to serve files from this embedded filesystem, typically under a specific path prefix (e.g., `/assets/posts/`).
+The assets are typically registered during feature initialization and made available to the web UI components that need to reference static resources like images, stylesheets, or client-side scripts.

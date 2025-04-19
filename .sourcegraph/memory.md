@@ -32,3 +32,9 @@ The following replacements are supported:
 
 - `petrock_example_feature_name` – for the name of newly generated features (e.g. `posts`)
 - `github.com/petrock/example_module_path` – the path to the finally generated module when using `petrock feature`.
+
+## Project status
+
+This project has no users yet – we are in the prototyping phase.
+
+When making changes, ignore backwards compatibility.
