@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
-	
+
 	"github.com/petrock/example_module_path/petrock_example_feature_name/queries"
 )
 

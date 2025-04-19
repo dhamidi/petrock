@@ -2,9 +2,9 @@ package workers
 
 import (
 	"time"
-	
-	"github.com/petrock/example_module_path/petrock_example_feature_name/state"
+
 	"github.com/petrock/example_module_path/petrock_example_feature_name/commands"
+	"github.com/petrock/example_module_path/petrock_example_feature_name/state"
 )
 
 // PendingSummary tracks a content item waiting for summarization

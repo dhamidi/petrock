@@ -1,8 +1,8 @@
 package pages
 
 import (
-	"github.com/petrock/example_module_path/petrock_example_feature_name/queries"
 	"github.com/petrock/example_module_path/petrock_example_feature_name/handlers"
+	"github.com/petrock/example_module_path/petrock_example_feature_name/queries"
 )
 
 // Result is a type alias for ItemResult from the queries package

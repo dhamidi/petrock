@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	
+
 	"github.com/petrock/example_module_path/petrock_example_feature_name/queries"
 )
 

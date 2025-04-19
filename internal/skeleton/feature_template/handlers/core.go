@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"github.com/petrock/example_module_path/petrock_example_feature_name/state"
 	"github.com/petrock/example_module_path/petrock_example_feature_name/queries"
+	"github.com/petrock/example_module_path/petrock_example_feature_name/state"
 )
 
 // State is an alias for the feature's state type
