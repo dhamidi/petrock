@@ -135,20 +135,20 @@ After this change, the feature template will use a hierarchical directory struct
 - Original http.go is removed
 - Code compiles successfully
 
-### T6: Migrate State Management
+### T6: Migrate State Management - DONE
 
-**T6.1:** Create base files in state/ directory
+**T6.1:** Create base files in state/ directory - DONE
 
 - Create state/main.go with main state container and interfaces
 - Create state/item.go and state/metadata.go files
 
-**T6.2:** Extract state code from state.go
+**T6.2:** Extract state code from state.go - DONE
 
 - Move State struct to state/main.go
 - Move item-related functions to state/item.go
 - Move metadata-related functions to state/metadata.go
 
-**T6.3:** Update imports and references
+**T6.3:** Update imports and references - DONE
 
 - Ensure all imports and references are updated to reflect new file locations
 
