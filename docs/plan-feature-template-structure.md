@@ -199,19 +199,19 @@ After this change, the feature template will use a hierarchical directory struct
 - register.go is removed
 - Code compiles successfully
 
-### T9: Migrate Routes
+### T9: Migrate Routes - DONE
 
-**T9.1:** Create base files in routes/ directory
+**T9.1:** Create base files in routes/ directory - DONE
 
 - Create routes/main.go, routes/api.go, routes/web.go files
 
-**T9.2:** Extract route definitions from routes.go
+**T9.2:** Extract route definitions from routes.go - DONE
 
 - Move API routes to routes/api.go
 - Move web UI routes to routes/web.go
 - Move route registration to routes/main.go
 
-**T9.3:** Update imports and references
+**T9.3:** Update imports and references - DONE
 
 - Ensure all imports and references are updated to reflect new file locations
 
