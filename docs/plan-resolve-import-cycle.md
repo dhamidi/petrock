@@ -33,7 +33,7 @@ After the change, we'll have a clean separation of concerns:
 - Delete the whole file state/commands.go
 - Confirm deletion with git status
 
-**T1.2:** Update main.go to remove command imports
+**T1.2:** Update main.go to remove command imports - DONE
 
 - Remove imports for commands package in state/main.go
 - Remove all command type references in state/main.go
