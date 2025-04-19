@@ -37,14 +37,14 @@ After this change, the feature template will use a hierarchical directory struct
 - Each directory has a .keep file to ensure it's tracked by git
 - Directory structure matches the specification in docs/new-feature-spec.md
 
-### T2: Migrate Command-Related Code
+### T2: Migrate Command-Related Code - DONE
 
-**T2.1:** Create base files in commands/ directory
+**T2.1:** Create base files in commands/ directory - DONE
 
 - Create commands/base.go with common interfaces and types
 - Create commands/create.go, commands/update.go, commands/delete.go files
 
-**T2.2:** Extract command definitions from commands.go
+**T2.2:** Extract command definitions from commands.go - DONE
 
 - Move CreateCommand to commands/create.go
 - Move UpdateCommand to commands/update.go
@@ -53,7 +53,7 @@ After this change, the feature template will use a hierarchical directory struct
 - Move SetGeneratedSummaryCommand to commands/set_summary.go
 - Move FailSummaryGenerationCommand to commands/fail_summary.go
 
-**T2.3:** Extract command handlers from execute.go
+**T2.3:** Extract command handlers from execute.go - DONE
 
 - Move handler functions to their respective command files
 - Update imports and references
