@@ -85,7 +85,7 @@ func RegisterFeature(app *core.App, featureState *state.State) {
 	// --- 6. Register Message Types for Decoding ---
 	// Register message types (commands, events) with the MessageLog
 	slog.Debug("Registering message types with MessageLog", "feature", "petrock_example_feature_name")
-	state.RegisterTypes(app.MessageLog)
+	commands.RegisterTypes(app.MessageLog)
 
 	// --- 7. Register Worker ---
 	// Initialize and register the worker with the app
