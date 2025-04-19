@@ -158,21 +158,21 @@ After this change, the feature template will use a hierarchical directory struct
 - Original state.go is removed
 - Code compiles successfully
 
-### T7: Migrate Worker Code
+### T7: Migrate Worker Code - DONE
 
-**T7.1:** Create base files in workers/ directory
+**T7.1:** Create base files in workers/ directory - DONE
 
 - Create workers/main.go with common worker interfaces and building blocks
 - Create workers/summary_worker.go for the complete summary generation worker
 - Create workers/types.go for shared worker type definitions
 
-**T7.2:** Extract worker code from worker.go
+**T7.2:** Extract worker code from worker.go - DONE
 
 - Move common interfaces and building blocks to workers/main.go
 - Move complete summary worker implementation to workers/summary_worker.go
 - Move shared type definitions to workers/types.go
 
-**T7.3:** Update imports and references
+**T7.3:** Update imports and references - DONE
 
 - Ensure all imports and references are updated to reflect new file locations
 
