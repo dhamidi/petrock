@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
+	"github.com/petrock/example_module_path/petrock_example_feature_name/state" // Import state package
 )
 
 // Ensure command implements the marker interfaces
@@ -26,7 +27,7 @@ func (c *RequestSummaryGenerationCommand) CommandName() string {
 }
 
 // Validate implements the Validator interface
-func (c *RequestSummaryGenerationCommand) Validate(state *State) error {
+func (c *RequestSummaryGenerationCommand) Validate(state *state.State) error {
 	if strings.TrimSpace(c.ID) == "" {
 		return errors.New("item ID cannot be empty")
 	}
