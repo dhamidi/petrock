@@ -8,6 +8,10 @@ import (
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 )
 
+// Ensure query and result implement the marker interfaces
+var _ core.Query = (*ListQuery)(nil)
+var _ core.QueryResult = (*ListQueryResult)(nil)
+
 // ListQuery holds data needed to retrieve a list of entities, possibly filtered or paginated.
 type ListQuery struct {
 	Page     int    `json:"page"`      // For pagination

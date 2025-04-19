@@ -9,6 +9,10 @@ import (
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 )
 
+// Ensure query and result implement the marker interfaces
+var _ core.Query = (*GetQuery)(nil)
+var _ core.QueryResult = (*GetQueryResult)(nil)
+
 // GetQuery holds data needed to retrieve a single entity.
 type GetQuery struct {
 	ID string // ID of the entity to retrieve
