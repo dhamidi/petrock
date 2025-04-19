@@ -246,7 +246,11 @@ func (a *App) ReplayLog() error {
 
 	// Use the iterator to process messages one by one
 	messageCount := 0
-	for msg := range a.MessageLog.After(replayCtx, startVersion) {
+	// Use a longer timeout specifically for replay operations
+	replayTimeoutCtx, cancel := context.WithTimeout(replayCtx, 60*time.Second)
+	defer cancel()
+	
+	for msg := range a.MessageLog.After(replayTimeoutCtx, startVersion) {
 		messageCount++
 		// DecodedPayload contains the decoded command or query
 		decodedMsg := msg.DecodedPayload

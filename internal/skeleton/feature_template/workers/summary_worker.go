@@ -27,11 +27,24 @@ func (w *Worker) Work() error {
 		"afterID", lastIDNum)
 
 	messageCount := 0
-	// Create a separate short-lived context for database operations
-	readCtx, readCancel := context.WithTimeout(baseCtx, 5*time.Second)
+	// Create a context for database operations with longer timeout for message replay
+	readCtx, readCancel := context.WithTimeout(baseCtx, 30*time.Second)
 	defer readCancel()
 
-	for msg := range w.log.After(readCtx, lastIDNum) {
+	// Set up a channel to detect context cancellation
+	done := make(chan struct{})
+	go func() {
+		select {
+		case <-readCtx.Done():
+			close(done)
+		case <-baseCtx.Done():
+			close(done)
+		}
+	}()
+	
+	msgIterator := w.log.After(readCtx, lastIDNum)
+	iterLoop:
+	for msg := range msgIterator {
 		messageCount++
 
 		// Log message being processed
@@ -50,6 +63,15 @@ func (w *Worker) Work() error {
 		slog.Debug("Updated lastProcessedID",
 			"feature", "petrock_example_feature_name",
 			"lastProcessedID", w.wState.lastProcessedID)
+		
+		// Check if context has been cancelled
+		select {
+		case <-done:
+			slog.Debug("Breaking message iteration due to context cancellation")
+			break iterLoop
+		default:
+			// Continue processing
+		}
 	}
 
 	if messageCount > 0 {
@@ -83,7 +105,7 @@ func (w *Worker) handleCreateCommand(ctx context.Context, cmd interface{}) {
 	}
 
 	// Use a separate context with longer timeout for command execution
-	execCtx, execCancel := context.WithTimeout(context.Background(), 15*time.Second)
+	execCtx, execCancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer execCancel()
 
 	if err := w.executor.Execute(execCtx, summarizeCmd); err != nil {
@@ -203,8 +225,8 @@ func (w *Worker) processPendingSummaries(ctx context.Context) error {
 				RequestID: summary.RequestID,
 				Reason:    "timeout",
 			}
-			// Use a fresh context for command execution
-			execCtx, execCancel := context.WithTimeout(context.Background(), 15*time.Second)
+			// Use a fresh context with longer timeout for command execution
+			execCtx, execCancel := context.WithTimeout(context.Background(), 60*time.Second)
 			if err := w.executor.Execute(execCtx, failCmd); err != nil {
 				slog.Error("Failed to record summary failure",
 					"feature", "petrock_example_feature_name",
@@ -289,8 +311,8 @@ func (w *Worker) callSummarizationAPI(ctx context.Context, summary PendingSummar
 		Summary:   fakeSummary,
 	}
 
-	// Use a fresh context for command execution
-	execCtx, execCancel := context.WithTimeout(context.Background(), 15*time.Second)
+	// Use a fresh context with longer timeout for command execution
+	execCtx, execCancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer execCancel()
 
 	if err := w.executor.Execute(execCtx, setCmd); err != nil {
