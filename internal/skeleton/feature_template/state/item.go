@@ -1,8 +1,8 @@
 package state
 
 import (
-	"strings"
 	"sort"
+	"strings"
 	"time"
 )
 

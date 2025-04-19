@@ -42,15 +42,12 @@ func (c *CreateCommand) Validate(state *State) error {
 	}
 
 	// Example stateful validation: Check if an item with the same name already exists
-	// Note: state.GetItem currently uses ID, not name. If using name as ID on create,
-	// this check is relevant. Adjust based on actual ID strategy.
-	// Assuming state.GetItem uses the ID field from the Item struct.
-	// If CreateCommand implies using Name as the potential ID:
-	state.mu.RLock() // Read lock for checking existence
-	_, exists := state.Items[trimmedName]
-	state.mu.RUnlock()
-	if exists {
-		return fmt.Errorf("item with name %q already exists", trimmedName)
+	// This simplistic approach just looks for items with the same name
+	items, _ := state.ListItems(1, 1000, "")
+	for _, item := range items {
+		if item.Name == trimmedName {
+			return fmt.Errorf("item with name %q already exists", trimmedName)
+		}
 	}
 
 	// Add other validation rules...

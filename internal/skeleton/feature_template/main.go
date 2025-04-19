@@ -70,7 +70,7 @@ func RegisterFeature(app *core.App, featureState *state.State) {
 	app.CommandRegistry.Register(&commands.CreateCommand{}, featureExecutor.HandleCreate, featureExecutor)
 	app.CommandRegistry.Register(&commands.UpdateCommand{}, featureExecutor.HandleUpdate, featureExecutor)
 	app.CommandRegistry.Register(&commands.DeleteCommand{}, featureExecutor.HandleDelete, featureExecutor)
-	
+
 	// Register summary-related commands
 	app.CommandRegistry.Register(&commands.RequestSummaryGenerationCommand{}, featureExecutor.HandleRequestSummaryGeneration, featureExecutor)
 	app.CommandRegistry.Register(&commands.FailSummaryGenerationCommand{}, featureExecutor.HandleFailSummaryGeneration, featureExecutor)

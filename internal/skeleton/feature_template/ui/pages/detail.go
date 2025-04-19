@@ -41,7 +41,7 @@ func ItemView(item Result) g.Node {
 						g.Text(item.Description),
 					),
 				),
-				
+
 				// Content field - spans full width
 				html.Div(
 					g.Attr("class", "col-span-1 sm:col-span-2"),
@@ -51,7 +51,7 @@ func ItemView(item Result) g.Node {
 						g.Text(item.Content),
 					),
 				),
-				
+
 				// Summary field (if available) - spans full width
 				func() g.Node {
 					if item.Summary == "" {
@@ -66,7 +66,6 @@ func ItemView(item Result) g.Node {
 						),
 					)
 				}(),
-				
 
 				// Created date
 				html.Div(

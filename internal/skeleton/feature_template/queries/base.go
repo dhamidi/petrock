@@ -1,12 +1,11 @@
 package queries
 
 import (
-	// These imports will be needed when implementing the full functionality
-	// "context"
-	// "fmt"
-	// "log/slog"
-	// "github.com/petrock/example_module_path/core"
+	"github.com/petrock/example_module_path/petrock_example_feature_name/state"
 )
+
+// State is an alias to the state package's State type
+type State = state.State
 
 // Querier handles query processing for the feature.
 // It typically depends on the feature's state representation.
