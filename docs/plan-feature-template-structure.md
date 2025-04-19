@@ -90,13 +90,13 @@ After this change, the feature template will use a hierarchical directory struct
 - Original queries.go and query.go are removed
 - Code compiles successfully
 
-### T4: Migrate UI Components
+### T4: Migrate UI Components - DONE
 
-**T4.1:** Create base files in ui/ directory
+**T4.1:** Create base files in ui/ directory - DONE
 
 - Create files in ui/components/, ui/layouts/, ui/pages/ directories
 
-**T4.2:** Extract UI components from view.go
+**T4.2:** Extract UI components from view.go - DONE
 
 - Move table components to ui/components/tables.go
 - Move form components to ui/components/forms.go
