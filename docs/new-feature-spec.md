@@ -6,69 +6,72 @@ This document outlines a proposed directory and file structure for features gene
 
 ```
 feature_template/
-├── main.go            # Main feature package exports and initialization
-│
-├── assets/
-│   └── keep.txt
-│
-├── commands/
-│   ├── base.go                     # Common command interfaces and helpers
-│   ├── create.go                   # Create commands
-│   ├── update.go                   # Update commands  
-│   ├── delete.go                   # Delete commands
-│   ├── request_summary.go          # Request summary generation commands
-│   ├── set_summary.go              # Set generated summary commands
-│   └── fail_summary.go             # Failed summary generation commands
-│
-├── handlers/
-│   ├── base.go              # Common handler utilities and types
-│   ├── middleware.go         # Common middleware functions
-│   ├── create_item.go        # Item creation handlers (API)
-│   ├── create_form.go        # Form handlers for item creation (UI)
-│   ├── read_item.go          # Single item detail handlers
-│   ├── read_list.go          # List view handlers
-│   ├── update_item.go        # Item update handlers (API)
-│   ├── update_form.go        # Form handlers for item updates (UI)
-│   ├── delete_item.go        # Item deletion handlers (API)
-│   └── delete_form.go        # Confirmation forms for deletion (UI)
-│
-├── queries/
-│   ├── base.go        # Common query interfaces and types
-│   ├── get.go         # Query and result type for single items
-│   └── list.go        # Query and result types for item lists
-│
-├── state/
-│   ├── main.go        # Main state container and interfaces
-│   ├── item.go        # Core item state
-│   └── metadata.go    # Related metadata state
-│
-├── ui/
-│   ├── components/    # Reusable UI components
-│   │   ├── buttons.go  # Button components and actions
-│   │   ├── forms.go    # Form input components
-│   │   ├── tables.go   # Table and list components
-│   │   └── alerts.go   # Alert and notification components
-│   ├── layouts/       # Page layouts
-│   │   ├── main.go     # Standard page layout
-│   │   └── modal.go    # Modal dialog layouts
-│   ├── pages/         # Complete page views
-│   │   ├── list.go     # List view for multiple items
-│   │   ├── detail.go   # Detail view for single item
-│   │   ├── edit.go     # Edit form view
-│   │   ├── new.go      # New item form view
-│   │   └── delete.go   # Delete confirmation view
-│   └── helpers.go     # View helper functions and utilities
-│
-├── routes/
-│   ├── main.go        # Central route registration
-│   ├── api.go         # API routes (REST endpoints)
-│   ├── web.go         # Web UI routes (HTML pages)
-│   └── webhooks.go    # Webhook routes (external integrations)
-│
-└── workers/
-    ├── main.go           # Common worker interfaces and building blocks
-    ├── summary_worker.go  # Complete worker for handling summary generation
-    └── types.go          # Shared worker type definitions
+|-- main.go            # Main feature package exports and initialization
+|-- assets.go         # Asset registration and management
+|-- queries.go        # Legacy file (to be deprecated)
+|-- view.go           # Legacy file (to be deprecated)
+|
+|-- assets/
+|   `-- keep.txt
+|
+|-- commands/
+|   |-- base.go                     # Common command interfaces and helpers
+|   |-- create.go                   # Create commands
+|   |-- update.go                   # Update commands  
+|   |-- delete.go                   # Delete commands
+|   |-- request_summary.go          # Request summary generation commands
+|   |-- set_summary.go              # Set generated summary commands
+|   |-- fail_summary.go             # Failed summary generation commands
+|   `-- register.go                 # Command registration 
+|
+|-- handlers/
+|   |-- base.go              # Common handler utilities and types
+|   |-- middleware.go        # Common middleware functions
+|   |-- core.go              # Core handler functionality
+|   |-- commands.go          # Command handling
+|   |-- queries.go           # Query handling
+|   |-- views.go             # View rendering
+|   |-- create_item.go       # Item creation handlers (API)
+|   |-- create_form.go       # Form handlers for item creation (UI)
+|   |-- read_item.go         # Single item detail handlers
+|   |-- read_list.go         # List view handlers
+|   |-- update_item.go       # Item update handlers (API)
+|   |-- update_form.go       # Form handlers for item updates (UI)
+|   |-- delete_item.go       # Item deletion handlers (API)
+|   `-- delete_form.go       # Confirmation forms for deletion (UI)
+|
+|-- queries/
+|   |-- base.go        # Common query interfaces and types
+|   |-- get.go         # Query and result type for single items
+|   `-- list.go        # Query and result types for item lists
+|
+|-- state/
+|   |-- main.go        # Main state container and interfaces
+|   |-- item.go        # Core item state
+|   `-- metadata.go    # Related metadata state
+|
+|-- ui/
+|   |-- components/    # Reusable UI components
+|   |   |-- forms.go    # Form input components
+|   |   `-- tables.go   # Table and list components
+|   |-- layouts/       # Page layouts
+|   |   |-- main.go     # Standard page layout
+|   |   `-- modal.go    # Modal dialog layouts
+|   |-- pages/         # Complete page views
+|   |   |-- list.go     # List view for multiple items
+|   |   |-- detail.go   # Detail view for single item
+|   |   `-- delete.go   # Delete confirmation view
+|   `-- helpers.go     # View helper functions and utilities
+|
+|-- routes/
+|   |-- main.go        # Central route registration
+|   |-- api.go         # API routes (REST endpoints)
+|   `-- web.go         # Web UI routes (HTML pages)
+|
+`-- workers/
+    |-- main.go           # Common worker interfaces and building blocks
+    |-- summary_worker.go  # Complete worker for handling summary generation
+    `-- types.go          # Shared worker type definitions
 ```
 
 ## Rationale
@@ -98,19 +101,19 @@ The current feature template uses a flat directory structure with the following 
 
 ```
 feature_template/
-├── assets.go
-├── commands.go
-├── execute.go
-├── http.go
-├── queries.go
-├── query.go
-├── register.go
-├── routes.go
-├── state.go
-├── view.go
-├── worker.go
-└── assets/
-    └── keep.txt
+|-- assets.go
+|-- commands.go
+|-- execute.go
+|-- http.go
+|-- queries.go
+|-- query.go
+|-- register.go
+|-- routes.go
+|-- state.go
+|-- view.go
+|-- worker.go
+`-- assets/
+    `-- keep.txt
 ```
 
 Here's how the files in the current structure map to the new structure:
