@@ -9,6 +9,7 @@ import (
 	"github.com/petrock/example_module_path/petrock_example_feature_name/queries"
 	"github.com/petrock/example_module_path/petrock_example_feature_name/routes"
 	"github.com/petrock/example_module_path/petrock_example_feature_name/state"
+	_ "github.com/petrock/example_module_path/petrock_example_feature_name/ui"
 	"github.com/petrock/example_module_path/petrock_example_feature_name/workers"
 )
 
@@ -17,6 +18,7 @@ import (
 // It connects the command/query messages to their respective handlers, registers
 // message types needed for log replay, and sets up feature-specific HTTP routes.
 func RegisterFeature(app *core.App, featureState *state.State) {
+
 	slog.Debug("Registering feature", "feature", "petrock_example_feature_name")
 
 	// Validate required dependencies
