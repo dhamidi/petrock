@@ -11,6 +11,10 @@ import (
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 )
 
+// Ensure command implements the marker interfaces
+var _ core.Command = (*DeleteCommand)(nil)
+var _ Validator = (*DeleteCommand)(nil)
+
 // DeleteCommand holds data needed to delete an entity.
 type DeleteCommand struct {
 	ID        string    `json:"id"` // ID of the entity to delete

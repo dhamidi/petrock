@@ -11,6 +11,10 @@ import (
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 )
 
+// Ensure command implements the marker interfaces
+var _ core.Command = (*UpdateCommand)(nil)
+var _ Validator = (*UpdateCommand)(nil)
+
 // UpdateCommand holds data needed to update an existing entity.
 type UpdateCommand struct {
 	ID          string    `json:"id"` // ID of the entity to update

@@ -8,6 +8,9 @@ import (
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 )
 
+// Ensure command implements the marker interfaces
+var _ core.Command = (*FailSummaryGenerationCommand)(nil)
+
 // FailSummaryGenerationCommand indicates a summary generation request failed
 type FailSummaryGenerationCommand struct {
 	ID        string `json:"id"`         // ID of the item

@@ -10,6 +10,10 @@ import (
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 )
 
+// Ensure command implements the marker interfaces
+var _ core.Command = (*RequestSummaryGenerationCommand)(nil)
+var _ Validator = (*RequestSummaryGenerationCommand)(nil)
+
 // RequestSummaryGenerationCommand requests a summary be generated for an item
 type RequestSummaryGenerationCommand struct {
 	ID        string `json:"id"`         // ID of the item to summarize

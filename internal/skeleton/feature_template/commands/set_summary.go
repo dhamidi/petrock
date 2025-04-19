@@ -8,6 +8,9 @@ import (
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 )
 
+// Ensure command implements the marker interfaces
+var _ core.Command = (*SetGeneratedSummaryCommand)(nil)
+
 // SetGeneratedSummaryCommand sets the generated summary for an item
 type SetGeneratedSummaryCommand struct {
 	ID        string `json:"id"`         // ID of the item

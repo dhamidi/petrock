@@ -11,6 +11,10 @@ import (
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 )
 
+// Ensure command implements the marker interfaces
+var _ core.Command = (*CreateCommand)(nil)
+var _ Validator = (*CreateCommand)(nil)
+
 // CreateCommand holds data needed to create a new entity.
 type CreateCommand struct {
 	// Example fields - replace with actual data needed for creation
