@@ -4,6 +4,8 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+
+	"github.com/petrock/example_module_path/petrock_example_feature_name/commands"
 )
 
 // HandleDeleteItem handles requests to delete an item.
@@ -17,7 +19,7 @@ func (fs *FeatureServer) HandleDeleteItem(w http.ResponseWriter, r *http.Request
 	slog.Debug("HandleDeleteItem called", "feature", "petrock_example_feature_name", "id", itemID)
 
 	// Construct the command
-	cmd := &DeleteCommand{ID: itemID /* DeletedBy: "user_from_context" */}
+	cmd := &commands.DeleteCommand{ID: itemID /* DeletedBy: "user_from_context" */}
 
 	// Execute the command using the central executor
 	err := fs.app.Executor.Execute(r.Context(), cmd)

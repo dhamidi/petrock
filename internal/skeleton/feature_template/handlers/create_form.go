@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/petrock/example_module_path/core"
+	"github.com/petrock/example_module_path/petrock_example_feature_name/commands"
 )
 
 // HandleNewForm handles requests to display a form for creating a new item.
@@ -64,7 +65,7 @@ func (fs *FeatureServer) HandleCreateForm(w http.ResponseWriter, r *http.Request
 	}
 
 	// Create the command from form data
-	cmd := CreateCommand{
+	cmd := commands.CreateCommand{
 		Name:        form.Get("name"),
 		Description: form.Get("description"),
 		CreatedBy:   "user", // Replace with actual user ID if authentication is implemented

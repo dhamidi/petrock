@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/petrock/example_module_path/core"
+	"github.com/petrock/example_module_path/petrock_example_feature_name/commands"
 	"github.com/petrock/example_module_path/petrock_example_feature_name/queries"
 )
 
@@ -114,7 +115,7 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 	}
 
 	// Create the update command from form data
-	cmd := UpdateCommand{
+	cmd := commands.UpdateCommand{
 		ID:          itemID,
 		Name:        form.Get("name"),
 		Description: form.Get("description"),

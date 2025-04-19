@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/petrock/example_module_path/petrock_example_feature_name/commands"
 	"github.com/petrock/example_module_path/petrock_example_feature_name/queries"
 )
 
@@ -76,7 +77,7 @@ func (fs *FeatureServer) HandleDeleteConfirm(w http.ResponseWriter, r *http.Requ
 	// ...
 
 	// Create the delete command
-	cmd := &DeleteCommand{
+	cmd := &commands.DeleteCommand{
 		ID:        itemID,
 		DeletedBy: "user", // Replace with actual user ID if authentication is implemented
 		DeletedAt: time.Now().UTC(),
