@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
+	"github.com/petrock/example_module_path/petrock_example_feature_name/state" // Import state package
 )
 
 // Validator defines an interface for commands that require stateful validation.
 // The feature's Executor will call this method if implemented by a command.
 type Validator interface {
-	Validate(state *State) error
+	Validate(state *state.State) error
 }
 
 // Executor implements the core.FeatureExecutor interface for this feature.
@@ -20,11 +21,11 @@ type Validator interface {
 // It also bridges validation calls from the central core.Executor to
 // command structs that implement the feature's Validator interface.
 type Executor struct {
-	state *State // Dependency on the feature's state
+	state *state.State // Dependency on the feature's state
 }
 
 // NewExecutor creates a new feature-specific Executor instance.
-func NewExecutor(state *State) *Executor {
+func NewExecutor(state *state.State) *Executor {
 	if state == nil {
 		panic("state cannot be nil for feature Executor")
 	}

@@ -26,11 +26,11 @@ After the change, we'll have a clean separation of concerns:
 
 ## Detailed Task Breakdown
 
-### T1: Remove state/commands.go and Move State Updates to Command Handlers - DONE
+### T1: Remove commands/state.go and Use Direct References to State Types
 
-**T1.1:** Remove state/commands.go file entirely - DONE
+**T1.1:** Remove commands/state.go file entirely
 
-- Delete the whole file state/commands.go
+- Delete the whole file commands/state.go
 - Confirm deletion with git status
 
 **T1.2:** Update main.go to remove command imports - DONE
@@ -48,10 +48,12 @@ After the change, we'll have a clean separation of concerns:
 - Delete the Apply method from state/main.go
 - Create specific state manipulation functions in state package if needed
 
-**T1.5:** Update command handlers to manipulate state directly - DONE
+**T1.5:** Update command handlers to use direct references to state types
 
-- Modify each command handler to call the appropriate state function
-- Replace the state.Apply call with direct state manipulation
+- Add import for state package in all command handler files
+- Modify Validator interface to refer to state.State
+- Update all references to State to state.State
+- Update all references to Item to state.Item
 
 **Definition of Done for T1:**
 

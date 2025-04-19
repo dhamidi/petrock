@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
+	"github.com/petrock/example_module_path/petrock_example_feature_name/state" // Import state package
 )
 
 // Ensure command implements the marker interfaces
@@ -30,7 +31,7 @@ func (c *UpdateCommand) CommandName() string {
 }
 
 // Validate implements the Validator interface for UpdateCommand.
-func (c *UpdateCommand) Validate(state *State) error {
+func (c *UpdateCommand) Validate(state *state.State) error {
 	// Trim all string fields
 	trimmedID := strings.TrimSpace(c.ID)
 	trimmedName := strings.TrimSpace(c.Name)
