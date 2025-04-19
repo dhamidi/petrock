@@ -221,19 +221,19 @@ After this change, the feature template will use a hierarchical directory struct
 - Original routes.go is removed
 - Code compiles successfully
 
-### T10: Verification and Testing
+### T10: Verification and Testing - DONE
 
-**T10.1:** Run build to verify new structure
+**T10.1:** Run build to verify new structure - DONE
 
 - Run ./build.sh to verify the new structure compiles
 - Fix any compile errors or issues
 
-**T10.2:** Generate a test feature with the new template
+**T10.2:** Generate a test feature with the new template - DONE
 
 - Use petrock to generate a test feature with the new template
 - Verify that the generated feature works as expected
 
-**T10.3:** Update documentation
+**T10.3:** Update documentation - DONE
 
 - Update any documentation that references the old structure
 - Add documentation for the new structure
