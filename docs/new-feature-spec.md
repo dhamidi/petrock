@@ -8,8 +8,6 @@ This document outlines a proposed directory and file structure for features gene
 feature_template/
 |-- main.go            # Main feature package exports and initialization
 |-- assets.go         # Asset registration and management
-|-- queries.go        # Legacy file (to be deprecated)
-|-- view.go           # Legacy file (to be deprecated)
 |
 |-- assets/
 |   `-- keep.txt
@@ -84,9 +82,13 @@ This structure provides several advantages:
 4. **Discoverability**: The directory structure clearly communicates the architecture
 5. **Separation of concerns**: Distinct boundaries between different aspects of the feature
 
+## Implementation Status
+
+The legacy files `view.go` and `queries.go` have been removed, with functionality migrated to their respective subdirectories.
+
 ## Implementation Considerations
 
-When transitioning to this structure:
+When continuing the transition to this structure:
 
 1. The main package file (main.go) should re-export all necessary components to maintain compatibility
 2. Cross-package references should use proper import paths
@@ -118,18 +120,18 @@ feature_template/
 
 Here's how the files in the current structure map to the new structure:
 
-| Current File | New Location | Notes |
+| Current File | Status | Notes |
 |--------------|--------------|-------|
 | `assets.go` | Remains at root level | Minor change, still handles asset registration |
 | `commands.go` | `commands/` directory | Split into multiple files by command type |
 | `execute.go` | `commands/` directory | Implementation logic moved alongside command definitions |
 | `http.go` | `handlers/` directory | Split into multiple files by handler purpose |
-| `queries.go` | `queries/` directory | Split into multiple files by query type |
-| `query.go` | `queries/` directory | Implementation logic moved alongside query definitions |
+| `queries.go` | ✓ Moved to `queries/` directory | Split into multiple files by query type |
+| `query.go` | ✓ Moved to `queries/` directory | Implementation logic moved alongside query definitions |
 | `register.go` | `main.go` | Registration logic centralized in main package file |
 | `routes.go` | `routes/` directory | Split into multiple files by route type |
 | `state.go` | `state/` directory | Split into multiple files by entity type |
-| `view.go` | `ui/` directory | Split into multiple files by component purpose |
+| `view.go` | ✓ Moved to `ui/` directory | Split into multiple files by component purpose |
 | `worker.go` | `workers/` directory | Split into multiple files by worker responsibility |
 
 The key differences are:
