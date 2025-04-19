@@ -65,20 +65,20 @@ After this change, the feature template will use a hierarchical directory struct
 - Original commands.go and execute.go are removed
 - Code compiles successfully
 
-### T3: Migrate Query-Related Code
+### T3: Migrate Query-Related Code - DONE
 
-**T3.1:** Create base files in queries/ directory
+**T3.1:** Create base files in queries/ directory - DONE
 
 - Create queries/base.go with common interfaces and types
 - Create queries/get.go and queries/list.go files
 
-**T3.2:** Extract query definitions and result types from queries.go
+**T3.2:** Extract query definitions and result types from queries.go - DONE
 
 - Move list query and list result types to queries/list.go
 - Move get query and item result type to queries/get.go
 - Include result type definitions in the same file as their corresponding queries
 
-**T3.3:** Extract query handlers from query.go
+**T3.3:** Extract query handlers from query.go - DONE
 
 - Move handler functions to their respective query files
 - Update imports and references
