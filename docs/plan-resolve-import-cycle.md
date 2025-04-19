@@ -38,7 +38,7 @@ After the change, we'll have a clean separation of concerns:
 - Remove imports for commands package in state/main.go
 - Remove all command type references in state/main.go
 
-**T1.3:** Move RegisterTypes function to commands package
+**T1.3:** Move RegisterTypes function to commands package - DONE
 
 - Create a new function in commands package to register command types
 - Remove RegisterTypes from state package
