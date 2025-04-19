@@ -6,7 +6,6 @@ import (
 	"log/slog"
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
-	"github.com/petrock/example_module_path/petrock_example_feature_name/state" // Import state package
 )
 
 // Ensure command implements the marker interfaces
@@ -43,12 +42,12 @@ func (e *Executor) HandleSetGeneratedSummary(ctx context.Context, command core.C
 		slog.Error("Set summary failed", "error", err, "id", cmd.ID)
 		return err
 	}
-	
+
 	// Set the summary
 	existingItem.Summary = cmd.Summary
 	existingItem.UpdatedAt = getTimestamp(msg)
 	existingItem.Version++
-	
+
 	// Save the updated item
 	if err := e.state.UpdateItem(existingItem); err != nil {
 		slog.Error("Failed to update item summary in state", "error", err, "id", cmd.ID)
