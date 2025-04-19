@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	
+	"github.com/petrock/example_module_path/petrock_example_feature_name/queries"
 )
 
 // HandleListItems handles requests to list items.
@@ -29,7 +31,7 @@ func (fs *FeatureServer) HandleListItems(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Construct the query message
-	query := ListQuery{
+	query := queries.ListQuery{
 		Page:     page,
 		PageSize: pageSize,
 		Filter:   filter,

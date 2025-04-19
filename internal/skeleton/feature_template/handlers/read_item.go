@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	
+	"github.com/petrock/example_module_path/petrock_example_feature_name/queries"
 )
 
 // HandleGetItem handles requests to retrieve a single item.
@@ -25,7 +27,7 @@ func (fs *FeatureServer) HandleGetItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Construct the query message
-	query := GetQuery{ID: itemID}
+	query := queries.GetQuery{ID: itemID}
 
 	// Execute the query using the feature's querier
 	result, err := fs.querier.HandleGet(r.Context(), query)
