@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
+	"github.com/petrock/example_module_path/petrock_example_feature_name/state" // Import state package
 )
 
 // Ensure command implements the marker interfaces
@@ -60,10 +61,18 @@ func (e *Executor) HandleDelete(ctx context.Context, command core.Command, msg *
 
 	slog.Debug("Applying state change for DeleteCommand", "feature", "petrock_example_feature_name", "id", cmd.ID)
 
-	// Apply the change using the state's Apply method
-	if err := e.state.Apply(cmd, msg); err != nil {
-		slog.Error("State Apply failed for DeleteCommand", "error", err, "id", cmd.ID)
-		return fmt.Errorf("state.Apply failed for DeleteCommand: %w", err)
+	// Check if the item exists first
+	_, found := e.state.GetItem(cmd.ID)
+	if !found {
+		err := fmt.Errorf("item with ID %s not found for deletion", cmd.ID)
+		slog.Error("Delete failed", "error", err, "id", cmd.ID)
+		return err
+	}
+	
+	// Delete the item
+	if err := e.state.DeleteItem(cmd.ID); err != nil {
+		slog.Error("Failed to delete item from state", "error", err, "id", cmd.ID)
+		return fmt.Errorf("failed to delete item from state: %w", err)
 	}
 
 	slog.Debug("State change applied successfully for DeleteCommand", "feature", "petrock_example_feature_name", "id", cmd.ID)

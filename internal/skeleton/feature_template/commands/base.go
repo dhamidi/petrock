@@ -4,6 +4,7 @@ import (
 	"context"
 	// "fmt" - Will be used in implementation
 	"log/slog"
+	"time"
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 )
@@ -51,4 +52,12 @@ func (e *Executor) ValidateCommand(ctx context.Context, cmd core.Command) error 
 	// Basic stateless validation might have happened elsewhere (e.g., in the command struct itself, or HTTP handler).
 	slog.Debug("Command does not implement Validator, skipping stateful validation", "feature", "petrock_example_feature_name", "command_type", cmd.CommandName())
 	return nil
+}
+
+// getTimestamp returns the timestamp from the message metadata if available, otherwise current time
+func getTimestamp(msg *core.Message) time.Time {
+	if msg != nil {
+		return msg.Timestamp
+	}
+	return time.Now().UTC()
 }

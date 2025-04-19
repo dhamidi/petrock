@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
+	"github.com/petrock/example_module_path/petrock_example_feature_name/state" // Import state package
 )
 
 // Ensure command implements the marker interfaces
@@ -35,10 +36,23 @@ func (e *Executor) HandleSetGeneratedSummary(ctx context.Context, command core.C
 
 	slog.Debug("Applying state change for SetGeneratedSummaryCommand", "feature", "petrock_example_feature_name", "id", cmd.ID, "requestID", cmd.RequestID)
 
-	// Apply the change using the state's Apply method
-	if err := e.state.Apply(cmd, msg); err != nil {
-		slog.Error("State Apply failed for SetGeneratedSummaryCommand", "error", err, "id", cmd.ID)
-		return fmt.Errorf("state.Apply failed for SetGeneratedSummaryCommand: %w", err)
+	// Get the existing item
+	existingItem, found := e.state.GetItem(cmd.ID)
+	if !found {
+		err := fmt.Errorf("item with ID %s not found for summary update", cmd.ID)
+		slog.Error("Set summary failed", "error", err, "id", cmd.ID)
+		return err
+	}
+	
+	// Set the summary
+	existingItem.Summary = cmd.Summary
+	existingItem.UpdatedAt = getTimestamp(msg)
+	existingItem.Version++
+	
+	// Save the updated item
+	if err := e.state.UpdateItem(existingItem); err != nil {
+		slog.Error("Failed to update item summary in state", "error", err, "id", cmd.ID)
+		return fmt.Errorf("failed to update item summary in state: %w", err)
 	}
 
 	slog.Debug("State change applied successfully for SetGeneratedSummaryCommand", "feature", "petrock_example_feature_name", "id", cmd.ID)

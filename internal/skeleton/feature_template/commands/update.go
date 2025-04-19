@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
+	"github.com/petrock/example_module_path/petrock_example_feature_name/state" // Import state package
 )
 
 // Ensure command implements the marker interfaces
@@ -80,10 +81,24 @@ func (e *Executor) HandleUpdate(ctx context.Context, command core.Command, msg *
 
 	slog.Debug("Applying state change for UpdateCommand", "feature", "petrock_example_feature_name", "id", cmd.ID)
 
-	// Apply the change using the state's Apply method
-	if err := e.state.Apply(cmd, msg); err != nil {
-		slog.Error("State Apply failed for UpdateCommand", "error", err, "id", cmd.ID)
-		return fmt.Errorf("state.Apply failed for UpdateCommand: %w", err)
+	// Get the existing item
+	existingItem, found := e.state.GetItem(cmd.ID)
+	if !found {
+		err := fmt.Errorf("item with ID %s not found for update", cmd.ID)
+		slog.Error("Update failed", "error", err, "id", cmd.ID)
+		return err
+	}
+	
+	// Update the item properties
+	existingItem.Name = cmd.Name
+	existingItem.Description = cmd.Description
+	existingItem.UpdatedAt = getTimestamp(msg)
+	existingItem.Version++
+	
+	// Save the updated item
+	if err := e.state.UpdateItem(existingItem); err != nil {
+		slog.Error("Failed to update item in state", "error", err, "id", cmd.ID)
+		return fmt.Errorf("failed to update item in state: %w", err)
 	}
 
 	slog.Debug("State change applied successfully for UpdateCommand", "feature", "petrock_example_feature_name", "id", cmd.ID)

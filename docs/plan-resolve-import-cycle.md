@@ -26,7 +26,7 @@ After the change, we'll have a clean separation of concerns:
 
 ## Detailed Task Breakdown
 
-### T1: Remove state/commands.go and Move State Updates to Command Handlers
+### T1: Remove state/commands.go and Move State Updates to Command Handlers - DONE
 
 **T1.1:** Remove state/commands.go file entirely - DONE
 
@@ -48,7 +48,7 @@ After the change, we'll have a clean separation of concerns:
 - Delete the Apply method from state/main.go
 - Create specific state manipulation functions in state package if needed
 
-**T1.5:** Update command handlers to manipulate state directly
+**T1.5:** Update command handlers to manipulate state directly - DONE
 
 - Modify each command handler to call the appropriate state function
 - Replace the state.Apply call with direct state manipulation
