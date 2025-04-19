@@ -109,15 +109,15 @@ After this change, the feature template will use a hierarchical directory struct
 - Original view.go is removed
 - Code compiles successfully
 
-### T5: Migrate HTTP Handlers
+### T5: Migrate HTTP Handlers - DONE
 
-**T5.1:** Create base files in handlers/ directory
+**T5.1:** Create base files in handlers/ directory - DONE
 
 - Create handlers/base.go for common utilities and types
 - Create handlers/middleware.go for common middleware
 - Create individual handler files with descriptive names (e.g., create_item.go, read_list.go)
 
-**T5.2:** Extract HTTP handlers from http.go
+**T5.2:** Extract HTTP handlers from http.go - DONE
 
 - Move create handlers to create_item.go and create_form.go
 - Move read/list handlers to read_item.go and read_list.go
@@ -125,7 +125,7 @@ After this change, the feature template will use a hierarchical directory struct
 - Move delete handlers to delete_item.go and delete_form.go
 - Move middleware functions to middleware.go
 
-**T5.3:** Update imports and references
+**T5.3:** Update imports and references - DONE
 
 - Ensure all imports and references are updated to reflect new file locations
 
