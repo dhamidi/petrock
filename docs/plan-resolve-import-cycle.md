@@ -43,7 +43,7 @@ After the change, we'll have a clean separation of concerns:
 - Create a new function in commands package to register command types
 - Remove RegisterTypes from state package
 
-**T1.4:** Remove Apply method from state package
+**T1.4:** Remove Apply method from state package - DONE
 
 - Delete the Apply method from state/main.go
 - Create specific state manipulation functions in state package if needed
