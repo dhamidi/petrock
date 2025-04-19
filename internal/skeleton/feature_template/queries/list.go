@@ -20,12 +20,12 @@ func (q ListQuery) QueryName() string {
 	return "petrock_example_feature_name/list" // Removed suffix
 }
 
-// ListResult holds a list of entities and pagination details.
-type ListResult struct {
-	Items      []Result `json:"items"`
-	TotalCount int      `json:"total_count"`
-	Page       int      `json:"page"`
-	PageSize   int      `json:"page_size"`
+// ListQueryResult holds a list of entities and pagination details.
+type ListQueryResult struct {
+	Items      []ItemResult `json:"items"`
+	TotalCount int          `json:"total_count"`
+	Page       int          `json:"page"`
+	PageSize   int          `json:"page_size"`
 }
 
 // HandleList processes the ListQuery.
@@ -57,9 +57,9 @@ func (q *Querier) HandleList(ctx context.Context, query core.Query) (core.QueryR
 	items, totalCount := q.state.ListItems(page, pageSize, listQuery.Filter)
 
 	// 3. Map internal state items to QueryResult items
-	results := make([]Result, 0, len(items))
+	results := make([]ItemResult, 0, len(items))
 	for _, item := range items {
-		results = append(results, Result{
+		results = append(results, ItemResult{
 			ID:          item.ID,
 			Name:        item.Name,
 			Description: item.Description,
@@ -71,8 +71,8 @@ func (q *Querier) HandleList(ctx context.Context, query core.Query) (core.QueryR
 		})
 	}
 
-	// 4. Construct the ListResult
-	listResult := &ListResult{
+	// 4. Construct the ListQueryResult
+	listResult := &ListQueryResult{
 		Items:      results,
 		TotalCount: totalCount,
 		Page:       page,

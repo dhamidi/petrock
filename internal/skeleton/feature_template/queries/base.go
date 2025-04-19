@@ -9,8 +9,8 @@ import (
 // State is an alias to the state package's State type
 type State = state.State
 
-// Result holds the data for a single entity returned by a query.
-type Result struct {
+// ItemResult holds the data for a single entity returned by a query.
+type ItemResult struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`

@@ -46,7 +46,7 @@ func (fs *FeatureServer) HandleGetItem(w http.ResponseWriter, r *http.Request) {
 
 	// Render the item view HTML
 	// Type assert the result to the appropriate type
-	itemResult, ok := result.(*Result)
+	getResult, ok := result.(*queries.GetQueryResult)
 	if !ok {
 		slog.Error("Invalid result type for item view", "type", fmt.Sprintf("%T", result))
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -54,10 +54,10 @@ func (fs *FeatureServer) HandleGetItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create page title
-	pageTitle := fmt.Sprintf("%s - Detail", itemResult.Name)
+	pageTitle := fmt.Sprintf("%s - Detail", getResult.Item.Name)
 
 	// Render the page with our helper and success message if present
-	if err := RenderPageWithSuccess(w, pageTitle, ItemView(*itemResult), successMsg); err != nil {
+	if err := RenderPageWithSuccess(w, pageTitle, ItemView(getResult.Item), successMsg); err != nil {
 		slog.Error("Error rendering item view", "error", err)
 		http.Error(w, "Error rendering view", http.StatusInternalServerError)
 	}

@@ -19,16 +19,9 @@ func (q GetQuery) QueryName() string {
 	return "petrock_example_feature_name/get" // Removed suffix
 }
 
-// Result holds the data for a single entity returned by a query.
-type Result struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Content     string    `json:"content"` // Content field that gets summarized
-	Summary     string    `json:"summary"` // Generated summary
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-	Version     int       `json:"version"` // Example version field
+// GetQueryResult wraps an ItemResult as a specific result type for GetQuery
+type GetQueryResult struct {
+	Item ItemResult `json:"item"`
 }
 
 // HandleGet processes the GetQuery.
@@ -54,7 +47,7 @@ func (q *Querier) HandleGet(ctx context.Context, query core.Query) (core.QueryRe
 	}
 
 	// 2. Map internal state representation to the QueryResult struct
-	result := &Result{
+	itemResult := ItemResult{
 		ID:          item.ID,
 		Name:        item.Name,
 		Description: item.Description,
@@ -63,6 +56,10 @@ func (q *Querier) HandleGet(ctx context.Context, query core.Query) (core.QueryRe
 		CreatedAt:   item.CreatedAt,
 		UpdatedAt:   item.UpdatedAt,
 		Version:     item.Version,
+	}
+
+	result := &GetQueryResult{
+		Item: itemResult,
 	}
 
 	slog.Debug("Successfully processed GetQuery", "feature", "petrock_example_feature_name", "id", getQuery.ID)

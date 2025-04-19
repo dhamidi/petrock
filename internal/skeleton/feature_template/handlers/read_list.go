@@ -47,7 +47,7 @@ func (fs *FeatureServer) HandleListItems(w http.ResponseWriter, r *http.Request)
 
 	// Render the list view HTML
 	// Type assert the result to the appropriate type
-	listResult, ok := result.(*ListResult)
+	listResult, ok := result.(*queries.ListQueryResult)
 	if !ok {
 		slog.Error("Invalid result type for list view", "type", fmt.Sprintf("%T", result))
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
