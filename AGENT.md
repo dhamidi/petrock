@@ -38,3 +38,13 @@ The following replacements are supported:
 This project has no users yet – we are in the prototyping phase.
 
 When making changes, ignore backwards compatibility.
+
+# Lessons
+
+- Template code in `internal/skeleton/` must be valid, compilable Go code that gets string-substituted during generation
+- Gomponents use `g "maragu.dev/gomponents"`, dot-import components, `Classes{...}` maps, and `html.Style()` takes raw CSS strings
+- CSS should be embedded as string constants in gomponents files, not external files
+- Build process (`./build.sh`) validates the entire template→generation→compilation pipeline
+- UI gallery components import core package using template placeholder `"github.com/petrock/example_module_path/core"`
+- Template system uses simple string replacement, never string-based templating engines
+- Integration tests include generating projects, adding features, and running live servers
