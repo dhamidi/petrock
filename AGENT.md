@@ -48,3 +48,4 @@ When making changes, ignore backwards compatibility.
 - UI gallery components import core package using template placeholder `"github.com/petrock/example_module_path/core"`
 - Template system uses simple string replacement, never string-based templating engines
 - Integration tests include generating projects, adding features, and running live servers
+- The user maintains the test server process - assume it runs or ask the user to run it when testing web functionality

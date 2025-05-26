@@ -30,7 +30,7 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 - Empty component list initially returned by `GetAllComponents()`
 - HTML structure includes sidebar navigation layout (left) and content panel (right)
 
-### Step 2: Register Gallery Routes in Serve Command
+### Step 2: Register Gallery Routes in Serve Command - DONE
 **Objective**: Integrate gallery into the application routing
 
 **Files to modify**:
