@@ -76,6 +76,12 @@ func GetAllComponents() []ComponentInfo {
 			Category:    "Form",
 			Handler:     HandleFormControlsDetail,
 		},
+		{
+			Name:        "form-layout",
+			Description: "Form layout components including FormGroup and FieldSet for organizing form elements",
+			Category:    "Form",
+			Handler:     HandleFormLayoutDetail,
+		},
 	}
 }
 
