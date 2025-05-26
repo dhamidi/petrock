@@ -10,9 +10,8 @@ import (
 	"maragu.dev/gomponents/html"
 )
 
-// HandleButtonGroupDetail renders the ButtonGroup component demo page
-func HandleButtonGroupDetail(app *core.App) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+// HandleButtonGroupDetail handles the ButtonGroup component demo page
+func HandleButtonGroupDetail(w http.ResponseWriter, r *http.Request) {
 		// Create demo content showing different button group layouts
 		demoContent := html.Div(
 			ui.CSSClass("space-y-8"),
@@ -370,5 +369,4 @@ ui.ButtonGroup(ui.ButtonGroupProps{Spacing: "none"},
 
 		w.Header().Set("Content-Type", "text/html")
 		response.Render(w)
-	}
 }

@@ -16,6 +16,7 @@ type ComponentInfo struct {
 	Name        string
 	Description string
 	Category    string
+	Handler     http.HandlerFunc
 }
 
 // GetAllComponents returns a list of all available UI components
@@ -25,48 +26,57 @@ func GetAllComponents() []ComponentInfo {
 			Name:        "container",
 			Description: "Responsive container with different width variants",
 			Category:    "Layout",
+			Handler:     HandleContainerDetail,
 		},
 		{
 			Name:        "grid",
 			Description: "Flexible CSS Grid container for complex layouts",
-			Category:    "Layout",
+			Category:    "Layout", 
+			Handler:     HandleGridDetail,
 		},
 		{
 			Name:        "section",
 			Description: "Semantic section component with proper heading hierarchy",
 			Category:    "Layout",
+			Handler:     HandleSectionDetail,
 		},
 		{
 			Name:        "divider",
 			Description: "Horizontal separator with different styles and spacing",
 			Category:    "Layout",
+			Handler:     HandleDividerDetail,
 		},
 		{
 			Name:        "card",
 			Description: "Structured content container with header, body, and footer sections",
 			Category:    "Content",
+			Handler:     HandleCardDetail,
 		},
 		{
 			Name:        "button",
 			Description: "Interactive button with multiple variants, sizes, and states",
 			Category:    "Interactive",
+			Handler:     HandleButtonDetail,
 		},
 		{
 			Name:        "button-group",
 			Description: "Container for grouping related buttons with consistent spacing",
 			Category:    "Interactive",
+			Handler:     HandleButtonGroupDetail,
 		},
 		{
-		Name:        "form-inputs",
-		Description: "Essential form input components including text inputs, textareas, and select dropdowns",
-		Category:    "Form",
+			Name:        "form-inputs",
+			Description: "Essential form input components including text inputs, textareas, and select dropdowns",
+			Category:    "Form",
+			Handler:     HandleFormInputsDetail,
 		},
-	{
-		Name:        "form-controls",
-		Description: "Interactive form controls including checkboxes, radio buttons, and toggle switches",
-		Category:    "Form",
-	},
-}
+		{
+			Name:        "form-controls",
+			Description: "Interactive form controls including checkboxes, radio buttons, and toggle switches",
+			Category:    "Form",
+			Handler:     HandleFormControlsDetail,
+		},
+	}
 }
 
 // BuildSidebar creates the component navigation sidebar content

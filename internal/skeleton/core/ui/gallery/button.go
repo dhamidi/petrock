@@ -10,9 +10,8 @@ import (
 	"maragu.dev/gomponents/html"
 )
 
-// HandleButtonDetail renders the Button component demo page
-func HandleButtonDetail(app *core.App) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+// HandleButtonDetail handles the Button component demo page
+func HandleButtonDetail(w http.ResponseWriter, r *http.Request) {
 		// Create demo content showing different button variants and states
 		demoContent := html.Div(
 			ui.CSSClass("space-y-8"),
@@ -314,5 +313,4 @@ ui.Button(ui.ButtonProps{
 
 		w.Header().Set("Content-Type", "text/html")
 		response.Render(w)
-	}
 }

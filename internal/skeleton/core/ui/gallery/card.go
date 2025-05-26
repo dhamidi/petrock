@@ -10,9 +10,8 @@ import (
 	"maragu.dev/gomponents/html"
 )
 
-// HandleCardDetail renders the Card component demo page
-func HandleCardDetail(app *core.App) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+// HandleCardDetail handles the Card component demo page
+func HandleCardDetail(w http.ResponseWriter, r *http.Request) {
 		// Create demo content showing different card layouts
 		demoContent := html.Div(
 			ui.CSSClass("space-y-8"),
@@ -252,5 +251,4 @@ ui.Card(ui.CardProps{Variant: "outlined", Padding: "large"},
 
 		w.Header().Set("Content-Type", "text/html")
 		response.Render(w)
-	}
 }

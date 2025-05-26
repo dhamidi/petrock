@@ -10,9 +10,8 @@ import (
 	"maragu.dev/gomponents/html"
 )
 
-// HandleDividerDetail renders the Divider component demo page
-func HandleDividerDetail(app *core.App) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+// HandleDividerDetail handles the Divider component demo page
+func HandleDividerDetail(w http.ResponseWriter, r *http.Request) {
 		// Create demo content showing different divider variants
 		demoContent := html.Div(
 			ui.CSSClass("space-y-8"),
@@ -286,5 +285,4 @@ html.Div(
 
 		w.Header().Set("Content-Type", "text/html")
 		response.Render(w)
-	}
 }

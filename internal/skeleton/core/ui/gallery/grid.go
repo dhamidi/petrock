@@ -10,9 +10,8 @@ import (
 	"maragu.dev/gomponents/html"
 )
 
-// HandleGridDetail renders the Grid component demo page
-func HandleGridDetail(app *core.App) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+// HandleGridDetail handles the Grid component demo page
+func HandleGridDetail(w http.ResponseWriter, r *http.Request) {
 		// Create demo content showing different grid layouts
 		demoContent := html.Div(
 			ui.CSSClass("space-y-8"),
@@ -142,5 +141,4 @@ func HandleGridDetail(app *core.App) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "text/html")
 		response.Render(w)
-	}
 }

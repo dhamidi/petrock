@@ -10,9 +10,8 @@ import (
 	"maragu.dev/gomponents/html"
 )
 
-// HandleSectionDetail renders the Section component demo page
-func HandleSectionDetail(app *core.App) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+// HandleSectionDetail handles the Section component demo page
+func HandleSectionDetail(w http.ResponseWriter, r *http.Request) {
 		// Create demo content showing different section layouts
 		demoContent := html.Div(
 			ui.CSSClass("space-y-8"),
@@ -223,5 +222,4 @@ ui.Section(ui.SectionProps{Heading: "Main Section", Level: 1},
 
 		w.Header().Set("Content-Type", "text/html")
 		response.Render(w)
-	}
 }

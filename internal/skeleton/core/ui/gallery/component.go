@@ -30,41 +30,16 @@ func HandleComponentDetail(app *core.App) http.HandlerFunc {
 		}
 
 		var pageContent g.Node
-		
-		if foundComponent != nil {
-		// Route to specific component handlers
-		switch componentName {
-		case "container":
-			HandleContainerDetail(app)(w, r)
+	
+	if foundComponent != nil {
+		// Use the handler from ComponentInfo
+		if foundComponent.Handler != nil {
+			foundComponent.Handler(w, r)
 			return
-		case "grid":
-			HandleGridDetail(app)(w, r)
-			return
-		case "section":
-			HandleSectionDetail(app)(w, r)
-			return
-		case "divider":
-			HandleDividerDetail(app)(w, r)
-			return
-		case "card":
-			HandleCardDetail(app)(w, r)
-			return
-		case "button":
-			HandleButtonDetail(app)(w, r)
-			return
-		case "button-group":
-		HandleButtonGroupDetail(app)(w, r)
-		return
-		case "form-inputs":
-		HandleFormInputsDetail(w, r)
-		return
-	case "form-controls":
-		HandleFormControlsDetail(w, r)
-		return
-	}
+		}
 		
 		// Component found - show details
-			pageContent = core.Page("Component: "+foundComponent.Name,
+		pageContent = core.Page("Component: "+foundComponent.Name,
 				html.Div(
 					Classes{"flex": true, "min-h-screen": true, "-mx-4": true, "-mt-4": true},
 					// Sidebar with back link

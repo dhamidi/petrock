@@ -11,9 +11,8 @@ import (
 	"github.com/petrock/example_module_path/core/ui"
 )
 
-// HandleContainerDetail returns an HTTP handler for the container component demo page
-func HandleContainerDetail(app *core.App) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+// HandleContainerDetail handles the container component demo page
+func HandleContainerDetail(w http.ResponseWriter, r *http.Request) {
 		// Create demo content showing different container variants
 		content := html.Div(
 			Classes{"space-y-8": true},
@@ -224,5 +223,4 @@ ui.Container(ui.ContainerProps{MaxWidth: "600px"},
 
 		w.Header().Set("Content-Type", "text/html")
 		response.Render(w)
-	}
 }
