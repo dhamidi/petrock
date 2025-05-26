@@ -51,6 +51,11 @@ func GetAllComponents() []ComponentInfo {
 			Description: "Interactive button with multiple variants, sizes, and states",
 			Category:    "Interactive",
 		},
+		{
+			Name:        "button-group",
+			Description: "Container for grouping related buttons with consistent spacing",
+			Category:    "Interactive",
+		},
 	}
 }
 

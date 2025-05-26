@@ -52,6 +52,9 @@ func HandleComponentDetail(app *core.App) http.HandlerFunc {
 		case "button":
 			HandleButtonDetail(app)(w, r)
 			return
+		case "button-group":
+			HandleButtonGroupDetail(app)(w, r)
+			return
 		}
 		
 		// Component found - show details
