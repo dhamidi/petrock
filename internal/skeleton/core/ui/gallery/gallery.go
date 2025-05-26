@@ -25,61 +25,73 @@ func GetAllComponents() []ComponentInfo {
 			Description: "Responsive container with different width variants",
 			Category:    "Layout",
 		},
+		{
+			Name:        "grid",
+			Description: "Flexible CSS Grid container for complex layouts",
+			Category:    "Layout",
+		},
 	}
+}
+
+// BuildSidebar creates the component navigation sidebar content
+func BuildSidebar() []g.Node {
+	components := GetAllComponents()
+
+	var sidebarContent []g.Node
+	if len(components) == 0 {
+		sidebarContent = append(sidebarContent,
+			html.Div(
+				html.Class("text-gray-500 italic"),
+				g.Text("No components available yet"),
+			),
+		)
+	} else {
+		// Group components by category and create navigation
+		categories := make(map[string][]ComponentInfo)
+		for _, comp := range components {
+			categories[comp.Category] = append(categories[comp.Category], comp)
+		}
+
+		for category, comps := range categories {
+			categorySection := []g.Node{
+				html.H2(
+					html.Class("text-sm font-medium text-gray-600 uppercase tracking-wide mb-3"),
+					g.Text(category),
+				),
+			}
+
+			var compLinks []g.Node
+			for _, comp := range comps {
+				compLinks = append(compLinks,
+					html.Li(
+						html.A(
+							html.Href("/_/ui/"+comp.Name),
+							html.Class("block px-3 py-2 text-blue-600 hover:bg-blue-50 rounded"),
+							g.Text(comp.Name),
+						),
+					),
+				)
+			}
+
+			categorySection = append(categorySection, html.Ul(
+				html.Class("space-y-1 mb-6"),
+				g.Group(compLinks),
+			))
+
+			sidebarContent = append(sidebarContent, html.Div(
+				g.Group(categorySection),
+			))
+		}
+	}
+
+	return sidebarContent
 }
 
 // HandleGallery returns an HTTP handler for the main gallery page
 func HandleGallery(app *core.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		components := GetAllComponents()
-
-		// Create sidebar content using Tailwind classes
-		var sidebarContent []g.Node
-		if len(components) == 0 {
-			sidebarContent = append(sidebarContent,
-				html.Div(
-					Classes{"text-gray-500": true, "italic": true},
-					g.Text("No components available yet"),
-				),
-			)
-		} else {
-			// Group components by category and create navigation
-			categories := make(map[string][]ComponentInfo)
-			for _, comp := range components {
-				categories[comp.Category] = append(categories[comp.Category], comp)
-			}
-
-			for category, comps := range categories {
-				categorySection := []g.Node{
-					html.H2(
-						Classes{"text-sm": true, "font-medium": true, "text-gray-600": true, "uppercase": true, "tracking-wide": true, "mb-3": true},
-						g.Text(category),
-					),
-				}
-
-				var compLinks []g.Node
-				for _, comp := range comps {
-					compLinks = append(compLinks,
-						html.Li(
-							html.A(
-								html.Href("/_/ui/"+comp.Name),
-								Classes{"block": true, "px-3": true, "py-2": true, "text-blue-600": true, "hover:bg-blue-50": true, "rounded": true},
-								g.Text(comp.Name),
-							),
-						),
-					)
-				}
-
-				categorySection = append(categorySection, html.Ul(
-					Classes{"space-y-1": true, "mb-6": true},
-					g.Group(compLinks),
-				))
-
-				sidebarContent = append(sidebarContent, html.Div(
-					g.Group(categorySection),
-				))
-			}
-		}
+		// Create sidebar content
+		sidebarContent := BuildSidebar()
 
 		// Create main content using existing Page component
 		pageContent := core.Page("UI Component Gallery",

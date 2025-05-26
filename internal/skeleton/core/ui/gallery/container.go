@@ -192,9 +192,28 @@ ui.Container(ui.ContainerProps{MaxWidth: "600px"},
 			),
 		)
 
-		// Create page using existing Page component
+		// Create page content with proper sidebar navigation
 		pageContent := core.Page("Container Component",
-			content,
+			html.Div(
+				ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
+				// Sidebar with full component navigation
+				html.Nav(
+					ui.CSSClass("w-64", "bg-white", "border-r", "border-gray-200", "p-6", "overflow-y-auto"),
+					html.H1(
+						ui.CSSClass("text-lg", "font-semibold", "text-gray-900", "mb-6"),
+						g.Text("Components"),
+					),
+					g.Group(BuildSidebar()),
+				),
+				// Main content
+				html.Main(
+					ui.CSSClass("flex-1", "p-6", "overflow-y-auto"),
+					html.Div(
+						ui.CSSClass("max-w-4xl"),
+						content,
+					),
+				),
+			),
 		)
 
 		// Use existing Layout function
