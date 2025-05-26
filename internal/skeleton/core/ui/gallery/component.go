@@ -2,7 +2,6 @@ package gallery
 
 import (
 	"net/http"
-
 	g "maragu.dev/gomponents"
 	. "maragu.dev/gomponents/components"
 	"maragu.dev/gomponents/html"
@@ -33,7 +32,14 @@ func HandleComponentDetail(app *core.App) http.HandlerFunc {
 		var pageContent g.Node
 		
 		if foundComponent != nil {
-			// Component found - show details
+		// Route to specific component handlers
+		switch componentName {
+		case "container":
+			HandleContainerDetail(app)(w, r)
+			return
+		}
+		
+		// Component found - show details
 			pageContent = core.Page("Component: "+foundComponent.Name,
 				html.Div(
 					Classes{"flex": true, "min-h-screen": true, "-mx-4": true, "-mt-4": true},

@@ -43,20 +43,7 @@ func Style(props map[string]string) g.Node {
 	return html.Style(strings.Join(styles, ";"))
 }
 
-// Classes creates a class attribute from a map where keys are class names
-// and values are booleans indicating whether to include the class
-func Classes(classMap map[string]bool) g.Node {
-	var classes []string
-	for className, include := range classMap {
-		if include && strings.TrimSpace(className) != "" {
-			classes = append(classes, strings.TrimSpace(className))
-		}
-	}
-	if len(classes) == 0 {
-		return nil
-	}
-	return html.Class(strings.Join(classes, " "))
-}
+
 
 // Attrs combines multiple attributes into a slice for easy spreading
 func Attrs(attrs ...g.Node) []g.Node {

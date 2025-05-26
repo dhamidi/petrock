@@ -18,9 +18,14 @@ type ComponentInfo struct {
 }
 
 // GetAllComponents returns a list of all available UI components
-// Initially returns an empty list as components will be added in later steps
 func GetAllComponents() []ComponentInfo {
-	return []ComponentInfo{}
+	return []ComponentInfo{
+		{
+			Name:        "container",
+			Description: "Responsive container with different width variants",
+			Category:    "Layout",
+		},
+	}
 }
 
 // HandleGallery returns an HTTP handler for the main gallery page
