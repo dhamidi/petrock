@@ -40,6 +40,9 @@ func HandleComponentDetail(app *core.App) http.HandlerFunc {
 		case "grid":
 			HandleGridDetail(app)(w, r)
 			return
+		case "card":
+			HandleCardDetail(app)(w, r)
+			return
 		}
 		
 		// Component found - show details

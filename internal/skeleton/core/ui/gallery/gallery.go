@@ -30,6 +30,11 @@ func GetAllComponents() []ComponentInfo {
 			Description: "Flexible CSS Grid container for complex layouts",
 			Category:    "Layout",
 		},
+		{
+			Name:        "card",
+			Description: "Structured content container with header, body, and footer sections",
+			Category:    "Content",
+		},
 	}
 }
 
