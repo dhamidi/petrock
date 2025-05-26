@@ -334,17 +334,76 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 **Objective**: Remove old view system and use new UI components
 
 **Files to remove**:
-- `internal/skeleton/core/view.go`
-- `internal/skeleton/core/view_layout.go`
+- `internal/skeleton/core/view.go` - Contains legacy Button, Input, TextArea, Select, FormError, FieldGroup, Page functions using old `Classes{}` map syntax
+- `internal/skeleton/core/view_layout.go` - Contains legacy Layout function with hardcoded HTML structure
 
 **Files to modify**:
-- `internal/skeleton/core/page_index.go` - Update to use new UI components
+- `internal/skeleton/core/page_index.go` - Update IndexPage and HandleIndex to use new UI components instead of core.Page/core.Layout
+- All gallery files currently using `core.Page()` and `core.Layout()` for page structure
+
+**CRITICAL BLOCKERS & DECISIONS**:
+
+1. **Missing Layout Function**: The new UI components don't provide Layout/Page equivalents. Need to decide:
+   - Create new ui.Layout and ui.Page components that match current functionality
+   - Move layout logic into a different package 
+   - Update all gallery handlers to use raw HTML structure
+
+2. **Gallery Dependencies**: 25+ gallery files currently use `core.Page()` and `core.Layout()`. These must be updated or the removal will break the gallery system.
+
+3. **Feature Template Impact**: `internal/skeleton/feature_template/ui/components/forms.go` uses `core.Form` extensively for validation - this integration needs preservation.
+
+4. **CSRF and Form Integration**: Legacy view.go provides `CSRFTokenInput` and `FormError` functions that integrate with `core.Form` validation system - new form components need equivalent functionality.
+
+**RECOMMENDED APPROACH**:
+
+**Phase A: Create Layout and Form Integration Components**
+- Create `ui.Layout()` function to replace `core.Layout()` with same HTML structure and Tailwind CDN
+- Create `ui.Page()` function to replace `core.Page()` with container, title, and children pattern
+- Create `ui.FormGroup()` function that accepts `core.Form` and field name, returns FormGroup with proper validation state
+- Create `ui.FormError()` helper that extracts error from `core.Form` and returns error display
+- Create `ui.CSRFInput()` helper for CSRF token hidden inputs
+- Use `core.Form` methods directly in components:
+  ```go
+  // Use existing methods directly - no wrappers needed
+  form.HasError(field)  // for validation state
+  form.Get(field)       // for field values
+  form.GetError(field)  // for error messages
+  ```
+
+**Phase B: Update Gallery System**
+- Update all 25+ gallery handlers to use new `ui.Layout()` and `ui.Page()`
+- Test gallery functionality completely before proceeding
+
+**Phase C: Update Feature Template Integration**
+- Update `feature_template/ui/components/forms.go` to use `core.Form` methods directly
+- Simplify `FormFieldClass()` to call `form.HasError()` directly for validation state
+- Replace `FormErrorDisplay()` with new `ui.FormError()` helper (calls `form.GetError()` directly)
+- Update form field components to call `form.Get()` directly for values
+- Preserve `CsrfField()` or migrate to `ui.CSRFInput()`
+- Test feature generation and form validation workflow
+
+**Phase D: Update Index Page**
+- Refactor `IndexPage()` to use new UI components:
+  - Replace `Page()` call with `ui.Container()` + `ui.Section()` pattern
+  - Use `ui.Text()` and `ui.Code()` for content display
+  - Use proper semantic HTML with new components
+- Update `HandleIndex()` to use new `ui.Layout()`
+
+**Phase E: Clean Legacy Files**
+- Remove `view.go` and `view_layout.go` only after all references updated
+- Run full build and test cycle
+- Verify gallery, index page, and feature generation all work
 
 **Acceptance criteria**:
-- Index page uses new UI components
-- No references to old view system
+- New ui.Layout and ui.Page components created and functional
+- ui.FormGroup, ui.FormError, and ui.CSRFInput helpers implemented (using `core.Form` methods directly)
+- All 25+ gallery files updated to use new layout system
+- Feature template forms.go updated to call `form.HasError()`, `form.Get()`, `form.GetError()` directly
+- Index page uses new UI components (Container, Section, etc.)
+- Gallery system remains fully functional
+- Feature generation with form validation works correctly (preserves all existing `core.Form` behavior)
 - Application builds and runs without errors
-- Index page renders correctly with new components
+- Zero breaking changes to existing `core.Form` API and validation methods
 
 ### Step 17: Final Gallery Polish and Documentation
 **Objective**: Complete the gallery experience
