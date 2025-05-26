@@ -7,9 +7,9 @@
 
 - Create a `core/ui` package with component library built on Gomponents (this goes into `internal/skeleton/core`)
   - replaces `internal/skeleton/core/view.go` and `internal/skeleton/core/layout.go`
-- Define a theme configuration system in `core/ui/theme.go`
+- Define consistent component patterns and styling
 - Implement core UI patterns (cards, forms, tables, navigation) as reusable components
-- Add design tokens for colors, spacing, typography in `core/ui/tokens.go`
+- Implement consistent styling across all components
 
 ## Code structure
 
@@ -78,35 +78,7 @@ func Container(props ContainerProps, children ...g.Node) g.Node {
   - ProgressBar (visual completion indicator)
   - LoadingSpinner (CSS-only animation)
 
-## Design Tokens
 
-- **Colors**
-
-  - Brand colors (primary, secondary, tertiary)
-  - UI colors (background, surface, border)
-  - Semantic colors (success, warning, error, info)
-  - Neutral palette (10 shades from white to black)
-  - Accessibility considerations (contrast ratios documented)
-
-- **Typography**
-
-  - Font families (heading, body, monospace)
-  - Font sizes (scale from xs to 3xl)
-  - Line heights (tight, normal, loose)
-  - Font weights (light, regular, medium, bold)
-  - Text styles (heading1-6, body, caption, code)
-
-- **Spacing**
-
-  - Spacing scale (4px, 8px, 16px, 24px, 32px, 48px, 64px, 96px, 128px)
-  - Layout spacing (page margins, gutters, section spacing)
-  - Component internal spacing (padding inside cards, buttons, etc.)
-
-- **Borders & Shadows**
-  - Border widths (thin, regular, thick)
-  - Border radii (none, sm, md, lg, pill, circle)
-  - Shadows (none, sm, md, lg, inner)
-  - Focus states (accessible focus rings)
 
 ## Integration with the rest of the system
 
@@ -130,8 +102,4 @@ Then we proceed with adding a single layout component, the container.
 
 Then we proceed with adding the remaining components one by one.
 
-Finally, we add design tokens:
-
-- design tokens need to be visible in the sidebar on the `/_/ui` gallery page under an entry "Design Tokens"
-- when selecting that entry, all tokens are listed in the main panel to the right
-- the URL is going to be `/_/ui/design-tokens`
+Finally, we add comprehensive documentation and examples for all components in the gallery.

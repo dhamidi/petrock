@@ -64,51 +64,9 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 - Base utilities available for component creation
 - Package structure follows Go conventions
 
-## Phase 2: Design Tokens
+## Phase 2: Layout Components
 
-### Step 4: Implement Design Tokens System
-**Objective**: Create the design token definitions and access system
-
-**Files to create**:
-- `internal/skeleton/core/ui/tokens.go` - All design tokens
-
-**Types/functions to create**:
-- `type ColorTokens struct { Primary, Secondary, Background, etc. string }`
-- `type SpacingTokens struct { XS, SM, MD, LG, XL, etc. string }`
-- `type TypographyTokens struct { FontFamily, FontSize, LineHeight, etc. map[string]string }`
-- `type BorderTokens struct { Width, Radius, Shadow map[string]string }`
-- `func GetTokens() *DesignTokens` - Access to all tokens
-- `var Tokens = GetTokens()` - Global tokens instance
-
-**Acceptance criteria**:
-- All color tokens defined (brand, UI, semantic, neutral palette)
-- Complete spacing scale (4px to 128px)
-- Typography scale with font families, sizes, weights
-- Border widths, radii, and shadow definitions
-- Accessibility considerations documented in comments
-
-### Step 5: Add Design Tokens to Gallery
-**Objective**: Display design tokens in the UI gallery
-
-**Files to modify**:
-- `internal/skeleton/core/ui/gallery/gallery.go`
-- `internal/skeleton/core/ui/gallery/tokens.go` (new file)
-
-**Functions to create**:
-- `func HandleDesignTokens() http.HandlerFunc` - Tokens display page
-- `func renderColorTokens() g.Node` - Color palette display
-- `func renderSpacingTokens() g.Node` - Spacing scale display
-- `func renderTypographyTokens() g.Node` - Typography samples
-
-**Acceptance criteria**:
-- Design tokens appear in gallery sidebar
-- Tokens page accessible at `/_/ui/design-tokens`
-- Visual representation of colors, spacing, typography
-- Interactive examples showing token usage
-
-## Phase 3: Layout Components
-
-### Step 6: Implement Container Component
+### Step 4: Implement Container Component
 **Objective**: Create the first layout component as a foundation
 
 **Files to create**:
@@ -128,7 +86,7 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 - Container appears in gallery with examples
 - Component page accessible at `/_/ui/container`
 
-### Step 7: Implement Grid Component
+### Step 5: Implement Grid Component
 **Objective**: Create flexible CSS Grid wrapper
 
 **Files to create**:
@@ -141,11 +99,11 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 
 **Acceptance criteria**:
 - Grid component supports column definitions
-- Gap spacing using design tokens
+- Gap spacing with consistent values
 - Grid areas support for complex layouts
 - Interactive examples in gallery
 
-### Step 8: Implement Card Component
+### Step 6: Implement Card Component
 **Objective**: Create structured content container
 
 **Files to create**:
@@ -162,10 +120,10 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 **Acceptance criteria**:
 - Card with distinct header, body, footer sections
 - Multiple card variants (default, outlined, elevated)
-- Consistent padding using design tokens
+- Consistent padding with predefined values
 - Visual examples in gallery
 
-### Step 9: Implement Section and Divider Components
+### Step 7: Implement Section and Divider Components
 **Objective**: Complete basic layout components
 
 **Files to create**:
@@ -186,9 +144,9 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 - Accessibility attributes (ARIA roles, heading hierarchy)
 - Gallery examples showing usage patterns
 
-## Phase 4: Interactive Components
+## Phase 3: Interactive Components
 
-### Step 10: Implement Button Component
+### Step 8: Implement Button Component
 **Objective**: Create primary interactive element
 
 **Files to create**:
@@ -204,9 +162,9 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 - Size options: small, medium, large
 - Disabled state handling
 - Proper accessibility attributes
-- Focus states using design tokens
+- Focus states with consistent styling
 
-### Step 11: Implement Button Group Component
+### Step 9: Implement Button Group Component
 **Objective**: Create grouped button layout
 
 **Files to create**:
@@ -223,9 +181,9 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 - Proper button focus navigation
 - Visual examples in gallery
 
-## Phase 5: Form Components
+## Phase 4: Form Components
 
-### Step 12: Implement Form Input Components
+### Step 10: Implement Form Input Components
 **Objective**: Create essential form elements
 
 **Files to create**:
@@ -245,10 +203,10 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 **Acceptance criteria**:
 - Input validation states (valid, invalid, pending)
 - Proper form accessibility (labels, ARIA attributes)
-- Consistent styling with design tokens
+- Consistent styling across all inputs
 - Interactive examples in gallery
 
-### Step 13: Implement Checkbox, Radio, and Toggle
+### Step 11: Implement Checkbox, Radio, and Toggle
 **Objective**: Complete form input types
 
 **Files to create**:
@@ -271,7 +229,7 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 - Keyboard navigation support
 - Gallery examples showing usage
 
-### Step 14: Implement Form Group and Field Set
+### Step 12: Implement Form Group and Field Set
 **Objective**: Create form organization components
 
 **Files to create**:
@@ -291,9 +249,9 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 - Validation message display
 - Complete form examples in gallery
 
-## Phase 6: Navigation Components
+## Phase 5: Navigation Components
 
-### Step 15: Implement Navigation Components
+### Step 13: Implement Navigation Components
 **Objective**: Create navigation UI elements
 
 **Files to create**:
@@ -320,9 +278,9 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 - Pagination with page numbers and navigation
 - Gallery examples for all navigation patterns
 
-## Phase 7: Feedback Components
+## Phase 6: Feedback Components
 
-### Step 16: Implement Feedback Components
+### Step 14: Implement Feedback Components
 **Objective**: Create user feedback and status elements
 
 **Files to create**:
@@ -348,9 +306,9 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 - Progress bar with accessibility labels
 - Gallery examples showing all feedback types
 
-## Phase 8: Advanced Interactive Components
+## Phase 7: Advanced Interactive Components
 
-### Step 17: Implement Disclosure Components
+### Step 15: Implement Disclosure Components
 **Objective**: Create expandable content components
 
 **Files to create**:
@@ -370,9 +328,9 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 - Keyboard accessibility
 - Gallery examples with interactive demos
 
-## Phase 9: Integration and Cleanup
+## Phase 8: Integration and Cleanup
 
-### Step 18: Replace Legacy View Files
+### Step 16: Replace Legacy View Files
 **Objective**: Remove old view system and use new UI components
 
 **Files to remove**:
@@ -388,25 +346,7 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 - Application builds and runs without errors
 - Index page renders correctly with new components
 
-### Step 19: Theme Configuration System
-**Objective**: Implement theming support
-
-**Files to create**:
-- `internal/skeleton/core/ui/theme.go`
-
-**Types/functions to create**:
-- `type Theme struct { Colors ColorTokens; Spacing SpacingTokens; Typography TypographyTokens }`
-- `func NewTheme() *Theme`
-- `func ApplyTheme(theme *Theme) string` - Returns CSS for theme
-- `func ThemeProvider(theme *Theme, children ...g.Node) g.Node`
-
-**Acceptance criteria**:
-- Theme system allows token customization
-- CSS variables generated from theme
-- Theme switcher example in gallery
-- Documentation for theme customization
-
-### Step 20: Final Gallery Polish and Documentation
+### Step 17: Final Gallery Polish and Documentation
 **Objective**: Complete the gallery experience
 
 **Files to modify**:
@@ -431,10 +371,9 @@ After each phase, run these verification commands:
 ## Success Criteria
 
 The implementation is complete when:
-- All 20+ UI components are implemented and functional
-- Design tokens are comprehensive and consistently applied
+- All 15+ UI components are implemented and functional
 - Gallery showcases all components with interactive examples
 - All components follow accessibility best practices
-- Theme system allows customization
+- Components have consistent styling and behavior
 - No breaking changes to existing application functionality
 - Documentation is complete for component usage
