@@ -94,6 +94,12 @@ func GetAllComponents() []ComponentInfo {
 			Category:    "Feedback",
 			Handler:     HandleFeedbackDetail,
 		},
+		{
+			Name:        "disclosure",
+			Description: "Expandable content components including disclosure widgets and accordions with CSS-only implementations",
+			Category:    "Interactive",
+			Handler:     HandleDisclosureDetail,
+		},
 	}
 }
 
