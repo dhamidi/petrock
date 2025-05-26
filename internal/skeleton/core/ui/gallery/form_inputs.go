@@ -3,7 +3,6 @@ package gallery
 import (
 	"net/http"
 
-	"github.com/petrock/example_module_path/core"
 	"github.com/petrock/example_module_path/core/ui"
 	g "maragu.dev/gomponents"
 	"maragu.dev/gomponents/html"
@@ -261,7 +260,7 @@ func HandleFormInputsDetail(w http.ResponseWriter, r *http.Request) {
 	)
 
 	// Create page content with proper sidebar navigation
-	pageContent := core.Page("Form Inputs Component",
+	pageContent := ui.Page("Form Inputs Component",
 		html.Div(
 			ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
 			// Sidebar with full component navigation
@@ -285,7 +284,7 @@ func HandleFormInputsDetail(w http.ResponseWriter, r *http.Request) {
 	)
 
 	// Use existing Layout function
-	response := core.Layout(
+	response := ui.Layout(
 		"Form Inputs Component - UI Gallery",
 		pageContent,
 	)

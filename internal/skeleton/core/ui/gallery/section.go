@@ -3,7 +3,6 @@ package gallery
 import (
 	"net/http"
 
-	"github.com/petrock/example_module_path/core"
 	"github.com/petrock/example_module_path/core/ui"
 
 	g "maragu.dev/gomponents"
@@ -191,7 +190,7 @@ ui.Section(ui.SectionProps{Heading: "Main Section", Level: 1},
 		)
 
 		// Create page content with proper sidebar navigation
-		pageContent := core.Page("Section Component",
+		pageContent := ui.Page("Section Component",
 			html.Div(
 				ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
 				// Sidebar with full component navigation
@@ -215,7 +214,7 @@ ui.Section(ui.SectionProps{Heading: "Main Section", Level: 1},
 		)
 
 		// Use existing Layout function
-		response := core.Layout(
+		response := ui.Layout(
 			"Section Component - UI Gallery",
 			pageContent,
 		)

@@ -3,7 +3,6 @@ package gallery
 import (
 	"net/http"
 
-	"github.com/petrock/example_module_path/core"
 	"github.com/petrock/example_module_path/core/ui"
 	g "maragu.dev/gomponents"
 	"maragu.dev/gomponents/html"
@@ -345,7 +344,7 @@ func HandleFormLayoutDetail(w http.ResponseWriter, r *http.Request) {
 	)
 
 	// Create page content with proper sidebar navigation
-	pageContent := core.Page("Form Layout Components",
+	pageContent := ui.Page("Form Layout Components",
 		html.Div(
 			ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
 			// Sidebar with full component navigation
@@ -369,7 +368,7 @@ func HandleFormLayoutDetail(w http.ResponseWriter, r *http.Request) {
 	)
 
 	// Use existing Layout function
-	response := core.Layout(
+	response := ui.Layout(
 		"Form Layout Components - UI Gallery",
 		pageContent,
 	)

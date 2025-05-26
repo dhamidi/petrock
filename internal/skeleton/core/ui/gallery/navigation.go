@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/petrock/example_module_path/core"
 	"github.com/petrock/example_module_path/core/ui"
 
 	g "maragu.dev/gomponents"
@@ -449,7 +448,7 @@ ui.Pagination(ui.PaginationProps{
 	)
 
 	// Create page content with proper sidebar navigation
-	pageContent := core.Page("Navigation Components",
+	pageContent := ui.Page("Navigation Components",
 		html.Div(
 			ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
 			// Sidebar with full component navigation
@@ -473,7 +472,7 @@ ui.Pagination(ui.PaginationProps{
 	)
 
 	// Use existing Layout function
-	response := core.Layout(
+	response := ui.Layout(
 		"Navigation Components - UI Gallery",
 		pageContent,
 	)

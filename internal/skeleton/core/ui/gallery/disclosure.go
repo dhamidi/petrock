@@ -3,7 +3,6 @@ package gallery
 import (
 	"net/http"
 
-	"github.com/petrock/example_module_path/core"
 	"github.com/petrock/example_module_path/core/ui"
 
 	g "maragu.dev/gomponents"
@@ -480,7 +479,7 @@ ui.Accordion(ui.AccordionProps{
 	)
 
 	// Create page content with proper sidebar navigation
-	pageContent := core.Page("Disclosure Components",
+	pageContent := ui.Page("Disclosure Components",
 		html.Div(
 			ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
 			// Sidebar with full component navigation
@@ -504,7 +503,7 @@ ui.Accordion(ui.AccordionProps{
 	)
 
 	// Use existing Layout function
-	response := core.Layout(
+	response := ui.Layout(
 		"Disclosure Components - UI Gallery",
 		pageContent,
 	)

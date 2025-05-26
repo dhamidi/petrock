@@ -3,7 +3,6 @@ package gallery
 import (
 	"net/http"
 
-	"github.com/petrock/example_module_path/core"
 	"github.com/petrock/example_module_path/core/ui"
 
 	g "maragu.dev/gomponents"
@@ -282,7 +281,7 @@ ui.Button(ui.ButtonProps{
 		)
 
 		// Create page content with proper sidebar navigation
-		pageContent := core.Page("Button Component",
+		pageContent := ui.Page("Button Component",
 			html.Div(
 				ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
 				// Sidebar with full component navigation
@@ -306,7 +305,7 @@ ui.Button(ui.ButtonProps{
 		)
 
 		// Use existing Layout function
-		response := core.Layout(
+		response := ui.Layout(
 			"Button Component - UI Gallery",
 			pageContent,
 		)

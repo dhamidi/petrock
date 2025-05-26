@@ -3,7 +3,6 @@ package gallery
 import (
 	"net/http"
 
-	"github.com/petrock/example_module_path/core"
 	"github.com/petrock/example_module_path/core/ui"
 
 	g "maragu.dev/gomponents"
@@ -509,7 +508,7 @@ ui.Toast(ui.ToastProps{
 	)
 
 	// Create page content with proper sidebar navigation
-	pageContent := core.Page("Feedback Components",
+	pageContent := ui.Page("Feedback Components",
 		html.Div(
 			ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
 			// Sidebar with full component navigation
@@ -533,7 +532,7 @@ ui.Toast(ui.ToastProps{
 	)
 
 	// Use existing Layout function
-	response := core.Layout(
+	response := ui.Layout(
 		"Feedback Components - UI Gallery",
 		pageContent,
 	)

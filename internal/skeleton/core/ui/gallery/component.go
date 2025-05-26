@@ -39,7 +39,7 @@ func HandleComponentDetail(app *core.App) http.HandlerFunc {
 		}
 		
 		// Component found - show details
-		pageContent = core.Page("Component: "+foundComponent.Name,
+		pageContent = ui.Page("Component: "+foundComponent.Name,
 		html.Div(
 		ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
 		// Sidebar with back link
@@ -73,7 +73,7 @@ func HandleComponentDetail(app *core.App) http.HandlerFunc {
 		)
 		} else {
 			// Component not found
-			pageContent = core.Page("Component Not Found",
+			pageContent = ui.Page("Component Not Found",
 			html.Div(
 			ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
 			// Sidebar with back link
@@ -116,7 +116,7 @@ func HandleComponentDetail(app *core.App) http.HandlerFunc {
 		}
 
 		// Use existing Layout function
-		layout := core.Layout("UI Component Gallery", pageContent)
+		layout := ui.Layout("UI Component Gallery", pageContent)
 		
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		err := layout.Render(w)

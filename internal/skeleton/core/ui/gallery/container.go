@@ -7,7 +7,6 @@ import (
 	. "maragu.dev/gomponents/components"
 	html "maragu.dev/gomponents/html"
 
-	"github.com/petrock/example_module_path/core"
 	"github.com/petrock/example_module_path/core/ui"
 )
 
@@ -192,7 +191,7 @@ ui.Container(ui.ContainerProps{MaxWidth: "600px"},
 		)
 
 		// Create page content with proper sidebar navigation
-		pageContent := core.Page("Container Component",
+		pageContent := ui.Page("Container Component",
 			html.Div(
 				ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
 				// Sidebar with full component navigation
@@ -216,7 +215,7 @@ ui.Container(ui.ContainerProps{MaxWidth: "600px"},
 		)
 
 		// Use existing Layout function
-		response := core.Layout(
+		response := ui.Layout(
 			"Container Component - UI Gallery",
 			pageContent,
 		)

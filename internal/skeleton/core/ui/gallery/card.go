@@ -3,7 +3,6 @@ package gallery
 import (
 	"net/http"
 
-	"github.com/petrock/example_module_path/core"
 	"github.com/petrock/example_module_path/core/ui"
 
 	g "maragu.dev/gomponents"
@@ -220,7 +219,7 @@ ui.Card(ui.CardProps{Variant: "outlined", Padding: "large"},
 		)
 
 		// Create page content with proper sidebar navigation
-		pageContent := core.Page("Card Component",
+		pageContent := ui.Page("Card Component",
 			html.Div(
 				ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
 				// Sidebar with full component navigation
@@ -244,9 +243,9 @@ ui.Card(ui.CardProps{Variant: "outlined", Padding: "large"},
 		)
 
 		// Use existing Layout function
-		response := core.Layout(
-			"Card Component - UI Gallery",
-			pageContent,
+		response := ui.Layout(
+		"Card Component - UI Gallery",
+		pageContent,
 		)
 
 		w.Header().Set("Content-Type", "text/html")

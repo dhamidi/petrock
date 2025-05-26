@@ -3,7 +3,6 @@ package gallery
 import (
 	"net/http"
 
-	"github.com/petrock/example_module_path/core"
 	"github.com/petrock/example_module_path/core/ui"
 
 	g "maragu.dev/gomponents"
@@ -254,7 +253,7 @@ html.Div(
 		)
 
 		// Create page content with proper sidebar navigation
-		pageContent := core.Page("Divider Component",
+		pageContent := ui.Page("Divider Component",
 			html.Div(
 				ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
 				// Sidebar with full component navigation
@@ -278,7 +277,7 @@ html.Div(
 		)
 
 		// Use existing Layout function
-		response := core.Layout(
+		response := ui.Layout(
 			"Divider Component - UI Gallery",
 			pageContent,
 		)

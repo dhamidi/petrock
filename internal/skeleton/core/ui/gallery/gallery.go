@@ -173,7 +173,7 @@ func HandleGallery(app *core.App) http.HandlerFunc {
 		sidebarContent := BuildSidebar()
 
 		// Create main content using existing Page component
-		pageContent := core.Page("UI Component Gallery",
+		pageContent := ui.Page("UI Component Gallery",
 			html.Div(
 				ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
 				// Sidebar
@@ -208,7 +208,7 @@ func HandleGallery(app *core.App) http.HandlerFunc {
 		)
 
 		// Use existing Layout function
-		layout := core.Layout("UI Component Gallery", pageContent)
+		layout := ui.Layout("UI Component Gallery", pageContent)
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		err := layout.Render(w)
