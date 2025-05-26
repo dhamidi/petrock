@@ -88,6 +88,12 @@ func GetAllComponents() []ComponentInfo {
 			Category:    "Navigation",
 			Handler:     HandleNavigationDetail,
 		},
+		{
+			Name:        "feedback",
+			Description: "Feedback components including alerts, badges, progress bars, loading spinners, and toast notifications",
+			Category:    "Feedback",
+			Handler:     HandleFeedbackDetail,
+		},
 	}
 }
 
