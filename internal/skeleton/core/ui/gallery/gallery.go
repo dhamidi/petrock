@@ -46,6 +46,11 @@ func GetAllComponents() []ComponentInfo {
 			Description: "Structured content container with header, body, and footer sections",
 			Category:    "Content",
 		},
+		{
+			Name:        "button",
+			Description: "Interactive button with multiple variants, sizes, and states",
+			Category:    "Interactive",
+		},
 	}
 }
 
