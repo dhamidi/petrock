@@ -56,6 +56,11 @@ func GetAllComponents() []ComponentInfo {
 			Description: "Container for grouping related buttons with consistent spacing",
 			Category:    "Interactive",
 		},
+		{
+			Name:        "form-inputs",
+			Description: "Essential form input components including text inputs, textareas, and select dropdowns",
+			Category:    "Form",
+		},
 	}
 }
 

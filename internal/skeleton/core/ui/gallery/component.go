@@ -53,9 +53,12 @@ func HandleComponentDetail(app *core.App) http.HandlerFunc {
 			HandleButtonDetail(app)(w, r)
 			return
 		case "button-group":
-			HandleButtonGroupDetail(app)(w, r)
-			return
-		}
+		HandleButtonGroupDetail(app)(w, r)
+		return
+		case "form-inputs":
+		HandleFormInputsDetail(w, r)
+		return
+	}
 		
 		// Component found - show details
 			pageContent = core.Page("Component: "+foundComponent.Name,
