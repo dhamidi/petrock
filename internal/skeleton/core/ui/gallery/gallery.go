@@ -5,10 +5,10 @@ import (
 	"sort"
 
 	g "maragu.dev/gomponents"
-	. "maragu.dev/gomponents/components"
 	html "maragu.dev/gomponents/html"
 
 	"github.com/petrock/example_module_path/core"
+	"github.com/petrock/example_module_path/core/ui"
 )
 
 // ComponentInfo represents metadata about a UI component
@@ -81,6 +81,12 @@ func GetAllComponents() []ComponentInfo {
 			Description: "Form layout components including FormGroup and FieldSet for organizing form elements",
 			Category:    "Form",
 			Handler:     HandleFormLayoutDetail,
+		},
+		{
+			Name:        "navigation",
+			Description: "Navigation components including navigation bars, sidebars, tabs, breadcrumbs, and pagination",
+			Category:    "Navigation",
+			Handler:     HandleNavigationDetail,
 		},
 	}
 }
@@ -157,31 +163,31 @@ func HandleGallery(app *core.App) http.HandlerFunc {
 		// Create main content using existing Page component
 		pageContent := core.Page("UI Component Gallery",
 			html.Div(
-				Classes{"flex": true, "min-h-screen": true, "-mx-4": true, "-mt-4": true},
+				ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
 				// Sidebar
 				html.Nav(
-					Classes{"w-64": true, "bg-white": true, "border-r": true, "border-gray-200": true, "p-6": true, "overflow-y-auto": true},
+					ui.CSSClass("w-64", "bg-white", "border-r", "border-gray-200", "p-6", "overflow-y-auto"),
 					html.H1(
-						Classes{"text-lg": true, "font-semibold": true, "text-gray-900": true, "mb-6": true},
+						ui.CSSClass("text-lg", "font-semibold", "text-gray-900", "mb-6"),
 						g.Text("Components"),
 					),
 					g.Group(sidebarContent),
 				),
 				// Main content
 				html.Main(
-					Classes{"flex-1": true, "p-6": true, "overflow-y-auto": true},
+					ui.CSSClass("flex-1", "p-6", "overflow-y-auto"),
 					html.Div(
-						Classes{"max-w-4xl": true},
+						ui.CSSClass("max-w-4xl"),
 						html.P(
-							Classes{"text-lg": true, "text-gray-600": true, "mb-4": true},
+							ui.CSSClass("text-lg", "text-gray-600", "mb-4"),
 							g.Text("Welcome to the UI component gallery. This is your central place to explore, test, and understand all available UI components in the design system."),
 						),
 						html.P(
-							Classes{"text-gray-600": true, "mb-4": true},
+							ui.CSSClass("text-gray-600", "mb-4"),
 							g.Text("Each component includes interactive examples, usage guidelines, and accessibility information to help you build consistent and accessible user interfaces."),
 						),
 						html.P(
-							Classes{"text-gray-600": true},
+							ui.CSSClass("text-gray-600"),
 							g.Text("Components will appear in the sidebar as they are implemented. The gallery will be populated as the design system grows."),
 						),
 					),

@@ -3,10 +3,10 @@ package gallery
 import (
 	"net/http"
 	g "maragu.dev/gomponents"
-	. "maragu.dev/gomponents/components"
 	"maragu.dev/gomponents/html"
 
 	"github.com/petrock/example_module_path/core"
+	"github.com/petrock/example_module_path/core/ui"
 )
 
 // HandleComponentDetail returns an HTTP handler for individual component detail pages
@@ -40,78 +40,78 @@ func HandleComponentDetail(app *core.App) http.HandlerFunc {
 		
 		// Component found - show details
 		pageContent = core.Page("Component: "+foundComponent.Name,
-				html.Div(
-					Classes{"flex": true, "min-h-screen": true, "-mx-4": true, "-mt-4": true},
-					// Sidebar with back link
-					html.Nav(
-						Classes{"w-64": true, "bg-white": true, "border-r": true, "border-gray-200": true, "p-6": true},
-						html.H1(
-							Classes{"text-lg": true, "font-semibold": true, "text-gray-900": true, "mb-6": true},
-							html.A(
-								html.Href("/_/ui"),
-								Classes{"text-blue-600": true, "hover:text-blue-800": true, "no-underline": true},
-								g.Text("← Gallery"),
-							),
-						),
-					),
-					// Main content
-					html.Main(
-						Classes{"flex-1": true, "p-6": true},
-						html.Div(
-							Classes{"max-w-4xl": true},
-							html.P(
-								Classes{"text-lg": true, "text-gray-600": true, "mb-4": true},
-								g.Text(foundComponent.Description),
-							),
-							html.P(
-								Classes{"text-gray-600": true, "mb-4": true},
-								g.Text("Interactive examples and documentation will appear here when the component is implemented."),
-							),
-						),
-					),
-				),
-			)
+		html.Div(
+		ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
+		// Sidebar with back link
+		html.Nav(
+		ui.CSSClass("w-64", "bg-white", "border-r", "border-gray-200", "p-6"),
+		html.H1(
+		ui.CSSClass("text-lg", "font-semibold", "text-gray-900", "mb-6"),
+		html.A(
+		html.Href("/_/ui"),
+		ui.CSSClass("text-blue-600", "hover:text-blue-800", "no-underline"),
+		g.Text("← Gallery"),
+		),
+		),
+		),
+		// Main content
+		html.Main(
+		ui.CSSClass("flex-1", "p-6"),
+		html.Div(
+		ui.CSSClass("max-w-4xl"),
+		html.P(
+		ui.CSSClass("text-lg", "text-gray-600", "mb-4"),
+		g.Text(foundComponent.Description),
+		),
+		html.P(
+		ui.CSSClass("text-gray-600", "mb-4"),
+		g.Text("Interactive examples and documentation will appear here when the component is implemented."),
+		),
+		),
+		),
+		),
+		)
 		} else {
 			// Component not found
 			pageContent = core.Page("Component Not Found",
-				html.Div(
-					Classes{"flex": true, "min-h-screen": true, "-mx-4": true, "-mt-4": true},
-					// Sidebar with back link
-					html.Nav(
-						Classes{"w-64": true, "bg-white": true, "border-r": true, "border-gray-200": true, "p-6": true},
-						html.H1(
-							Classes{"text-lg": true, "font-semibold": true, "text-gray-900": true, "mb-6": true},
-							html.A(
-								html.Href("/_/ui"),
-								Classes{"text-blue-600": true, "hover:text-blue-800": true, "no-underline": true},
-								g.Text("← Gallery"),
-							),
-						),
-					),
-					// Main content
-					html.Main(
-						Classes{"flex-1": true, "p-6": true},
-						html.Div(
-							Classes{"max-w-4xl": true},
-							html.P(
-								Classes{"text-lg": true, "text-red-600": true, "mb-4": true},
-								g.Textf("The component \"%s\" does not exist in the gallery.", componentName),
-							),
-							html.P(
-								Classes{"text-gray-600": true, "mb-4": true},
-								html.A(
-									html.Href("/_/ui"),
-									Classes{"text-blue-600": true, "hover:text-blue-800": true},
-									g.Text("← Back to Gallery"),
-								),
-							),
-							html.P(
-								Classes{"text-gray-500": true, "italic": true},
-								g.Text("No components are available yet."),
-							),
-						),
-					),
-				),
+			html.Div(
+			ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4"),
+			// Sidebar with back link
+			html.Nav(
+			ui.CSSClass("w-64", "bg-white", "border-r", "border-gray-200", "p-6"),
+			html.H1(
+			ui.CSSClass("text-lg", "font-semibold", "text-gray-900", "mb-6"),
+			html.A(
+			html.Href("/_/ui"),
+			ui.CSSClass("text-blue-600", "hover:text-blue-800", "no-underline"),
+			g.Text("← Gallery"),
+			),
+			),
+			),
+			// Main content
+			html.Main(
+			ui.CSSClass("flex-1", "p-6"),
+			html.Div(
+			ui.CSSClass("max-w-4xl"),
+			html.P(
+			ui.CSSClass("text-lg", "text-red-600", "mb-4"),
+			g.Textf("The component \"%s\" does not exist in the gallery.", componentName),
+			),
+			html.P(
+			ui.CSSClass("text-gray-600", "mb-4"),
+			html.A(
+			html.Href("/_/ui"),
+			ui.CSSClass("text-blue-600", "hover:text-blue-800"),
+			g.Text("← Back to Gallery"),
+			),
+			),
+			html.P(
+			ui.CSSClass("text-gray-500", "italic"),
+			g.Text("No components are available yet."),
+			),
+			),
+			),
+			),
 			)
 		}
 
