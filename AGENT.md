@@ -49,11 +49,12 @@ When making changes, ignore backwards compatibility.
 
 ## Gomponents Patterns
 - Gomponents use `g "maragu.dev/gomponents"`, dot-import components with `. "maragu.dev/gomponents/components"`
-- Use `Classes{...}` maps from components package, not custom utilities - the map syntax `Classes{"class": true}` works directly
+- **IMPORTANT**: Use `ui.CSSClass("class1", "class2", ...)` pattern, NOT `Classes{...}` maps - the old Classes syntax causes compilation errors
 - Never create custom `Classes` functions that conflict with gomponents' built-in `Classes` type
 - CSS should be embedded as string constants in gomponents files, not external files
 - `html.Style()` takes raw CSS strings for inline styles
 - Use `g.Text()` for text content, not bare `Text()` function calls
+- Use `html.THead` and `html.TBody` (capitalized) for table elements
 
 ## UI Component Architecture
 - UI components live in `internal/skeleton/core/ui/` with each component in its own file
@@ -69,6 +70,9 @@ When making changes, ignore backwards compatibility.
 - Use color-coded examples in demo pages to visually distinguish component variants
 - Include comprehensive documentation: description, usage examples, and properties table
 - Gallery navigation uses sidebar with components grouped by category
+- Use `BuildSidebar()` function in gallery.go to create consistent sidebar navigation across all component pages
+- Individual component pages must implement their own sidebar layout using flex pattern: `ui.CSSClass("flex", "min-h-screen", "-mx-4", "-mt-4")`
+- Component pages need full sidebar navigation, not just back links - users expect to navigate directly between components
 
 ## Build & Testing
 - Integration tests include generating projects, adding features, and running live servers
@@ -81,3 +85,12 @@ When making changes, ignore backwards compatibility.
 - Use Tailwind utility classes: `mx-auto`, `px-4`, and responsive max-width classes
 - Custom max-width override provides flexibility beyond predefined variants
 - Visual examples with colored backgrounds effectively demonstrate width differences
+
+## Grid Component Insights
+- Grid component supports flexible CSS Grid layouts with customizable columns, gaps, and grid template areas
+- Use CSS Grid properties: `grid-template-columns`, `gap`, `grid-template-areas` for layout control
+- GridProps pattern: `Columns`, `Gap`, and `Areas` properties provide comprehensive grid configuration
+- GridItem helper function enables named grid areas for complex layouts
+- Default values work well: `Columns: "1fr"` (single column), `Gap: "1rem"` (consistent spacing)
+- Common patterns: `"repeat(3, 1fr)"` for equal columns, `"200px 1fr 100px"` for mixed sizing
+- Grid areas enable semantic layout: `"header header header" "sidebar main aside" "footer footer footer"`
