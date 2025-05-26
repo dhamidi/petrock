@@ -58,6 +58,9 @@ func HandleComponentDetail(app *core.App) http.HandlerFunc {
 		case "form-inputs":
 		HandleFormInputsDetail(w, r)
 		return
+	case "form-controls":
+		HandleFormControlsDetail(w, r)
+		return
 	}
 		
 		// Component found - show details

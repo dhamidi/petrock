@@ -57,11 +57,16 @@ func GetAllComponents() []ComponentInfo {
 			Category:    "Interactive",
 		},
 		{
-			Name:        "form-inputs",
-			Description: "Essential form input components including text inputs, textareas, and select dropdowns",
-			Category:    "Form",
+		Name:        "form-inputs",
+		Description: "Essential form input components including text inputs, textareas, and select dropdowns",
+		Category:    "Form",
 		},
-	}
+	{
+		Name:        "form-controls",
+		Description: "Interactive form controls including checkboxes, radio buttons, and toggle switches",
+		Category:    "Form",
+	},
+}
 }
 
 // BuildSidebar creates the component navigation sidebar content

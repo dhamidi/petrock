@@ -206,7 +206,7 @@ Detailed step-by-step plan for implementing the design system as specified in `d
 - Consistent styling across all inputs
 - Interactive examples in gallery
 
-### Step 11: Implement Checkbox, Radio, and Toggle
+### Step 11: Implement Checkbox, Radio, and Toggle - DONE
 **Objective**: Complete form input types
 
 **Files to create**:
