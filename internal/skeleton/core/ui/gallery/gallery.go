@@ -2,6 +2,7 @@ package gallery
 
 import (
 	"net/http"
+	"sort"
 
 	g "maragu.dev/gomponents"
 	. "maragu.dev/gomponents/components"
@@ -31,6 +32,16 @@ func GetAllComponents() []ComponentInfo {
 			Category:    "Layout",
 		},
 		{
+			Name:        "section",
+			Description: "Semantic section component with proper heading hierarchy",
+			Category:    "Layout",
+		},
+		{
+			Name:        "divider",
+			Description: "Horizontal separator with different styles and spacing",
+			Category:    "Layout",
+		},
+		{
 			Name:        "card",
 			Description: "Structured content container with header, body, and footer sections",
 			Category:    "Content",
@@ -57,7 +68,16 @@ func BuildSidebar() []g.Node {
 			categories[comp.Category] = append(categories[comp.Category], comp)
 		}
 
-		for category, comps := range categories {
+		// Sort categories alphabetically
+		var categoryNames []string
+		for category := range categories {
+			categoryNames = append(categoryNames, category)
+		}
+		sort.Strings(categoryNames)
+
+		// Iterate over sorted categories
+		for _, category := range categoryNames {
+			comps := categories[category]
 			categorySection := []g.Node{
 				html.H2(
 					html.Class("text-sm font-medium text-gray-600 uppercase tracking-wide mb-3"),

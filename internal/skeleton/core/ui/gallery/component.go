@@ -40,6 +40,12 @@ func HandleComponentDetail(app *core.App) http.HandlerFunc {
 		case "grid":
 			HandleGridDetail(app)(w, r)
 			return
+		case "section":
+			HandleSectionDetail(app)(w, r)
+			return
+		case "divider":
+			HandleDividerDetail(app)(w, r)
+			return
 		case "card":
 			HandleCardDetail(app)(w, r)
 			return
