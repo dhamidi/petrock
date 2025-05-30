@@ -4,14 +4,15 @@ import (
 	"fmt"
 
 	g "maragu.dev/gomponents"
-	. "maragu.dev/gomponents/components"
 	"maragu.dev/gomponents/html"
 
 	"github.com/petrock/example_module_path/core"
+	"github.com/petrock/example_module_path/core/ui"
 	"github.com/petrock/example_module_path/petrock_example_feature_name/state"
 )
 
 // formFieldClass returns the appropriate CSS class for a form field based on its error state
+// DEPRECATED: Use ui.TextInputWithValidation, ui.TextAreaWithValidation instead
 func FormFieldClass(form *core.Form, fieldName string) string {
 	if form.HasError(fieldName) {
 		return "block w-full rounded-md sm:text-sm border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500"
@@ -20,23 +21,15 @@ func FormFieldClass(form *core.Form, fieldName string) string {
 }
 
 // csrfField returns a hidden input field for CSRF protection
+// DEPRECATED: Use ui.CSRFInput instead
 func CsrfField(token string) g.Node {
-	return html.Input(
-		g.Attr("type", "hidden"),
-		g.Attr("name", "csrf_token"),
-		g.Attr("value", token),
-	)
+	return ui.CSRFInput(token)
 }
 
 // formErrorDisplay renders an error message for a form field
+// DEPRECATED: Use ui.FormError instead
 func FormErrorDisplay(form *core.Form, fieldName string) g.Node {
-	if !form.HasError(fieldName) {
-		return nil
-	}
-	return html.Div(
-		g.Attr("class", "mt-2 text-sm text-red-600"),
-		g.Text(form.GetError(fieldName)),
-	)
+	return ui.FormError(form, fieldName)
 }
 
 // successAlert renders a success message
@@ -66,14 +59,14 @@ func SuccessAlert(message string) g.Node {
 // NewItemButton renders a button or link to navigate to the item creation page/view.
 func NewItemButton() g.Node {
 	return html.A(
-		g.Attr("href", "/petrock_example_feature_name/new"),
-		Classes{"px-4": true, "py-2": true, "bg-green-500": true, "text-white": true, "rounded": true, "hover:bg-green-600": true},
+		html.Href("/petrock_example_feature_name/new"),
+		ui.CSSClass("px-4", "py-2", "bg-green-500", "text-white", "rounded", "hover:bg-green-600"),
 		g.Text("New Item"),
 	)
 }
 
 // ItemForm renders an HTML <form> for creating or editing an item.
-// It uses core.Form for data and error handling.
+// It uses core.Form for data and error handling with new ui components.
 // 'item' can be nil when creating a new item.
 // 'csrfToken' should be provided by the handler.
 func ItemForm(form *core.Form, item *state.Item, csrfToken string) g.Node {
@@ -92,51 +85,48 @@ func ItemForm(form *core.Form, item *state.Item, csrfToken string) g.Node {
 		actionURL = "/petrock_example_feature_name/new"
 	}
 
-	// Get values from form (if validation failed) or from item (if editing)
-	nameValue := form.Get("name")
-	descriptionValue := form.Get("description")
-	if !form.HasError("name") && isEdit {
+	// Set values for form fields - use existing values from item if editing and no validation errors
+	var nameValue, descriptionValue string
+	if isEdit && item != nil {
 		nameValue = item.Name
-	}
-	if !form.HasError("description") && isEdit {
 		descriptionValue = item.Description
 	}
-
-	// Pass-through to global form error display helper
-	formErrorMessage := func(field string) g.Node {
-		return FormErrorDisplay(form, field)
+	// Override with form values if they exist (from failed validation)
+	if form.Get("name") != "" {
+		nameValue = form.Get("name")
+	}
+	if form.Get("description") != "" {
+		descriptionValue = form.Get("description")
 	}
 
 	return html.Div(
-		// Form container with back link
-		g.Attr("class", "space-y-8"),
+		ui.CSSClass("space-y-8"),
 
 		// Back navigation
 		html.Div(
-			g.Attr("class", "flex justify-end"),
+			ui.CSSClass("flex", "justify-end"),
 			html.A(
-				g.Attr("href", backLink(isEdit, item)),
-				g.Attr("class", "text-sm font-medium text-indigo-600 hover:text-indigo-500"),
-				html.Span(g.Attr("aria-hidden", "true"), g.Raw(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>`)),
+				html.Href(backLink(isEdit, item)),
+				ui.CSSClass("text-sm", "font-medium", "text-indigo-600", "hover:text-indigo-500"),
+				html.Span(html.Aria("hidden", "true"), g.Raw(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>`)),
 				g.Text(" Back"),
 			),
 		),
 
 		html.Form(
-			g.Attr("class", "bg-white shadow-sm border border-slate-200 rounded-lg overflow-hidden"),
-			// Form attributes
+			ui.CSSClass("bg-white", "shadow-sm", "border", "border-slate-200", "rounded-lg", "overflow-hidden"),
 			html.Action(actionURL),
 			html.Method("POST"),
 
 			// Form header
 			html.Div(
-				g.Attr("class", "border-b border-slate-200 bg-slate-50 px-4 py-5 sm:px-6"),
+				ui.CSSClass("border-b", "border-slate-200", "bg-slate-50", "px-4", "py-5", "sm:px-6"),
 				html.H3(
-					g.Attr("class", "text-lg font-medium leading-6 text-slate-900"),
+					ui.CSSClass("text-lg", "font-medium", "leading-6", "text-slate-900"),
 					g.Text(title),
 				),
 				html.P(
-					g.Attr("class", "mt-1 text-sm text-slate-500"),
+					ui.CSSClass("mt-1", "text-sm", "text-slate-500"),
 					g.Text(func() string {
 						if isEdit {
 							return "Update the item details below."
@@ -148,60 +138,43 @@ func ItemForm(form *core.Form, item *state.Item, csrfToken string) g.Node {
 
 			// Form body
 			html.Div(
-				g.Attr("class", "px-4 py-5 sm:p-6 space-y-6"),
+				ui.CSSClass("px-4", "py-5", "sm:p-6", "space-y-6"),
 
 				// CSRF Token
-				CsrfField(csrfToken),
+				ui.CSRFInput(csrfToken),
 
-				// Name field
-				html.Div(
-					html.Label(
-						g.Attr("for", "name"),
-						g.Attr("class", "block text-sm font-medium text-slate-700"),
-						g.Text("Name"),
-					),
-					html.Div(
-						g.Attr("class", "mt-1"),
-						html.Input(
-							g.Attr("type", "text"),
-							g.Attr("name", "name"),
-							g.Attr("id", "name"),
-							g.Attr("value", nameValue),
-							g.Attr("class", FormFieldClass(form, "name")),
-						),
-						formErrorMessage("name"),
-					),
+				// Name field using new ui components
+				ui.FormGroupWithValidation(form, "name", "Name",
+					ui.TextInputWithValidation(form, ui.TextInputProps{
+						Name:        "name",
+						Type:        "text",
+						Value:       nameValue,
+						Placeholder: "Enter item name",
+						Required:    true,
+					}),
+					"A unique name for this item",
 				),
 
-				// Description field
-				html.Div(
-					html.Label(
-						g.Attr("for", "description"),
-						g.Attr("class", "block text-sm font-medium text-slate-700"),
-						g.Text("Description"),
-					),
-					html.Div(
-						g.Attr("class", "mt-1"),
-						html.Textarea(
-							g.Attr("name", "description"),
-							g.Attr("id", "description"),
-							g.Attr("rows", "4"),
-							g.Attr("class", FormFieldClass(form, "description")),
-							g.Text(descriptionValue),
-						),
-						formErrorMessage("description"),
-					),
+				// Description field using new ui components
+				ui.FormGroupWithValidation(form, "description", "Description",
+					ui.TextAreaWithValidation(form, ui.TextAreaProps{
+						Name:        "description",
+						Value:       descriptionValue,
+						Placeholder: "Enter item description",
+						Rows:        4,
+						Required:    true,
+					}),
+					"A detailed description of this item",
 				),
 			),
 
 			// Form footer with submit button
 			html.Div(
-				g.Attr("class", "px-4 py-3 bg-slate-50 text-right sm:px-6 border-t border-slate-200"),
-				html.Button(
-					g.Attr("type", "submit"),
-					g.Attr("class", "inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"),
-					g.Text(submitLabel),
-				),
+				ui.CSSClass("px-4", "py-3", "bg-slate-50", "text-right", "sm:px-6", "border-t", "border-slate-200"),
+				ui.Button(ui.ButtonProps{
+					Type:    "submit",
+					Variant: "primary",
+				}, g.Text(submitLabel)),
 			),
 		),
 	)
