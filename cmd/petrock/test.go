@@ -120,16 +120,19 @@ func runTest(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("'go build ./...' failed in %s: %w", projectAbsDir, err) // Use projectAbsDir here
 	}
 
-	// 6. Start the web server in a background goroutine
+	// 6. Build the server binary first
+	slog.Info("Building server binary for integration test")
+	buildServerCmd := exec.Command("go", "build", "-o", "selftest-server", "./cmd/selftest")
+	if err := buildServerCmd.Run(); err != nil {
+		return fmt.Errorf("failed to build server binary: %w", err)
+	}
+
+	// 7. Start the server directly (no go run)
 	slog.Info("Starting web server for integration test")
-	serverCmd := exec.Command("go", "run", "./cmd/selftest", "serve", "--port", "8081")
+	serverCmd := exec.Command("./selftest-server", "serve", "--port", "8081")
 	serverCmd.Stdout = os.Stdout
 	serverCmd.Stderr = os.Stderr
-
-	// Create a channel that we could use for server termination signaling if needed
-	// But we'll just use the defer function with Process.Kill() for simplicity
 	
-	// Start the server in a goroutine
 	if err := serverCmd.Start(); err != nil {
 		return fmt.Errorf("failed to start web server: %w", err)
 	}
@@ -144,11 +147,11 @@ func runTest(cmd *cobra.Command, args []string) error {
 		_ = serverCmd.Wait()
 	}()
 
-	// 7. Wait a moment for the server to initialize
+	// 8. Wait a moment for the server to initialize
 	slog.Info("Waiting for server to initialize...")
 	time.Sleep(2 * time.Second)
 
-	// 8. Make an HTTP request to /posts
+	// 9. Make an HTTP request to /posts
 	slog.Info("Testing HTTP endpoint", "url", "http://localhost:8081/posts")
 	resp, err := http.Get("http://localhost:8081/posts")
 	if err != nil {
@@ -156,13 +159,13 @@ func runTest(cmd *cobra.Command, args []string) error {
 	}
 	defer resp.Body.Close()
 
-	// 9. Verify the response is 200 OK
+	// 10. Verify the response is 200 OK
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("unexpected status code: got %d, want %d", resp.StatusCode, http.StatusOK)
 	}
 	slog.Info("HTTP endpoint test successful", "status", resp.Status)
 
-	// 10. Test the self inspect command
+	// 11. Test the self inspect command
 	slog.Info("Testing 'self inspect' command")
 	selfInspectCmd := exec.Command("go", "run", "./cmd/selftest", "self", "inspect")
 	
@@ -172,14 +175,14 @@ func runTest(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to run 'self inspect' command: %w", err)
 	}
 
-	// 11. Verify the output is valid JSON
+	// 12. Verify the output is valid JSON
 	slog.Info("Verifying 'self inspect' output is valid JSON")
 	var result map[string]interface{}
 	if err := json.Unmarshal(selfInspectOutput, &result); err != nil {
 		return fmt.Errorf("'self inspect' command did not produce valid JSON: %w", err)
 	}
 
-	// 12. Verify the JSON contains the expected keys
+	// 13. Verify the JSON contains the expected keys
 	expectedKeys := []string{"commands", "queries", "routes", "features", "workers"}
 	for _, key := range expectedKeys {
 		if _, ok := result[key]; !ok {
@@ -187,7 +190,7 @@ func runTest(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// 13. Verify workers are included in the output
+	// 14. Verify workers are included in the output
 	workers, ok := result["workers"].([]interface{})
 	if !ok {
 		return fmt.Errorf("'workers' key doesn't contain an array of workers")
