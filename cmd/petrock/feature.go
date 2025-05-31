@@ -94,7 +94,7 @@ func runFeature(cmd *cobra.Command, args []string) error {
 
 	// 2. Define source and destination paths
 	// Source path is now relative to the root of SkeletonFS
-	skeletonSourcePath := "internal/skeleton/feature_template"
+	skeletonSourcePath := "internal/skeleton/petrock_example_feature_name"
 	destinationPath := featureName // Relative path for the new feature dir
 
 	// 3. Copy files using utils.CopyDir from the main SkeletonFS

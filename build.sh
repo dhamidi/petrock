@@ -62,7 +62,10 @@ step() {
 }
 
 build_skeleton() {
-  cp internal/skeleton/go.mod{.skel,} && go build ./internal/...
+  cp internal/skeleton/go.mod{.skel,} && (
+    cd internal/skeleton
+    go build ./...
+  )
 }
 
 build_petrock() {
