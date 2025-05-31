@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/petrock/example_module_path/core"
+	"github.com/petrock/example_module_path/core/ui"
 	g "maragu.dev/gomponents"
 	"maragu.dev/gomponents/html"
 )
@@ -65,138 +66,50 @@ func ParseIntParam(param string, defaultValue int) int {
 
 // --- View Helper Functions ---
 
-// RenderPage is a helper function to render a complete HTML page with proper layout
+// RenderPage is a helper function to render a complete HTML page using ui.Layout and ui.Page
 func RenderPage(w http.ResponseWriter, pageTitle string, content g.Node) error {
 	return RenderPageWithSuccess(w, pageTitle, content, "")
 }
 
-// RenderPageWithSuccess renders a complete HTML page with a success message
+// RenderPageWithSuccess renders a complete HTML page with a success message using ui components
 func RenderPageWithSuccess(w http.ResponseWriter, pageTitle string, content g.Node, successMsg string) error {
 	// Set content type for HTML
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	// Create the page using a modern layout
-	html := html.HTML(
-		html.Lang("en"),
-		html.Head(
-			html.Meta(html.Charset("utf-8")),
-			html.Meta(html.Name("viewport"), html.Content("width=device-width, initial-scale=1")),
-			html.TitleEl(g.Text(pageTitle)),
-			// Link to Tailwind CSS (modern version)
-			html.Script(
-				html.Src("https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"),
-				html.Async(),
-				html.Defer(),
-			),
-			// Add a modern font
-			html.Link(
-				html.Rel("stylesheet"),
-				html.Href("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"),
-			),
-		),
-		html.Body(
-			// Modern styling
-			g.Attr("class", "bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen font-sans antialiased text-slate-800"),
-
-			// Header - full width
-			html.Header(
-				g.Attr("class", "bg-white shadow-sm border-b border-slate-200"),
+	// Create success message content if provided
+	var pageContent g.Node
+	if successMsg != "" {
+		successAlert := html.Div(
+			ui.CSSClass("mb-6", "rounded-md", "bg-green-50", "p-4", "border", "border-green-200"),
+			html.Div(
+				ui.CSSClass("flex"),
 				html.Div(
-					g.Attr("class", "container mx-auto px-4 sm:px-6 lg:px-8 py-4"),
-					html.Div(
-						g.Attr("class", "flex justify-between items-center"),
-						html.Div(
-							g.Attr("class", "flex items-center"),
-							html.A(
-								g.Attr("href", "/"),
-								g.Attr("class", "text-xl font-semibold text-indigo-600"),
-								g.Text("Petrock App"),
-							),
+					ui.CSSClass("ml-3"),
+					html.P(
+						ui.CSSClass("text-sm", "font-medium", "text-green-800"),
+						html.Span(
+							ui.CSSClass("inline-block", "mr-1"),
+							g.Raw(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`),
 						),
-						html.Nav(
-							g.Attr("class", "flex space-x-4"),
-							html.A(
-								g.Attr("href", "/petrock_example_feature_name"),
-								g.Attr("class", "text-sm font-medium text-slate-700 hover:text-indigo-600"),
-								g.Text("Items"),
-							),
-							html.A(
-								g.Attr("href", "/petrock_example_feature_name/new"),
-								g.Attr("class", "text-sm font-medium text-slate-700 hover:text-indigo-600"),
-								g.Text("New Item"),
-							),
-						),
+						g.Text(successMsg),
 					),
 				),
 			),
+		)
+		pageContent = html.Div(
+			successAlert,
+			content,
+		)
+	} else {
+		pageContent = content
+	}
 
-			// Main content - centered on larger screens
-			html.Main(
-				g.Attr("class", "container mx-auto px-4 sm:px-6 lg:px-8 py-8"),
-				html.Div(
-					g.Attr("class", "max-w-4xl mx-auto"),
-					// Page title
-					html.H1(
-						g.Attr("class", "text-2xl font-bold text-slate-900 mb-6"),
-						g.Text(pageTitle),
-					),
-					// Success message (if any)
-					func() g.Node {
-						if successMsg == "" {
-							return nil
-						}
-						return html.Div(
-							g.Attr("class", "mb-6 rounded-md bg-green-50 p-4 border border-green-200"),
-							html.Div(
-								g.Attr("class", "flex"),
-								html.Div(
-									g.Attr("class", "ml-3"),
-									html.P(
-										g.Attr("class", "text-sm font-medium text-green-800"),
-										html.Span(
-											g.Attr("class", "inline-block mr-1"),
-											g.Raw(`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`),
-										),
-										g.Text(successMsg),
-									),
-								),
-							),
-						)
-					}(),
-					// Page content
-					html.Div(
-						g.Attr("class", "bg-white shadow-sm rounded-lg border border-slate-200 p-6"),
-						content,
-					),
-				),
-			),
-
-			// Footer - full width
-			html.Footer(
-				g.Attr("class", "bg-white border-t border-slate-200 mt-auto"),
-				html.Div(
-					g.Attr("class", "container mx-auto px-4 sm:px-6 lg:px-8 py-4"),
-					html.Div(
-						g.Attr("class", "justify-center items-center flex flex-row gap-2 text-sm text-slate-500"),
-						html.SVG(
-							g.Attr("xmlns", "http://www.w3.org/2000/svg"),
-							g.Attr("width", "14"),
-							g.Attr("height", "14"),
-							g.Attr("viewBox", "0 0 24 24"),
-							g.Attr("fill", "none"),
-							g.Attr("stroke", "currentColor"),
-							g.Attr("stroke-width", "2"),
-							g.Attr("stroke-linecap", "round"),
-							g.Attr("stroke-linejoin", "round"),
-							g.Raw(`<circle cx="12" cy="12" r="10"></circle><path d="M14.83 14.83a4 4 0 1 1 0-5.66"></path>`),
-						),
-						g.Text("2025 Petrock App - Built with petrock"),
-					),
-				),
-			),
-		),
+	// Use ui.Layout and ui.Page for consistent styling
+	page := ui.Layout(
+		pageTitle,
+		ui.Page(pageTitle, pageContent),
 	)
 
 	// Render the HTML
-	return html.Render(w)
+	return page.Render(w)
 }

@@ -2,120 +2,131 @@ package pages
 
 import (
 	g "maragu.dev/gomponents"
-	// . "maragu.dev/gomponents/components"
 	"maragu.dev/gomponents/html"
+	"github.com/petrock/example_module_path/core/ui"
 )
 
 // ItemView renders the HTML representation of a single item.
 // Adapt the fields and structure based on the 'Result' type in queries.go.
 func ItemView(item Result) g.Node {
-	return html.Div(
-		// Item information card
-		html.Div(
-			g.Attr("class", "space-y-6"),
+	return ui.Container(ui.ContainerProps{Variant: "default"},
+		// Navigation breadcrumbs
+		ui.Breadcrumbs(ui.BreadcrumbsProps{
+			Items: []ui.BreadcrumbItem{
+				{Label: "Items", Href: "/petrock_example_feature_name"},
+				{Label: item.Name, Current: true},
+			},
+		}),
 
-			// Item metadata in a grid layout - responsive
-			html.Dl(
-				g.Attr("class", "grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6"),
-
-				// ID field
-				html.Div(
-					g.Attr("class", "col-span-1"),
-					html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("ID")),
-					html.Dd(g.Attr("class", "mt-1 text-sm text-slate-900"), g.Text(item.ID)),
-				),
-
-				// Name field
-				html.Div(
-					g.Attr("class", "col-span-1"),
-					html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("Name")),
-					html.Dd(g.Attr("class", "mt-1 text-sm text-slate-900 font-medium"), g.Text(item.Name)),
-				),
-
-				// Description field - spans full width
-				html.Div(
-					g.Attr("class", "col-span-1 sm:col-span-2"),
-					html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("Description")),
-					html.Dd(
-						g.Attr("class", "mt-1 text-sm text-slate-900 whitespace-pre-wrap"),
-						g.Text(item.Description),
+		ui.Section(ui.SectionProps{Heading: item.Name, Level: 1},
+			// Main content in a card
+			ui.Card(ui.CardProps{Variant: "default", Padding: "large"},
+				ui.CardHeader(
+					html.Div(
+						ui.CSSClass("flex", "items-center", "justify-between"),
+						html.H2(ui.CSSClass("text-xl", "font-semibold"), g.Text("Item Details")),
+						ui.Badge(ui.BadgeProps{
+							Variant: "info",
+							Size:    "medium",
+						}, g.Textf("Version %d", item.Version)),
 					),
 				),
-
-				// Content field - spans full width
-				html.Div(
-					g.Attr("class", "col-span-1 sm:col-span-2"),
-					html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("Content")),
-					html.Dd(
-						g.Attr("class", "mt-1 text-sm text-slate-900 whitespace-pre-wrap p-3 bg-slate-50 rounded border border-slate-100"),
-						g.Text(item.Content),
-					),
-				),
-
-				// Summary field (if available) - spans full width
-				func() g.Node {
-					if item.Summary == "" {
-						return nil
-					}
-					return html.Div(
-						g.Attr("class", "col-span-1 sm:col-span-2"),
-						html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("Summary")),
-						html.Dd(
-							g.Attr("class", "mt-1 text-sm italic text-slate-700 whitespace-pre-wrap p-3 bg-indigo-50 rounded border border-indigo-100"),
-							g.Text(item.Summary),
+				ui.CardBody(
+					// Item details in a two-column grid
+					ui.Grid(ui.GridProps{
+						Columns: "repeat(auto-fit, minmax(250px, 1fr))",
+						Gap:     "1.5rem",
+					},
+						// Left column - Basic Info
+						html.Div(
+							ui.CSSClass("space-y-4"),
+							html.H3(ui.CSSClass("text-lg", "font-medium", "text-gray-900", "mb-3"), g.Text("Basic Information")),
+							
+							html.Div(
+								html.Dt(ui.CSSClass("text-sm", "font-medium", "text-gray-500"), g.Text("ID")),
+								html.Dd(ui.CSSClass("mt-1", "text-sm", "text-gray-900", "font-mono"), g.Text(item.ID)),
+							),
+							html.Div(
+								html.Dt(ui.CSSClass("text-sm", "font-medium", "text-gray-500"), g.Text("Name")),
+								html.Dd(ui.CSSClass("mt-1", "text-lg", "font-semibold", "text-gray-900"), g.Text(item.Name)),
+							),
+							html.Div(
+								html.Dt(ui.CSSClass("text-sm", "font-medium", "text-gray-500"), g.Text("Description")),
+								html.Dd(ui.CSSClass("mt-1", "text-sm", "text-gray-900"), g.Text(item.Description)),
+							),
 						),
-					)
-				}(),
 
-				// Created date
-				html.Div(
-					g.Attr("class", "col-span-1"),
-					html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("Created")),
-					html.Dd(
-						g.Attr("class", "mt-1 text-sm text-slate-500"),
-						g.Text(item.CreatedAt.Format("Jan 2, 2006 at 15:04")),
+						// Right column - Timestamps
+						html.Div(
+							ui.CSSClass("space-y-4"),
+							html.H3(ui.CSSClass("text-lg", "font-medium", "text-gray-900", "mb-3"), g.Text("Timestamps")),
+							
+							html.Div(
+								html.Dt(ui.CSSClass("text-sm", "font-medium", "text-gray-500"), g.Text("Created")),
+								html.Dd(ui.CSSClass("mt-1", "text-sm", "text-gray-900"), g.Text(item.CreatedAt.Format("Jan 2, 2006 at 15:04"))),
+							),
+							html.Div(
+								html.Dt(ui.CSSClass("text-sm", "font-medium", "text-gray-500"), g.Text("Last Updated")),
+								html.Dd(ui.CSSClass("mt-1", "text-sm", "text-gray-900"), g.Text(item.UpdatedAt.Format("Jan 2, 2006 at 15:04"))),
+							),
+						),
+					),
+
+					ui.Divider(ui.DividerProps{Variant: "default", Margin: "large"}),
+
+					// Content section
+					html.Div(
+						ui.CSSClass("space-y-4"),
+						html.H3(ui.CSSClass("text-lg", "font-medium", "text-gray-900"), g.Text("Content")),
+						html.Pre(
+							ui.CSSClass("text-sm", "text-gray-900", "whitespace-pre-wrap", "p-4", "bg-gray-50", "rounded-lg", "border"),
+							g.Text(item.Content),
+						),
+					),
+
+					// Summary section (if available)
+					func() g.Node {
+						if item.Summary == "" {
+							return nil
+						}
+						return html.Div(
+							ui.CSSClass("space-y-4", "mt-6"),
+							html.H3(ui.CSSClass("text-lg", "font-medium", "text-gray-900"), g.Text("AI Summary")),
+							html.Div(
+								ui.CSSClass("p-4", "bg-blue-50", "rounded-lg", "border", "border-blue-200"),
+								html.P(ui.CSSClass("text-sm", "italic", "text-blue-800"), g.Text(item.Summary)),
+							),
+						)
+					}(),
+				),
+				ui.CardFooter(
+					ui.ButtonGroup(ui.ButtonGroupProps{
+						Orientation: "horizontal",
+						Spacing:     "medium",
+					},
+						html.A(
+							html.Href("/petrock_example_feature_name/"+item.ID+"/edit"),
+							ui.Button(ui.ButtonProps{
+								Variant: "primary",
+								Size:    "medium",
+							}, g.Text("Edit Item")),
+						),
+						html.A(
+							html.Href("/petrock_example_feature_name/"+item.ID+"/delete"),
+							ui.Button(ui.ButtonProps{
+								Variant: "danger",
+								Size:    "medium",
+							}, g.Text("Delete Item")),
+						),
+						html.A(
+							html.Href("/petrock_example_feature_name"),
+							ui.Button(ui.ButtonProps{
+								Variant: "secondary",
+								Size:    "medium",
+							}, g.Text("Back to List")),
+						),
 					),
 				),
-
-				// Updated date
-				html.Div(
-					g.Attr("class", "col-span-1"),
-					html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("Last Updated")),
-					html.Dd(
-						g.Attr("class", "mt-1 text-sm text-slate-500"),
-						g.Text(item.UpdatedAt.Format("Jan 2, 2006 at 15:04")),
-					),
-				),
-
-				// Version number
-				html.Div(
-					g.Attr("class", "col-span-1 sm:col-span-2"),
-					html.Dt(g.Attr("class", "text-sm font-medium text-slate-500"), g.Text("Version")),
-					html.Dd(g.Attr("class", "mt-1 text-sm text-slate-500"), g.Textf("%d", item.Version)),
-				),
-			),
-		),
-
-		// Actions section - responsive
-		html.Div(
-			g.Attr("class", "mt-8 flex flex-col sm:flex-row gap-3"),
-			// Edit button
-			html.A(
-				g.Attr("href", "/petrock_example_feature_name/"+item.ID+"/edit"),
-				g.Attr("class", "inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:w-auto w-full"),
-				g.Text("Edit Item"),
-			),
-			// Delete button
-			html.A(
-				g.Attr("href", "/petrock_example_feature_name/"+item.ID+"/delete"),
-				g.Attr("class", "inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:w-auto w-full"),
-				g.Text("Delete Item"),
-			),
-			// Back to list
-			html.A(
-				g.Attr("href", "/petrock_example_feature_name"),
-				g.Attr("class", "inline-flex items-center justify-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md shadow-sm text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:w-auto w-full"),
-				g.Text("Back to List"),
 			),
 		),
 	)

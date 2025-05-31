@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/petrock/example_module_path/core" // Assuming core package exists
+	"github.com/petrock/example_module_path/core/ui/gallery"
 
 	// Use standard library for routing
 	"github.com/spf13/cobra"
@@ -165,6 +166,10 @@ func runServe(cmd *cobra.Command, args []string) error {
 	app.RegisterRoute("POST /commands", handleExecuteCommand(app.Executor, app.CommandRegistry))
 	app.RegisterRoute("GET /queries", handleListQueries(app.QueryRegistry))
 	app.RegisterRoute("GET /queries/{feature}/{queryName}", handleExecuteQuery(app.QueryRegistry))
+	
+	// Setup UI Gallery routes
+	app.RegisterRoute("GET /_/ui", gallery.HandleGallery(app))
+	app.RegisterRoute("GET /_/ui/{component}", gallery.HandleComponentDetail(app))
 
 	// IMPORTANT: We don't need this anymore since routes are registered during feature registration
 	// RegisterFeatureRoutes was a workaround for when mux was passed as nil to RegisterAllFeatures
