@@ -1,6 +1,7 @@
 .env
 .aider.*
 .aider*
+.DS_Store
 
 # Ignore petrock binary itself if built in the root
 /petrock
