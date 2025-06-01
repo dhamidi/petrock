@@ -60,7 +60,7 @@ func (c *CreateCommand) Validate(state *state.State) error {
 }
 
 // HandleCreate applies state changes for CreateCommand.
-func (e *Executor) HandleCreate(ctx context.Context, command core.Command, msg *core.Message) error {
+func (e *Executor) HandleCreate(ctx context.Context, command core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
 	// Type assertion for pointer type
 	cmd, ok := command.(*CreateCommand)
 	if !ok {

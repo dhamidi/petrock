@@ -50,7 +50,7 @@ func (c *DeleteCommand) Validate(state *state.State) error {
 }
 
 // HandleDelete applies state changes for DeleteCommand.
-func (e *Executor) HandleDelete(ctx context.Context, command core.Command, msg *core.Message) error {
+func (e *Executor) HandleDelete(ctx context.Context, command core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
 	// Type assertion for pointer type
 	cmd, ok := command.(*DeleteCommand)
 	if !ok {

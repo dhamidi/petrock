@@ -117,6 +117,79 @@ petrock test
 
 This creates a temporary project, runs `petrock new`, adds a test feature, attempts to build it, and tests basic HTTP functionality.
 
+## Worker System
+
+Petrock includes a powerful worker abstraction for background processing, event handling, and asynchronous operations. Workers eliminate boilerplate code while maintaining flexibility for complex business logic.
+
+### Key Features
+
+- **Command-Based Processing**: Workers respond to specific commands with focused handlers
+- **Automatic Message Processing**: Core infrastructure handles message iteration and routing
+- **State Management**: Built-in support for worker-specific state with persistence
+- **Periodic Work**: Background processing that runs during each work cycle
+- **Graceful Lifecycle**: Proper startup, shutdown, and error handling
+
+### Worker Benefits
+
+- **Reduced Boilerplate**: ~80% reduction in worker code compared to manual implementation
+- **Consistent Infrastructure**: All workers use the same message processing and error handling
+- **Easy Testing**: Command handlers are pure functions that are simple to test
+- **Scalable**: Projects can easily support 50-100 workers without code duplication
+
+### Example Worker
+
+```go
+func NewWorker(app *core.App, state *State, log *core.MessageLog, executor *core.Executor) core.Worker {
+    worker := core.NewWorker(
+        "Feature Worker",
+        "Handles background processing for the feature",
+        &WorkerState{pendingTasks: make(map[string]Task)},
+    )
+    
+    worker.SetDependencies(log, executor)
+    
+    // Register command handlers
+    worker.OnCommand("feature/process", func(ctx context.Context, cmd core.Command, msg *core.Message) error {
+        return handleProcessCommand(ctx, cmd, msg, worker.State().(*WorkerState))
+    })
+    
+    // Set periodic work
+    worker.SetPeriodicWork(func(ctx context.Context) error {
+        return processPendingTasks(ctx, worker.State().(*WorkerState))
+    })
+    
+    return worker
+}
+```
+
+For complete documentation on workers, see [`docs/workers.md`](docs/workers.md).
+
+## Key-Value Store
+
+Petrock applications include a built-in key-value store for persistent data storage. The KVStore provides a simple interface for storing JSON-serializable data with SQLite backing.
+
+### Features
+
+- **JSON Serialization**: Automatic marshaling/unmarshaling of Go types
+- **Pattern Matching**: List keys using SQLite GLOB patterns
+- **CLI Access**: Built-in commands for get, set, and list operations
+- **Worker Integration**: Used internally for worker position tracking
+
+### Usage Examples
+
+```bash
+# Store configuration
+go run ./cmd/myapp kv set --json "app:config" '{"theme": "dark", "debug": true}'
+
+# Retrieve configuration
+go run ./cmd/myapp kv get "app:config"
+
+# List all configuration keys
+go run ./cmd/myapp kv list "*:config"
+```
+
+For complete documentation on the KVStore, see [`docs/core/kv.md`](docs/core/kv.md).
+
 ## Generated Application
 
 A Petrock-generated application includes its own command-line interface:
@@ -136,6 +209,12 @@ go run ./cmd/<project-name> deploy --target-host user@hostname
 
 # Inspect the application (view registered commands, queries, routes, etc.)
 go run ./cmd/<project-name> self inspect
+
+# Key-value store operations
+go run ./cmd/<project-name> kv get <key>
+go run ./cmd/<project-name> kv set <key> <value>
+go run ./cmd/<project-name> kv set --json <key> <json-value>
+go run ./cmd/<project-name> kv list [glob-pattern]
 ```
 
 Refer to the generated code and the `docs/` directory within Petrock's repository for more in-depth details on the architecture and specific components.

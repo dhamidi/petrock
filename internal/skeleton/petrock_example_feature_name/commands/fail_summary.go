@@ -24,7 +24,7 @@ func (c *FailSummaryGenerationCommand) CommandName() string {
 }
 
 // HandleFailSummaryGeneration applies state changes for FailSummaryGenerationCommand.
-func (e *Executor) HandleFailSummaryGeneration(ctx context.Context, command core.Command, msg *core.Message) error {
+func (e *Executor) HandleFailSummaryGeneration(ctx context.Context, command core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
 	// Type assertion for pointer type
 	cmd, ok := command.(*FailSummaryGenerationCommand)
 	if !ok {

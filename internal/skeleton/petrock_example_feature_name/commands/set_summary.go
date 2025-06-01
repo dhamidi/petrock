@@ -24,7 +24,7 @@ func (c *SetGeneratedSummaryCommand) CommandName() string {
 }
 
 // HandleSetGeneratedSummary applies state changes for SetGeneratedSummaryCommand.
-func (e *Executor) HandleSetGeneratedSummary(ctx context.Context, command core.Command, msg *core.Message) error {
+func (e *Executor) HandleSetGeneratedSummary(ctx context.Context, command core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
 	// Type assertion for pointer type
 	cmd, ok := command.(*SetGeneratedSummaryCommand)
 	if !ok {

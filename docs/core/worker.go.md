@@ -15,17 +15,20 @@ type Worker interface {
     Start(ctx context.Context) error
     Stop(ctx context.Context) error
     Work() error
+    Replay(ctx context.Context) error
     WorkerInfo() *WorkerInfo  // Optional method
 }
 ```
 
 #### Methods
 
-- **`Start(ctx context.Context) error`**: Initializes the worker and rebuilds its internal state by processing existing messages from the message log. Should be idempotent and return an error if the worker is already started.
+- **`Start(ctx context.Context) error`**: Initializes the worker. Should be idempotent and return an error if the worker is already started.
 
 - **`Stop(ctx context.Context) error`**: Gracefully shuts down the worker, allowing it to clean up resources and finish any in-progress work. Should be idempotent and respect the provided context's deadline or cancellation.
 
-- **`Work() error`**: Performs a single processing cycle of the worker, handling new messages from the message log, updating internal state, and performing any required actions. Called periodically by the App's worker scheduler and should be quick and non-blocking when possible.
+- **`Work() error`**: Performs a single processing cycle of the worker, handling new messages from the message log since the last processed position, updating internal state, and performing any required actions. Called periodically by the App's worker scheduler and should be quick and non-blocking when possible.
+
+- **`Replay(ctx context.Context) error`**: Processes all messages from the beginning to reconstruct worker state. Called during startup after Start() but before regular Work() cycles. Should process messages for state reconstruction only, avoiding side effects.
 
 - **`WorkerInfo() *WorkerInfo`** (Optional): Provides self-description information for introspection and debugging purposes. If not implemented, information will be extracted via reflection.
 
@@ -107,15 +110,17 @@ func (w *MyWorker) WorkerInfo() *WorkerInfo {
 ### Worker Lifecycle
 
 1. **Registration**: Workers are registered with the App during feature registration
-2. **Startup**: App calls `Start()` on all workers during application initialization
-3. **Execution**: App periodically calls `Work()` on all workers (typically every 1-2 seconds with jitter)
-4. **Shutdown**: App calls `Stop()` on all workers during application shutdown
+2. **Startup**: App calls `Start()` on all workers during application initialization  
+3. **Replay**: App calls `Replay()` on all workers to reconstruct state from historical messages
+4. **Execution**: App periodically calls `Work()` on all workers (typically every 1-2 seconds with jitter)
+5. **Shutdown**: App calls `Stop()` on all workers during application shutdown
 
 ### Message Log Integration
 
 Workers typically:
-- Track their position in the message log to avoid reprocessing messages
+- Use `LogFollower` to track their position in the message log with persistent storage via `KVStore`
 - React to specific message types relevant to their functionality
+- Distinguish between replay (state-only) and normal processing using `ProcessingContext`
 - Dispatch commands through the central `core.Executor` when they need to update application state
 - Maintain their own internal state by processing messages chronologically
 

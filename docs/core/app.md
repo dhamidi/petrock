@@ -11,6 +11,7 @@ type App struct {
     CommandRegistry *CommandRegistry
     QueryRegistry   *QueryRegistry
     Executor        *Executor
+    KVStore         KVStore          // Key-value store for persistent data
     Features        []string         // Track registered feature names
     Routes          []string         // Track registered routes
     Mux             *http.ServeMux   // Store the HTTP mux
@@ -25,6 +26,7 @@ type App struct {
 - **CommandRegistry**: Maps command types to their handlers
 - **QueryRegistry**: Maps query types to their handlers
 - **Executor**: Central component for executing commands
+- **KVStore**: Key-value store for persistent data storage
 - **Features**: Tracks all registered feature names
 - **Routes**: Tracks all registered HTTP routes
 - **Mux**: HTTP router for the application
@@ -72,7 +74,8 @@ The `App` is initialized using the `NewApp` function, which:
 2. Sets up the database connection
 3. Initializes the message log
 4. Creates the central executor
-5. Initializes empty slices for features and routes
+5. Sets up the key-value store
+6. Initializes empty slices for features and routes
 
 ```go
 func NewApp(dbPath string) (*App, error) {
@@ -84,6 +87,7 @@ func NewApp(dbPath string) (*App, error) {
         CommandRegistry: commandRegistry,
         QueryRegistry:   queryRegistry,
         Executor:        executor,
+        KVStore:         kvStore,
         Features:        []string{},
         Routes:          []string{},
         // AppState will be initialized by the caller

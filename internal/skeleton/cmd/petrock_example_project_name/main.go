@@ -38,6 +38,7 @@ func init() {
 	rootCmd.AddCommand(NewBuildCmd())
 	rootCmd.AddCommand(NewDeployCmd())
 	rootCmd.AddCommand(NewSelfCmd())
+	rootCmd.AddCommand(NewKVCmd())
 }
 
 func main() {
