@@ -12,9 +12,12 @@ With this abstraction, projects can scale to 50-100 workers without code duplica
 
 The worker system consists of several key components:
 
-- **Worker Interface**: Defines the contract for all workers (Start, Stop, Work, WorkerInfo)
+- **Worker Interface**: Defines the contract for all workers (Start, Stop, Work, Replay, WorkerInfo)
 - **CommandWorker**: Concrete implementation providing command-based message processing
-- **Command Handlers**: Functions that process specific command types
+- **LogFollower**: Tracks worker position in the message log for reliable replay
+- **KVStore**: Persists worker positions and other state across restarts
+- **ProcessingContext**: Distinguishes between replay and normal processing modes
+- **Command Handlers**: Functions that process specific command types with context awareness
 - **Periodic Work**: Background processing that runs during each Work() cycle
 - **Worker State**: Custom state structure for worker-specific data
 
@@ -22,12 +25,14 @@ The worker system consists of several key components:
 
 The core worker infrastructure handles:
 
-1. **Message Processing Loop**: Automatically iterates through new messages since last processed ID
+1. **Message Processing Loop**: Automatically iterates through new messages using LogFollower position tracking
 2. **Command Routing**: Dispatches commands to registered handlers based on command name
-3. **State Management**: Tracks `lastProcessedID` and provides access to worker-specific state
-4. **Lifecycle Management**: Handles Start/Stop/Work cycle with proper context management
-5. **Error Handling**: Provides consistent error handling and structured logging
-6. **Periodic Execution**: Calls user-defined periodic work function
+3. **Position Management**: Uses LogFollower and KVStore for reliable position tracking across restarts
+4. **Replay System**: Automatically reconstructs worker state by replaying all historical messages during startup
+5. **Processing Context**: Provides context to handlers to distinguish replay vs normal processing
+6. **Lifecycle Management**: Handles Start/Replay/Work/Stop cycle with proper context management
+7. **Error Handling**: Provides consistent error handling and structured logging
+8. **Periodic Execution**: Calls user-defined periodic work function
 
 ## Creating a Worker
 
@@ -66,12 +71,12 @@ func NewWorker(app *core.App, state *State, log *core.MessageLog, executor *core
         workerState,
     )
 
-    // Set core dependencies
-    worker.SetDependencies(log, executor)
+    // Set core dependencies (KVStore will be set automatically by App)
+    worker.SetDependencies(log, executor, nil)
 
     // Register command handlers
-    worker.OnCommand("feature/process", func(ctx context.Context, cmd core.Command, msg *core.Message) error {
-        return handleProcessCommand(ctx, cmd, msg, workerState)
+    worker.OnCommand("feature/process", func(ctx context.Context, cmd core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
+        return handleProcessCommand(ctx, cmd, msg, workerState, pctx)
     })
 
     // Set periodic work
@@ -88,24 +93,28 @@ func NewWorker(app *core.App, state *State, log *core.MessageLog, executor *core
 Command handlers are the core of worker business logic. They receive commands and perform operations:
 
 ```go
-func handleProcessCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState) error {
+func handleProcessCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState, pctx *core.ProcessingContext) error {
     // Type assertion to get specific command
     processCmd, ok := cmd.(*ProcessCommand)
     if !ok {
         return fmt.Errorf("unexpected command type: %T", cmd)
     }
 
-    // Perform business logic
+    // ALWAYS update worker state (both replay and normal processing)
     task := Task{
         ID:        processCmd.TaskID,
         Data:      processCmd.Data,
         CreatedAt: time.Now(),
     }
 
-    // Update worker state
     workerState.pendingTasks[task.ID] = task
 
-    // Log the operation
+    // Skip side effects during replay
+    if pctx.IsReplay {
+        return nil
+    }
+
+    // Perform side effects only during normal processing
     slog.Info("Task added to processing queue",
         "taskID", task.ID,
         "feature", "your-feature")
@@ -303,14 +312,16 @@ func (w *OldWorker) Work() error {
 }
 
 // New pattern
-func handleProcessCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState) error {
+func handleProcessCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState, pctx *core.ProcessingContext) error {
     processCmd := cmd.(*ProcessCommand)
     // Same business logic here...
+    // Use pctx.IsReplay to distinguish between replay and normal processing
 }
 
-func handleUpdateCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState) error {
+func handleUpdateCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState, pctx *core.ProcessingContext) error {
     updateCmd := cmd.(*UpdateCommand)
     // Same business logic here...
+    // Use pctx.IsReplay to distinguish between replay and normal processing
 }
 ```
 
@@ -337,11 +348,11 @@ func NewWorker(app *core.App, state *State, log *core.MessageLog, executor *core
     }
 
     worker := core.NewWorker("Worker Name", "Description", workerState)
-    worker.SetDependencies(log, executor)
+    worker.SetDependencies(log, executor, nil) // KVStore set automatically by App
     
     // Register handlers
-    worker.OnCommand("feature/process", func(ctx context.Context, cmd core.Command, msg *core.Message) error {
-        return handleProcessCommand(ctx, cmd, msg, workerState)
+    worker.OnCommand("feature/process", func(ctx context.Context, cmd core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
+        return handleProcessCommand(ctx, cmd, msg, workerState, pctx)
     })
     
     return worker
@@ -406,8 +417,9 @@ func TestHandleProcessCommand(t *testing.T) {
 
     ctx := context.Background()
     msg := &core.Message{ID: 1}
+    pctx := &core.ProcessingContext{IsReplay: false}
 
-    err := handleProcessCommand(ctx, cmd, msg, workerState)
+    err := handleProcessCommand(ctx, cmd, msg, workerState, pctx)
     assert.NoError(t, err)
     assert.Contains(t, workerState.pendingTasks, "test-task")
 }
@@ -458,7 +470,7 @@ info := worker.WorkerInfo()
 fmt.Printf("Worker: %s - %s\n", info.Name, info.Description)
 
 // Check command registration
-worker.OnCommand("debug/list-handlers", func(ctx context.Context, cmd core.Command, msg *core.Message) error {
+worker.OnCommand("debug/list-handlers", func(ctx context.Context, cmd core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
     fmt.Printf("Handler called for: %s\n", cmd.CommandName())
     return nil
 })
@@ -492,7 +504,7 @@ func (w *WorkerState) debugMemoryUsage() {
 
 **Diagnosis**:
 ```go
-func handleCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState) (err error) {
+func handleCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState, pctx *core.ProcessingContext) (err error) {
     defer func() {
         if r := recover(); r != nil {
             err = fmt.Errorf("handler panic: %v", r)
@@ -606,7 +618,7 @@ func (s *ThreadSafeWorkerState) GetTask(id string) (Task, bool) {
 
 **Solutions**:
 ```go
-func handleTypedCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState) error {
+func handleTypedCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState, pctx *core.ProcessingContext) error {
     processCmd, ok := cmd.(*ProcessCommand)
     if !ok {
         slog.Warn("Unexpected command type", 
