@@ -6,95 +6,19 @@ import (
 	"log/slog"
 	"math/rand"
 	"time"
+
+	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
 )
 
-// Work performs a single processing cycle of the worker
-func (w *Worker) Work() error {
-	// Use background context for overall operation
-	baseCtx := context.Background()
-
-	// Debug log worker state at the beginning of each cycle
-	slog.Debug("Worker state",
-		"feature", "petrock_example_feature_name",
-		"lastProcessedID", w.wState.lastProcessedID,
-		"pendingSummaries", len(w.wState.pendingSummaries))
-
-	// 1. Process any new messages since last run
-	lastIDNum := w.wState.lastProcessedID
-
-	slog.Debug("Checking for new messages after ID",
-		"feature", "petrock_example_feature_name",
-		"afterID", lastIDNum)
-
-	messageCount := 0
-	// Create a context for database operations with longer timeout for message replay
-	readCtx, readCancel := context.WithTimeout(baseCtx, 30*time.Second)
-	defer readCancel()
-
-	// Set up a channel to detect context cancellation
-	done := make(chan struct{})
-	go func() {
-		select {
-		case <-readCtx.Done():
-			close(done)
-		case <-baseCtx.Done():
-			close(done)
-		}
-	}()
-	
-	msgIterator := w.log.After(readCtx, lastIDNum)
-	iterLoop:
-	for msg := range msgIterator {
-		messageCount++
-
-		// Log message being processed
-		slog.Debug("Processing message",
-			"feature", "petrock_example_feature_name",
-			"messageID", msg.ID,
-			"commandType", fmt.Sprintf("%T", msg.DecodedPayload))
-
-		// Process the message with a separate context
-		cmdCtx, cmdCancel := context.WithTimeout(baseCtx, 5*time.Second)
-		w.processMessage(cmdCtx, msg)
-		cmdCancel()
-
-		// Update the last processed ID
-		w.wState.lastProcessedID = msg.ID
-		slog.Debug("Updated lastProcessedID",
-			"feature", "petrock_example_feature_name",
-			"lastProcessedID", w.wState.lastProcessedID)
-		
-		// Check if context has been cancelled
-		select {
-		case <-done:
-			slog.Debug("Breaking message iteration due to context cancellation")
-			break iterLoop
-		default:
-			// Continue processing
-		}
-	}
-
-	if messageCount > 0 {
-		slog.Debug("Processed new messages",
-			"feature", "petrock_example_feature_name",
-			"count", messageCount)
-	}
-
-	// 2. Process any pending summaries with a fresh context
-	summaryCtx, summaryCancel := context.WithTimeout(baseCtx, 10*time.Second)
-	defer summaryCancel()
-	return w.processPendingSummaries(summaryCtx)
-}
-
 // handleCreateCommand processes new item creation commands
-func (w *Worker) handleCreateCommand(ctx context.Context, cmd interface{}) {
+func handleCreateCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState) error {
 	// Type assertion for pointer type
 	createCmd, ok := cmd.(*CreateCommand)
 	if !ok {
 		slog.Warn("Expected *CreateCommand but got different type",
 			"feature", "petrock_example_feature_name",
 			"type", fmt.Sprintf("%T", cmd))
-		return
+		return fmt.Errorf("unexpected command type: %T", cmd)
 	}
 
 	// Request summarization for the new item's content
@@ -108,36 +32,39 @@ func (w *Worker) handleCreateCommand(ctx context.Context, cmd interface{}) {
 	execCtx, execCancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer execCancel()
 
-	if err := w.executor.Execute(execCtx, summarizeCmd); err != nil {
+	if err := workerState.executor.Execute(execCtx, summarizeCmd); err != nil {
 		slog.Error("Failed to request summary generation",
 			"feature", "petrock_example_feature_name",
 			"itemID", createCmd.Name,
 			"error", err)
+		return err
 	}
+
+	return nil
 }
 
 // handleSummaryRequestCommand tracks summary generation requests
-func (w *Worker) handleSummaryRequestCommand(ctx context.Context, cmd interface{}) {
+func handleSummaryRequestCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState) error {
 	// Type assertion for pointer type
 	requestCmd, ok := cmd.(*RequestSummaryGenerationCommand)
 	if !ok {
 		slog.Warn("Expected *RequestSummaryGenerationCommand but got different type",
 			"feature", "petrock_example_feature_name",
 			"type", fmt.Sprintf("%T", cmd))
-		return
+		return fmt.Errorf("unexpected command type: %T", cmd)
 	}
 
 	// Retrieve the content to summarize from state
-	item, found := w.state.GetItem(requestCmd.ID)
+	item, found := workerState.state.GetItem(requestCmd.ID)
 	if !found {
 		slog.Error("Cannot find item to summarize",
 			"feature", "petrock_example_feature_name",
 			"itemID", requestCmd.ID)
-		return
+		return fmt.Errorf("item not found: %s", requestCmd.ID)
 	}
 
 	// Add to pending summaries
-	w.wState.pendingSummaries[requestCmd.RequestID] = PendingSummary{
+	workerState.pendingSummaries[requestCmd.RequestID] = PendingSummary{
 		RequestID: requestCmd.RequestID,
 		ItemID:    requestCmd.ID,
 		Content:   item.Content,
@@ -148,56 +75,62 @@ func (w *Worker) handleSummaryRequestCommand(ctx context.Context, cmd interface{
 		"feature", "petrock_example_feature_name",
 		"itemID", requestCmd.ID,
 		"requestID", requestCmd.RequestID)
+
+	return nil
 }
 
 // handleSummaryFailCommand removes failed summary requests from pending
-func (w *Worker) handleSummaryFailCommand(ctx context.Context, cmd interface{}) {
+func handleSummaryFailCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState) error {
 	// Type assertion for pointer type
 	failCmd, ok := cmd.(*FailSummaryGenerationCommand)
 	if !ok {
 		slog.Warn("Expected *FailSummaryGenerationCommand but got different type",
 			"feature", "petrock_example_feature_name",
 			"type", fmt.Sprintf("%T", cmd))
-		return
+		return fmt.Errorf("unexpected command type: %T", cmd)
 	}
 
 	// Remove from pending summaries
-	delete(w.wState.pendingSummaries, failCmd.RequestID)
+	delete(workerState.pendingSummaries, failCmd.RequestID)
 
 	slog.Info("Removed failed summary request from queue",
 		"feature", "petrock_example_feature_name",
 		"itemID", failCmd.ID,
 		"requestID", failCmd.RequestID,
 		"reason", failCmd.Reason)
+
+	return nil
 }
 
 // handleSummarySetCommand removes completed summary requests from pending
-func (w *Worker) handleSummarySetCommand(ctx context.Context, cmd interface{}) {
+func handleSummarySetCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState) error {
 	// Type assertion for pointer type
 	setCmd, ok := cmd.(*SetGeneratedSummaryCommand)
 	if !ok {
 		slog.Warn("Expected *SetGeneratedSummaryCommand but got different type",
 			"feature", "petrock_example_feature_name",
 			"type", fmt.Sprintf("%T", cmd))
-		return
+		return fmt.Errorf("unexpected command type: %T", cmd)
 	}
 
 	// Remove from pending summaries
-	delete(w.wState.pendingSummaries, setCmd.RequestID)
+	delete(workerState.pendingSummaries, setCmd.RequestID)
 
 	slog.Info("Summary successfully set for item",
 		"feature", "petrock_example_feature_name",
 		"itemID", setCmd.ID,
 		"requestID", setCmd.RequestID)
+
+	return nil
 }
 
 // processPendingSummaries calls external API for pending summaries
-func (w *Worker) processPendingSummaries(ctx context.Context) error {
-	pendingCount := len(w.wState.pendingSummaries)
+func processPendingSummaries(ctx context.Context, workerState *WorkerState) error {
+	pendingCount := len(workerState.pendingSummaries)
 
 	// Make a copy of pending summaries to process
 	summariesToProcess := make([]PendingSummary, 0, pendingCount)
-	for _, summary := range w.wState.pendingSummaries {
+	for _, summary := range workerState.pendingSummaries {
 		summariesToProcess = append(summariesToProcess, summary)
 	}
 
@@ -227,7 +160,7 @@ func (w *Worker) processPendingSummaries(ctx context.Context) error {
 			}
 			// Use a fresh context with longer timeout for command execution
 			execCtx, execCancel := context.WithTimeout(context.Background(), 60*time.Second)
-			if err := w.executor.Execute(execCtx, failCmd); err != nil {
+			if err := workerState.executor.Execute(execCtx, failCmd); err != nil {
 				slog.Error("Failed to record summary failure",
 					"feature", "petrock_example_feature_name",
 					"itemID", summary.ItemID,
@@ -238,7 +171,7 @@ func (w *Worker) processPendingSummaries(ctx context.Context) error {
 		}
 
 		// Call the summarization API
-		if err := w.callSummarizationAPI(ctx, summary); err != nil {
+		if err := callSummarizationAPI(ctx, workerState, summary); err != nil {
 			slog.Error("Failed to call summarization API",
 				"feature", "petrock_example_feature_name",
 				"itemID", summary.ItemID,
@@ -251,7 +184,7 @@ func (w *Worker) processPendingSummaries(ctx context.Context) error {
 }
 
 // callSummarizationAPI calls the external API to generate a summary
-func (w *Worker) callSummarizationAPI(ctx context.Context, summary PendingSummary) error {
+func callSummarizationAPI(ctx context.Context, workerState *WorkerState, summary PendingSummary) error {
 	// This is a mock implementation - in a real application, this would call an actual API
 
 	// Simulate API call with a random delay between 500ms and 1.5s
@@ -278,15 +211,15 @@ func (w *Worker) callSummarizationAPI(ctx context.Context, summary PendingSummar
 	// 	return fmt.Errorf("failed to marshal request: %w", err)
 	// }
 	//
-	// req, err := http.NewRequestWithContext(ctx, "POST", w.apiURL, bytes.NewBuffer(jsonData))
+	// req, err := http.NewRequestWithContext(ctx, "POST", workerState.apiURL, bytes.NewBuffer(jsonData))
 	// if err != nil {
 	// 	return fmt.Errorf("failed to create request: %w", err)
 	// }
 	//
 	// req.Header.Set("Content-Type", "application/json")
-	// req.Header.Set("Authorization", "Bearer "+w.apiKey)
+	// req.Header.Set("Authorization", "Bearer "+workerState.apiKey)
 	//
-	// resp, err := w.client.Do(req)
+	// resp, err := workerState.client.Do(req)
 	// if err != nil {
 	// 	return fmt.Errorf("API request failed: %w", err)
 	// }
@@ -315,7 +248,7 @@ func (w *Worker) callSummarizationAPI(ctx context.Context, summary PendingSummar
 	execCtx, execCancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer execCancel()
 
-	if err := w.executor.Execute(execCtx, setCmd); err != nil {
+	if err := workerState.executor.Execute(execCtx, setCmd); err != nil {
 		return fmt.Errorf("failed to update item with summary: %w", err)
 	}
 
