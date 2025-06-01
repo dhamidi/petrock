@@ -3,9 +3,9 @@ package generator
 import (
 	"fmt"
 	"log/slog"
-	"strings"
 
 	petrock "github.com/dhamidi/petrock"
+	"github.com/dhamidi/petrock/internal/generator/templates"
 )
 
 // CommandGenerator implements ComponentGenerator for command-specific generation
@@ -47,6 +47,11 @@ func (cg *CommandGenerator) GenerateCommandComponent(featureName, entityName, ta
 		"entity", entityName,
 		"target", targetDir)
 
+	// Validate entity name
+	if err := templates.ValidateCommandEntity(entityName); err != nil {
+		return fmt.Errorf("invalid command entity: %w", err)
+	}
+
 	// Check for collisions
 	exists, err := cg.inspector.ComponentExists(ComponentTypeCommand, featureName, entityName)
 	if err != nil {
@@ -55,13 +60,16 @@ func (cg *CommandGenerator) GenerateCommandComponent(featureName, entityName, ta
 		return fmt.Errorf("command %s/%s already exists", featureName, entityName)
 	}
 
+	// Build command placeholders
+	placeholders := templates.BuildCommandPlaceholders(featureName, entityName, modulePath)
+	
 	// Prepare extraction options
 	extractOptions := ExtractionOptions{
 		ComponentType: ComponentTypeCommand,
 		FeatureName:   featureName,
 		EntityName:    entityName,
 		TargetDir:     targetDir,
-		Replacements:  cg.buildCommandReplacements(featureName, entityName, modulePath),
+		Replacements:  templates.GetCommandReplacements(placeholders),
 	}
 
 	// Extract command files
@@ -85,48 +93,29 @@ func (cg *CommandGenerator) ValidateCommandStructure(featureName, entityName, ta
 
 // getCommandFileList returns the list of skeleton files needed for command generation
 func (cg *CommandGenerator) getCommandFileList(featureName, entityName string) ([]string, error) {
-	commandFiles := []string{
-		"internal/skeleton/petrock_example_feature_name/commands/base.go",
-		"internal/skeleton/petrock_example_feature_name/commands/register.go",
+	// Get command file mapping from templates
+	fileMap := templates.GetCommandTemplateFiles(entityName)
+	
+	// Extract source files and verify they exist
+	var commandFiles []string
+	for skeletonFile := range fileMap {
+		if cg.skeletonFileExists(skeletonFile) {
+			commandFiles = append(commandFiles, skeletonFile)
+			slog.Debug("Found command skeleton file", "file", skeletonFile)
+		} else {
+			slog.Debug("Command skeleton file not found, skipping", 
+				"file", skeletonFile, "entity", entityName)
+		}
 	}
 
-	// Check if entity-specific command file exists in skeleton
-	entityFile := fmt.Sprintf("internal/skeleton/petrock_example_feature_name/commands/%s.go", entityName)
-	if cg.skeletonFileExists(entityFile) {
-		commandFiles = append(commandFiles, entityFile)
-		slog.Debug("Found entity-specific command file", "file", entityFile)
-	} else {
-		// Generate a generic command file based on naming patterns
-		slog.Debug("Entity-specific command file not found, will use base patterns", 
-			"entity", entityName, "expectedFile", entityFile)
-		
-		// For now, if the specific entity file doesn't exist, we don't generate it
-		// In a more sophisticated implementation, we could generate from templates
+	if len(commandFiles) == 0 {
+		return nil, fmt.Errorf("no command skeleton files found for entity %s", entityName)
 	}
 
 	return commandFiles, nil
 }
 
-// buildCommandReplacements creates command-specific placeholder replacements
-func (cg *CommandGenerator) buildCommandReplacements(featureName, entityName, modulePath string) map[string]string {
-	replacements := map[string]string{
-		"petrock_example_feature_name": featureName,
-		"github.com/petrock/example_module_path": modulePath,
-	}
 
-	// Add command-specific entity replacements
-	// These handle entity name variations in different contexts
-	replacements[fmt.Sprintf("petrock_example_feature_name/%s", entityName)] = fmt.Sprintf("%s/%s", featureName, entityName)
-	
-	// Handle command registration patterns
-	if strings.Contains(entityName, "_") {
-		// Convert snake_case to camelCase for struct names
-		camelEntity := toCamelCase(entityName)
-		replacements[fmt.Sprintf("%sCommand", strings.Title(entityName))] = fmt.Sprintf("%sCommand", camelEntity)
-	}
-
-	return replacements
-}
 
 // skeletonFileExists checks if a file exists in the embedded skeleton
 func (cg *CommandGenerator) skeletonFileExists(filePath string) bool {
@@ -134,18 +123,4 @@ func (cg *CommandGenerator) skeletonFileExists(filePath string) bool {
 	return err == nil
 }
 
-// toCamelCase converts snake_case to CamelCase
-func toCamelCase(input string) string {
-	if input == "" {
-		return ""
-	}
-	
-	parts := strings.Split(input, "_")
-	result := ""
-	for _, part := range parts {
-		if len(part) > 0 {
-			result += strings.ToUpper(string(part[0])) + strings.ToLower(part[1:])
-		}
-	}
-	return result
-}
+
