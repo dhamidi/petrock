@@ -164,6 +164,32 @@ func NewWorker(app *core.App, state *State, log *core.MessageLog, executor *core
 
 For complete documentation on workers, see [`docs/workers.md`](docs/workers.md).
 
+## Key-Value Store
+
+Petrock applications include a built-in key-value store for persistent data storage. The KVStore provides a simple interface for storing JSON-serializable data with SQLite backing.
+
+### Features
+
+- **JSON Serialization**: Automatic marshaling/unmarshaling of Go types
+- **Pattern Matching**: List keys using SQLite GLOB patterns
+- **CLI Access**: Built-in commands for get, set, and list operations
+- **Worker Integration**: Used internally for worker position tracking
+
+### Usage Examples
+
+```bash
+# Store configuration
+go run ./cmd/myapp kv set --json "app:config" '{"theme": "dark", "debug": true}'
+
+# Retrieve configuration
+go run ./cmd/myapp kv get "app:config"
+
+# List all configuration keys
+go run ./cmd/myapp kv list "*:config"
+```
+
+For complete documentation on the KVStore, see [`docs/core/kv.md`](docs/core/kv.md).
+
 ## Generated Application
 
 A Petrock-generated application includes its own command-line interface:
@@ -183,6 +209,12 @@ go run ./cmd/<project-name> deploy --target-host user@hostname
 
 # Inspect the application (view registered commands, queries, routes, etc.)
 go run ./cmd/<project-name> self inspect
+
+# Key-value store operations
+go run ./cmd/<project-name> kv get <key>
+go run ./cmd/<project-name> kv set <key> <value>
+go run ./cmd/<project-name> kv set --json <key> <json-value>
+go run ./cmd/<project-name> kv list [glob-pattern]
 ```
 
 Refer to the generated code and the `docs/` directory within Petrock's repository for more in-depth details on the architecture and specific components.

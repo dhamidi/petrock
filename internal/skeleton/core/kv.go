@@ -13,6 +13,9 @@ type KVStore interface {
 	
 	// Set stores a value by key, marshaling it appropriately
 	Set(key string, value any) error
+	
+	// List returns all keys matching the glob pattern
+	List(glob string) ([]string, error)
 }
 
 // SQLiteKVStore implements KVStore using SQLite storage
@@ -72,4 +75,28 @@ func (s *SQLiteKVStore) Set(key string, value any) error {
 	}
 	
 	return nil
+}
+
+// List returns all keys matching the glob pattern
+func (s *SQLiteKVStore) List(glob string) ([]string, error) {
+	rows, err := s.db.Query("SELECT key FROM kv_store WHERE key GLOB ?", glob)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query keys with glob %s: %w", glob, err)
+	}
+	defer rows.Close()
+	
+	var keys []string
+	for rows.Next() {
+		var key string
+		if err := rows.Scan(&key); err != nil {
+			return nil, fmt.Errorf("failed to scan key: %w", err)
+		}
+		keys = append(keys, key)
+	}
+	
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error during key iteration: %w", err)
+	}
+	
+	return keys, nil
 }
