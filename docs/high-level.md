@@ -33,20 +33,32 @@ This creates a new directory called blog, initializes a git repository in there,
 The basic structure is this:
 
 ```
-cmd                # contains the application's command line interface
-cmd/blog/main.go   # the main entrypoint for the `blog` command
-cmd/blog/serve.go  # the `blog serve` subcommand which starts the http server, by default on port 8080
-cmd/blog/build.go  # the `blog build` subcommand which builds a single binary including all assets that can be shipped to the target host
-cmd/blog/deploy.go # the `blog deploy` subcommand which copies the binary via SSH to the target host
+cmd                      # contains the application's command line interface
+cmd/blog/main.go         # the main entrypoint for the `blog` command
+cmd/blog/serve.go        # the `blog serve` subcommand which starts the http server, by default on port 8080
+cmd/blog/build.go        # the `blog build` subcommand which builds a single binary including all assets that can be shipped to the target host
+cmd/blog/deploy.go       # the `blog deploy` subcommand which copies the binary via SSH to the target host
+cmd/blog/features.go     # registers all features with the core application
+cmd/blog/routes.go       # application-specific HTTP routes
+cmd/blog/self.go         # self-documenting feature for the core application
 
-core                 # package core takes care of all infrastructure concerns
-core/commands.go     # a registry for commands and their associated handlers
-core/queries.go      # a registry for queries and their associated handlers
-core/form.go         # a flexible data structure for capturing data with error states
-core/log.go          # a persistent event log, backed by sqlite3
-core/view.go         # provides shared components
-core/view_layout.go  # Layout gomponent + views
-core/page_index.go   # The body gomponent for the index page
+core                     # package core takes care of all infrastructure concerns
+core/app.go              # central App struct managing application lifecycle
+core/commands.go         # a registry for commands and their associated handlers
+core/queries.go          # a registry for queries and their associated handlers
+core/form.go             # a flexible data structure for capturing data with error states
+core/log.go              # a persistent event log, backed by sqlite3
+core/worker.go           # background worker management and interfaces
+core/inspect.go          # runtime inspection and debugging tools
+core/page_index.go       # The body gomponent for the index page
+core/ui/                 # UI component library directory
+core/ui/layout.go        # Layout gomponents for consistent page structure
+core/ui/ui.go            # core UI utilities and helper functions
+core/ui/base.go          # base UI components
+core/ui/gallery/         # UI component gallery and documentation
+core/ui/gallery/gallery.go     # main gallery page and navigation
+core/ui/gallery/component.go   # individual component demonstration handlers
+...                      # additional UI components (button, card, form elements, etc.)
 ```
 
 ### Adding a new feature
@@ -58,20 +70,37 @@ petrock feature posts
 This generates a new Go package called "posts", which contains all of the functionality related to authoring and editing posts:
 
 ```
-posts/            # the package for this feature
-posts/register.go # the entrypoint for the module which registers it with the core
-posts/commands.go # structs for commands that change the state of this feature
-posts/queries.go  # structs for queries and their result types
-posts/execute.go  # functions for accepting messages that change the state of posts
-posts/query.go    # functions for accepting messages that returns parts of the state of posts
-posts/state.go    # application state that needs to be kept
-posts/worker.go   # long-running background processes that react to events in the message log
-posts/view.go     # components for rendering
-posts/assets.go   # a file that builds an in-memory FS using go:embed for the assets directory
-posts/routes.go   # defines feature-specific HTTP routes
-posts/http.go     # contains feature-specific HTTP handlers
-posts/assets.go   # a file that builds an in-memory FS using go:embed for the assets directory
-posts/assets/     # a directory containing binary assets that should get included in the final binary
+posts/                    # the package for this feature
+posts/main.go             # the entrypoint for the module which registers it with the core
+posts/assets.go           # a file that builds an in-memory FS using go:embed for the assets directory
+posts/assets/             # a directory containing binary assets that should get included in the final binary
+posts/commands/           # directory containing command definitions
+posts/commands/base.go    # base command interfaces and utilities
+posts/commands/create.go  # command for creating posts
+posts/commands/update.go  # command for updating posts
+posts/commands/delete.go  # command for deleting posts
+posts/commands/register.go # command registration with core
+posts/queries/            # directory containing query definitions
+posts/queries/base.go     # base query interfaces and utilities
+posts/queries/list.go     # query for listing posts
+posts/queries/get.go      # query for getting individual posts
+posts/state/              # application state management
+posts/workers/            # long-running background processes that react to events
+posts/routes/             # feature-specific HTTP routes
+posts/routes/main.go      # route registration
+posts/routes/api.go       # API routes
+posts/routes/web.go       # web routes
+posts/handlers/           # HTTP request handlers
+posts/handlers/base.go    # base handler utilities
+posts/handlers/core.go    # core handler functionality
+posts/handlers/commands.go # command handling via HTTP
+posts/handlers/views.go   # view rendering handlers
+posts/handlers/middleware.go # feature-specific middleware
+posts/ui/                 # UI components and templates
+posts/ui/helpers.go       # UI helper functions
+posts/ui/components/      # reusable UI components
+posts/ui/layouts/         # layout templates
+posts/ui/pages/           # page templates
 ```
 
 # Inside Petrock generated code
