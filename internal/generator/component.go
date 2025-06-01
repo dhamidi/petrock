@@ -107,8 +107,8 @@ func (cg *ComponentGeneratorImpl) GenerateComponent(options GenerateOptions) err
 		cmdGen := NewCommandGenerator(".")
 		return cmdGen.GenerateCommandComponent(options.FeatureName, options.EntityName, options.TargetDir, options.ModulePath)
 	case ComponentTypeQuery:
-		// Use generic approach for now, will be specialized in Task 3.1
-		return cg.generateGenericComponent(options)
+		queryGen := NewQueryGenerator(".")
+		return queryGen.GenerateQueryComponent(options.FeatureName, options.EntityName, options.TargetDir, options.ModulePath)
 	case ComponentTypeWorker:
 		// Use generic approach for now, will be specialized in Task 4.1
 		return cg.generateGenericComponent(options)
