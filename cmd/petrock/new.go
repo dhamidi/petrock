@@ -30,23 +30,171 @@ var (
 // //go:embed all:../../internal/skeleton // Removed embed directive here
 // var skeletonFS embed.FS // Removed local embed FS variable
 
+// ComponentType represents the type of component to generate
+type ComponentType string
+
+const (
+	ComponentTypeCommand ComponentType = "command"
+	ComponentTypeQuery   ComponentType = "query" 
+	ComponentTypeWorker  ComponentType = "worker"
+)
+
+// GenerateComponentOptions holds options for component generation
+type GenerateComponentOptions struct {
+	ComponentType ComponentType
+	FeatureName   string
+	EntityName    string
+}
+
 // newCmd represents the new command
 var newCmd = &cobra.Command{
 	Use:   "new [projectName] [modulePath]",
-	Short: "Creates a new Petrock project structure",
+	Short: "Creates a new Petrock project structure or generates components",
 	Long: `Creates a new directory with the specified project name, initializes a Go module
 with the given module path, sets up a git repository, and generates the
 initial project files based on Petrock templates.
 
-Example:
-  petrock new myblog github.com/youruser/myblog`,
+For component generation, use the subcommands:
+  petrock new command <feature>/<entity>   - Generate command component
+  petrock new query <feature>/<entity>     - Generate query component  
+  petrock new worker <feature>/<entity>    - Generate worker component
+
+Examples:
+  petrock new myblog github.com/youruser/myblog
+  petrock new command posts/create
+  petrock new query posts/get
+  petrock new worker posts/summary`,
 	Args: cobra.ExactArgs(2), // Require both project name and module path
 	RunE: runNew,
 }
 
 func init() {
 	rootCmd.AddCommand(newCmd)
+	
+	// Add component subcommands
+	newCmd.AddCommand(newCommandCmd())
+	newCmd.AddCommand(newQueryCmd())
+	newCmd.AddCommand(newWorkerCmd())
+	
 	// Add flags here if needed in the future (e.g., --template-set)
+}
+
+// validateComponentArgs validates feature/entity format and extracts components
+func validateComponentArgs(args []string) (string, string, error) {
+	if len(args) != 1 {
+		return "", "", fmt.Errorf("expected exactly one argument in format <feature>/<entity>")
+	}
+	
+	return parseFeatureEntityName(args[0])
+}
+
+// parseFeatureEntityName parses feature/entity format
+func parseFeatureEntityName(input string) (string, string, error) {
+	parts := strings.Split(input, "/")
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("invalid format %q: expected <feature>/<entity>", input)
+	}
+	
+	featureName := strings.TrimSpace(parts[0])
+	entityName := strings.TrimSpace(parts[1])
+	
+	if featureName == "" || entityName == "" {
+		return "", "", fmt.Errorf("invalid format %q: feature and entity names cannot be empty", input)
+	}
+	
+	// Basic validation of names (similar to existing validation)
+	if !dirNameRegex.MatchString(featureName) {
+		return "", "", fmt.Errorf("invalid feature name %q: must contain only letters, numbers, '.', '_', '-'", featureName)
+	}
+	if !dirNameRegex.MatchString(entityName) {
+		return "", "", fmt.Errorf("invalid entity name %q: must contain only letters, numbers, '.', '_', '-'", entityName)
+	}
+	
+	return featureName, entityName, nil
+}
+
+// newCommandCmd creates the command subcommand
+func newCommandCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "command <feature>/<entity>",
+		Short: "Generate a command component",
+		Long:  `Generate command files for a specific feature and entity from skeleton templates.`,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			featureName, entityName, err := validateComponentArgs(args)
+			if err != nil {
+				return err
+			}
+			
+			options := GenerateComponentOptions{
+				ComponentType: ComponentTypeCommand,
+				FeatureName:   featureName,
+				EntityName:    entityName,
+			}
+			
+			return runComponentGeneration(options)
+		},
+	}
+}
+
+// newQueryCmd creates the query subcommand  
+func newQueryCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "query <feature>/<entity>",
+		Short: "Generate a query component",
+		Long:  `Generate query files for a specific feature and entity from skeleton templates.`,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			featureName, entityName, err := validateComponentArgs(args)
+			if err != nil {
+				return err
+			}
+			
+			options := GenerateComponentOptions{
+				ComponentType: ComponentTypeQuery,
+				FeatureName:   featureName,
+				EntityName:    entityName,
+			}
+			
+			return runComponentGeneration(options)
+		},
+	}
+}
+
+// newWorkerCmd creates the worker subcommand
+func newWorkerCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "worker <feature>/<entity>",
+		Short: "Generate a worker component", 
+		Long:  `Generate worker files for a specific feature and entity from skeleton templates.`,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			featureName, entityName, err := validateComponentArgs(args)
+			if err != nil {
+				return err
+			}
+			
+			options := GenerateComponentOptions{
+				ComponentType: ComponentTypeWorker,
+				FeatureName:   featureName,
+				EntityName:    entityName,
+			}
+			
+			return runComponentGeneration(options)
+		},
+	}
+}
+
+// runComponentGeneration handles component generation (placeholder for now)
+func runComponentGeneration(options GenerateComponentOptions) error {
+	slog.Debug("Component generation requested", 
+		"type", options.ComponentType,
+		"feature", options.FeatureName, 
+		"entity", options.EntityName)
+	
+	// TODO: Implement actual component generation logic
+	// This will be implemented in subsequent tasks
+	return fmt.Errorf("component generation not yet implemented")
 }
 
 func runNew(cmd *cobra.Command, args []string) error {
