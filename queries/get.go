@@ -19,7 +19,7 @@ type GetQuery struct {
 
 // QueryName returns the unique kebab-case name for this query type.
 func (q GetQuery) QueryName() string {
-	return "posts/get" // Removed suffix
+	return "test/get" // Removed suffix
 }
 
 // GetQueryResult wraps an ItemResult as a specific result type for GetQuery
@@ -35,7 +35,7 @@ func (q *Querier) HandleGet(ctx context.Context, query core.Query) (core.QueryRe
 		return nil, fmt.Errorf("invalid query type for HandleGet: expected GetQuery, got %T", query)
 	}
 
-	slog.Debug("Handling GetQuery", "feature", "posts", "id", getQuery.ID)
+	slog.Debug("Handling GetQuery", "feature", "test", "id", getQuery.ID)
 
 	if q.state == nil {
 		slog.Error("State is nil in Querier, cannot handle GetQuery")
@@ -65,6 +65,6 @@ func (q *Querier) HandleGet(ctx context.Context, query core.Query) (core.QueryRe
 		Item: itemResult,
 	}
 
-	slog.Debug("Successfully processed GetQuery", "feature", "posts", "id", getQuery.ID)
+	slog.Debug("Successfully processed GetQuery", "feature", "test", "id", getQuery.ID)
 	return result, nil
 }

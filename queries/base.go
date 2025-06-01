@@ -3,7 +3,7 @@ package queries
 import (
 	"time"
 
-	"github.com/dhamidi/petrock/posts/state"
+	"github.com/dhamidi/petrock/test/state"
 )
 
 // State is an alias to the state package's State type
