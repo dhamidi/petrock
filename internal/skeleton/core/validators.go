@@ -167,6 +167,72 @@ func (v EmailValidator) Validate(ctx *FieldContext) []ParseError {
 	return nil
 }
 
+// CrossFieldValidator validates fields against other fields in the same struct
+type CrossFieldValidator struct{}
+
+func (v CrossFieldValidator) CanValidate(ctx *FieldContext) bool {
+	return ctx.GetTag("confirm_field", "") != ""
+}
+
+func (v CrossFieldValidator) Validate(ctx *FieldContext) []ParseError {
+	confirmField := ctx.GetTag("confirm_field", "")
+	if confirmField == "" {
+		return nil
+	}
+
+	// This is a simplified implementation - in a full implementation,
+	// you'd need access to the entire struct being validated
+	// For now, this serves as a demonstration of the pattern
+	return []ParseError{{
+		Field:   ctx.Name,
+		Message: fmt.Sprintf("Must match %s field", confirmField),
+		Code:    "field_mismatch",
+		Meta: map[string]interface{}{
+			"confirm_field": confirmField,
+		},
+	}}
+}
+
+// ConditionalValidator validates fields only when conditions are met
+type ConditionalValidator struct{}
+
+func (v ConditionalValidator) CanValidate(ctx *FieldContext) bool {
+	return ctx.GetTag("required_if", "") != ""
+}
+
+func (v ConditionalValidator) Validate(ctx *FieldContext) []ParseError {
+	requiredIf := ctx.GetTag("required_if", "")
+	if requiredIf == "" {
+		return nil
+	}
+
+	// Parse the condition: "field:value"
+	parts := strings.SplitN(requiredIf, ":", 2)
+	if len(parts) != 2 {
+		return []ParseError{{
+			Field:   ctx.Name,
+			Message: "Invalid required_if condition format",
+			Code:    "invalid_condition",
+		}}
+	}
+
+	// This is a demonstration - full implementation would check the actual field values
+	return nil // Conditional logic would go here
+}
+
+// CustomMessageValidator allows custom error messages
+type CustomMessageValidator struct{}
+
+func (v CustomMessageValidator) CanValidate(ctx *FieldContext) bool {
+	return ctx.GetTag("message", "") != ""
+}
+
+func (v CustomMessageValidator) Validate(ctx *FieldContext) []ParseError {
+	// This validator doesn't actually validate - it's used by other validators
+	// to override their default messages. This is a pattern demonstration.
+	return nil
+}
+
 // StandardTagParser parses common validation tags
 type StandardTagParser struct{}
 

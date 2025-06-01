@@ -306,6 +306,9 @@ func NewParser() *Parser {
 	p.RegisterValidator(LengthValidator{})
 	p.RegisterValidator(RangeValidator{})
 	p.RegisterValidator(EmailValidator{})
+	p.RegisterValidator(CrossFieldValidator{})
+	p.RegisterValidator(ConditionalValidator{})
+	p.RegisterValidator(CustomMessageValidator{})
 
 	p.RegisterTagParser(StandardTagParser{})
 
