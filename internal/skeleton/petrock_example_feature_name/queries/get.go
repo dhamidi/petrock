@@ -14,7 +14,7 @@ var _ core.QueryResult = (*GetQueryResult)(nil)
 
 // GetQuery holds data needed to retrieve a single entity.
 type GetQuery struct {
-	ID string // ID of the entity to retrieve
+	ID string `json:"id" validate:"required"` // ID of the entity to retrieve
 }
 
 // QueryName returns the unique kebab-case name for this query type.

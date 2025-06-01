@@ -297,9 +297,29 @@ func handleExecuteCommand(executor *core.Executor, registry *core.CommandRegistr
 		// Create a new instance of the command struct (must be a pointer for unmarshaling)
 		cmdInstancePtr := reflect.New(cmdType).Interface()
 
-		// Unmarshal the payload into the command instance pointer
-		if err := json.Unmarshal(req.Payload, cmdInstancePtr); err != nil {
-			slog.Error("Failed to unmarshal command payload", "type", req.Type, "error", err)
+		// First unmarshal to a map for the new parsing system
+		var payloadMap map[string]interface{}
+		if err := json.Unmarshal(req.Payload, &payloadMap); err != nil {
+			slog.Error("Failed to unmarshal command payload to map", "type", req.Type, "error", err)
+			http.Error(w, fmt.Sprintf("Bad Request: invalid JSON payload for type %q: %s", req.Type, err.Error()), http.StatusBadRequest)
+			return
+		}
+
+		// Use the new parsing system for validation
+		if err := core.ParseFromMap(payloadMap, cmdInstancePtr); err != nil {
+			// Handle validation errors with structured response
+			if parseErrors, ok := err.(*core.ParseErrors); ok {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusBadRequest)
+				json.NewEncoder(w).Encode(map[string]interface{}{
+					"error":   "Validation failed",
+					"details": parseErrors.Errors,
+				})
+				return
+			}
+			
+			// Handle other parsing errors
+			slog.Error("Failed to parse command payload", "type", req.Type, "error", err)
 			http.Error(w, fmt.Sprintf("Bad Request: invalid payload for type %q: %s", req.Type, err.Error()), http.StatusBadRequest)
 			return
 		}
@@ -389,10 +409,22 @@ func handleExecuteQuery(registry *core.QueryRegistry) http.HandlerFunc {
 		queryInstancePtr := reflect.New(queryType) // Returns a pointer Value
 		queryInstance := queryInstancePtr.Elem()   // Get the struct Value
 
-		// Populate the query struct fields from URL query parameters
-		urlParams := r.URL.Query()
-		if err := populateStructFromURLParams(queryInstance, urlParams); err != nil {
-			slog.Error("Failed to populate query struct from URL parameters", "name", fullQueryName, "error", err) // Use fullQueryName here
+		// Use the new parsing system for URL parameters  
+		urlValues := r.URL.Query()
+		if err := core.ParseFromURLValues(urlValues, queryInstancePtr.Interface()); err != nil {
+			// Handle validation errors with structured response for API consistency
+			if parseErrors, ok := err.(*core.ParseErrors); ok {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusBadRequest)
+				json.NewEncoder(w).Encode(map[string]interface{}{
+					"error":   "Validation failed",
+					"details": parseErrors.Errors,
+				})
+				return
+			}
+			
+			// Handle other parsing errors
+			slog.Error("Failed to parse query parameters", "name", fullQueryName, "error", err)
 			http.Error(w, fmt.Sprintf("Bad Request: %s", err.Error()), http.StatusBadRequest)
 			return
 		}
