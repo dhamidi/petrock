@@ -13,6 +13,7 @@ import (
 	// "github.com/dhamidi/petrock/internal/template" // Removed template import
 	// "github.com/dhamidi/petrock/internal/skeletonfs" // Removed import for skeletonfs
 	petrock "github.com/dhamidi/petrock" // Import root package for embedded FS
+	"github.com/dhamidi/petrock/internal/generator"
 	"github.com/dhamidi/petrock/internal/utils"
 
 	"github.com/spf13/cobra"
@@ -30,18 +31,9 @@ var (
 // //go:embed all:../../internal/skeleton // Removed embed directive here
 // var skeletonFS embed.FS // Removed local embed FS variable
 
-// ComponentType represents the type of component to generate
-type ComponentType string
-
-const (
-	ComponentTypeCommand ComponentType = "command"
-	ComponentTypeQuery   ComponentType = "query" 
-	ComponentTypeWorker  ComponentType = "worker"
-)
-
 // GenerateComponentOptions holds options for component generation
 type GenerateComponentOptions struct {
-	ComponentType ComponentType
+	ComponentType generator.ComponentType
 	FeatureName   string
 	EntityName    string
 }
@@ -127,7 +119,7 @@ func newCommandCmd() *cobra.Command {
 			}
 			
 			options := GenerateComponentOptions{
-				ComponentType: ComponentTypeCommand,
+				ComponentType: generator.ComponentTypeCommand,
 				FeatureName:   featureName,
 				EntityName:    entityName,
 			}
@@ -151,7 +143,7 @@ func newQueryCmd() *cobra.Command {
 			}
 			
 			options := GenerateComponentOptions{
-				ComponentType: ComponentTypeQuery,
+				ComponentType: generator.ComponentTypeQuery,
 				FeatureName:   featureName,
 				EntityName:    entityName,
 			}
@@ -175,7 +167,7 @@ func newWorkerCmd() *cobra.Command {
 			}
 			
 			options := GenerateComponentOptions{
-				ComponentType: ComponentTypeWorker,
+				ComponentType: generator.ComponentTypeWorker,
 				FeatureName:   featureName,
 				EntityName:    entityName,
 			}
@@ -185,16 +177,30 @@ func newWorkerCmd() *cobra.Command {
 	}
 }
 
-// runComponentGeneration handles component generation (placeholder for now)
+// runComponentGeneration handles component generation with collision detection
 func runComponentGeneration(options GenerateComponentOptions) error {
 	slog.Debug("Component generation requested", 
 		"type", options.ComponentType,
 		"feature", options.FeatureName, 
 		"entity", options.EntityName)
 	
+	// Create inspector for collision detection
+	inspector := generator.NewComponentInspector(".")
+	
+	// Check if component already exists
+	exists, err := inspector.ComponentExists(options.ComponentType, options.FeatureName, options.EntityName)
+	if err != nil {
+		slog.Debug("Failed to check existing components", "error", err)
+		// Don't fail hard on inspector errors - might be running outside petrock project
+		slog.Warn("Could not check for existing components, proceeding anyway", "error", err.Error())
+	} else if exists {
+		return fmt.Errorf("component %s %s/%s already exists", 
+			options.ComponentType, options.FeatureName, options.EntityName)
+	}
+	
 	// TODO: Implement actual component generation logic
-	// This will be implemented in subsequent tasks
-	return fmt.Errorf("component generation not yet implemented")
+	// This will be implemented in subsequent tasks (Task 1.3)
+	return fmt.Errorf("component generation logic not yet implemented")
 }
 
 func runNew(cmd *cobra.Command, args []string) error {
