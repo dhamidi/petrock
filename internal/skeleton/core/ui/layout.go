@@ -59,12 +59,7 @@ func NewFormData(values url.Values, errors []ParseError) *FormData {
 
 
 
-// Legacy Form interface for backward compatibility during migration
-type Form interface {
-	HasError(field string) bool
-	GetError(field string) string
-	Get(key string) string
-}
+
 
 // Layout renders the full HTML page structure.
 // It includes common head elements and wraps the body content.
@@ -126,26 +121,7 @@ func FormGroupWithValidation(formData *FormData, fieldName, label string, input 
 	}, input)
 }
 
-// FormGroupWithValidationLegacy provides backward compatibility with legacy Form interface
-func FormGroupWithValidationLegacy(form Form, fieldName, label string, input g.Node, helpText ...string) g.Node {
-	var helpTextStr string
-	if len(helpText) > 0 {
-		helpTextStr = helpText[0]
-	}
 
-	var errorText string
-	if form.HasError(fieldName) {
-		errorText = form.GetError(fieldName)
-	}
-
-	return FormGroup(FormGroupProps{
-		Label:     label,
-		HelpText:  helpTextStr,
-		ErrorText: errorText,
-		Required:  false, // This could be a parameter if needed
-		ID:        fieldName,
-	}, input)
-}
 
 // TextInputWithValidation creates a TextInput with validation state from FormData
 func TextInputWithValidation(formData *FormData, props TextInputProps) g.Node {
@@ -169,27 +145,7 @@ func TextInputWithValidation(formData *FormData, props TextInputProps) g.Node {
 	return TextInput(props)
 }
 
-// TextInputWithValidationLegacy provides backward compatibility with legacy Form interface
-func TextInputWithValidationLegacy(form Form, props TextInputProps) g.Node {
-	// Set the value from the form if not already set
-	if props.Value == "" {
-		props.Value = form.Get(props.Name)
-	}
 
-	// Set validation state based on form errors
-	if props.ValidationState == "" {
-		if form.HasError(props.Name) {
-			props.ValidationState = "invalid"
-		}
-	}
-
-	// Set ID to Name if not provided (for label association)
-	if props.ID == "" && props.Name != "" {
-		props.ID = props.Name
-	}
-
-	return TextInput(props)
-}
 
 // TextAreaWithValidation creates a TextArea with validation state from FormData
 func TextAreaWithValidation(formData *FormData, props TextAreaProps) g.Node {
@@ -213,27 +169,7 @@ func TextAreaWithValidation(formData *FormData, props TextAreaProps) g.Node {
 	return TextArea(props)
 }
 
-// TextAreaWithValidationLegacy provides backward compatibility with legacy Form interface
-func TextAreaWithValidationLegacy(form Form, props TextAreaProps) g.Node {
-	// Set the value from the form if not already set
-	if props.Value == "" {
-		props.Value = form.Get(props.Name)
-	}
 
-	// Set validation state based on form errors
-	if props.ValidationState == "" {
-		if form.HasError(props.Name) {
-			props.ValidationState = "invalid"
-		}
-	}
-
-	// Set ID to Name if not provided (for label association)
-	if props.ID == "" && props.Name != "" {
-		props.ID = props.Name
-	}
-
-	return TextArea(props)
-}
 
 // SelectWithValidation creates a Select with validation state from FormData
 func SelectWithValidation(formData *FormData, props SelectProps) g.Node {
@@ -257,27 +193,7 @@ func SelectWithValidation(formData *FormData, props SelectProps) g.Node {
 	return Select(props)
 }
 
-// SelectWithValidationLegacy provides backward compatibility with legacy Form interface
-func SelectWithValidationLegacy(form Form, props SelectProps) g.Node {
-	// Set the value from the form if not already set
-	if props.Value == "" {
-		props.Value = form.Get(props.Name)
-	}
 
-	// Set validation state based on form errors
-	if props.ValidationState == "" {
-		if form.HasError(props.Name) {
-			props.ValidationState = "invalid"
-		}
-	}
-
-	// Set ID to Name if not provided (for label association)
-	if props.ID == "" && props.Name != "" {
-		props.ID = props.Name
-	}
-
-	return Select(props)
-}
 
 // FormError renders error messages for a specific field from FormData.
 // Returns nil if there's no error for the field.
@@ -291,16 +207,7 @@ func FormError(formData *FormData, field string) g.Node {
 	)
 }
 
-// FormErrorLegacy provides backward compatibility with legacy Form interface
-func FormErrorLegacy(form Form, field string) g.Node {
-	if !form.HasError(field) {
-		return nil
-	}
-	return html.Span(
-		CSSClass("text-red-600", "text-sm", "mt-1"),
-		g.Text(form.GetError(field)),
-	)
-}
+
 
 // CSRFInput renders a hidden input field for CSRF token protection.
 func CSRFInput(token string) g.Node {
@@ -363,26 +270,3 @@ func CSRFInput(token string) g.Node {
 //     )
 //   }
 //
-// Legacy compatibility example:
-//
-//   func MyLegacyFormHandler(form *core.Form) g.Node {
-//     return ui.Layout("My Form", 
-//       ui.Page("Contact Form",
-//         html.Form(
-//           html.Method("POST"),
-//           ui.CSRFInput("csrf-token-here"),
-//           
-//           // Use legacy functions for backward compatibility
-//           ui.FormGroupWithValidationLegacy(form, "name", "Full Name",
-//             ui.TextInputWithValidationLegacy(form, ui.TextInputProps{
-//               Name: "name",
-//               Type: "text",
-//               Placeholder: "Enter your full name",
-//               Required: true,
-//             }),
-//             "Please enter your full name",
-//           ),
-//         ),
-//       ),
-//     )
-//   }

@@ -1,10 +1,10 @@
 # core/form.go
 
-This file provides form handling functionality for web applications, supporting both the new tag-based validation system and legacy form templates.
+This file previously contained the legacy Form system. All form functionality has been moved to the modern tag-based validation system.
 
 ## Current System (Tag-Based Validation)
 
-The current form system uses struct tags for validation and supports multiple input sources. See [Form Validation Guide](../form-validation-guide.md) for detailed documentation.
+The form system uses struct tags for validation and supports multiple input sources. See [Form Validation Guide](../form-validation-guide.md) for detailed documentation.
 
 ### Key Functions
 
@@ -39,36 +39,38 @@ if err := core.ParseFromURLValues(r.PostForm, &cmd); err != nil {
 }
 ```
 
-## Legacy Form System (Template Compatibility)
+## Template Integration
 
-The legacy `Form` struct is maintained for template compatibility:
-
-### Types
-
-- `Form`: A struct holding form data and validation errors for template rendering.
-    - `Values url.Values`: The raw form values, typically parsed from an HTTP request.
-    - `Errors map[string][]string`: A map where keys are field names and values are slices of error messages for that field.
-
-### Functions
-
-- `NewForm(data url.Values) *Form`: Creates a new `Form` instance initialized with the provided `url.Values`.
-- `(f *Form) HasError(field string) bool`: Checks if a specific field has any associated validation errors.
-- `(f *Form) GetError(field string) string`: Returns the *first* error message for a given field. Returns an empty string if there are no errors for that field.
-- `(f *Form) AddError(field, message string)`: Adds a new error message to a specific field.
-- `(f *Form) IsValid() bool`: Returns `true` if the `Errors` map is empty, `false` otherwise.
-
-### Template Integration
-
-ParseErrors from the new system can be converted to Form errors for template compatibility:
+For template rendering, use `ui.FormData` which works directly with validation errors:
 
 ```go
-form := core.NewForm(r.PostForm)
-// Convert ParseErrors to form errors
+// Convert ParseErrors to ui.ParseError format for templates
+var uiErrors []ui.ParseError
 for _, parseErr := range parseErrors.Errors {
-    form.AddError(parseErr.Field, parseErr.Message)
+    uiErrors = append(uiErrors, ui.ParseError{
+        Field:   parseErr.Field,
+        Message: parseErr.Message,
+        Code:    parseErr.Code,
+        Meta:    parseErr.Meta,
+    })
 }
+formData := ui.NewFormData(r.PostForm, uiErrors)
+
+// Use in templates
+ui.FormGroupWithValidation(formData, "name", "Name", ...)
 ```
 
-## Migration Path
+## Migration Complete
 
-New code should use the tag-based validation system. The legacy Form system remains available for template compatibility and will be maintained until templates are updated to work directly with ParseErrors.
+✅ **Legacy system removed:**
+- `core.Form` struct and methods
+- `core.NewForm()` function  
+- Legacy validation methods (`ValidateRequired`, `ValidateEmail`, etc.)
+
+✅ **Modern system in place:**
+- Tag-based validation with struct tags
+- `ui.FormData` for template rendering
+- Direct integration with validation pipeline
+- Rich error information with codes and metadata
+
+For complete documentation, see [Form Validation Guide](../form-validation-guide.md).

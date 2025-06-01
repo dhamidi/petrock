@@ -6,42 +6,11 @@ import (
 	g "maragu.dev/gomponents"
 	"maragu.dev/gomponents/html"
 
-	"github.com/petrock/example_module_path/core"
 	"github.com/petrock/example_module_path/core/ui"
 	"github.com/petrock/example_module_path/petrock_example_feature_name/state"
 )
 
-// formFieldClass returns the appropriate CSS class for a form field based on its error state
-// DEPRECATED: Use ui.TextInputWithValidation, ui.TextAreaWithValidation instead
-func FormFieldClass(form *core.Form, fieldName string) string {
-	if form.HasError(fieldName) {
-		return "block w-full rounded-md sm:text-sm border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500"
-	}
-	return "block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-}
 
-// csrfField returns a hidden input field for CSRF protection
-// DEPRECATED: Use ui.CSRFInput instead
-func CsrfField(token string) g.Node {
-	return ui.CSRFInput(token)
-}
-
-// formErrorDisplay renders an error message for a form field
-// DEPRECATED: Use ui.FormError instead
-func FormErrorDisplay(form *core.Form, fieldName string) g.Node {
-	return ui.FormErrorLegacy(form, fieldName)
-}
-
-// ItemFormLegacy provides backward compatibility with core.Form interface
-// DEPRECATED: Use ItemForm with ui.FormData instead
-func ItemFormLegacy(form *core.Form, item *state.Item, csrfToken string) g.Node {
-	// Convert core.Form to ui.FormData for compatibility
-	formData := &ui.FormData{
-		Values: form.Values,
-		Errors: []ui.ParseError{}, // Legacy forms don't have structured errors
-	}
-	return ItemForm(formData, item, csrfToken)
-}
 
 // successAlert renders a success message using the new Alert component
 func SuccessAlert(message string) g.Node {

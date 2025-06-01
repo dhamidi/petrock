@@ -221,52 +221,68 @@ parser := core.NewParser()
 parser.RegisterValidator(PasswordStrengthValidator{})
 ```
 
-## Migration Guide
+## Template Integration
 
-### From Old Form System
+### Using FormData in Templates
 
-Replace form-based validation:
+The system uses `ui.FormData` for template rendering:
 
 ```go
-// Old approach
-form := core.NewForm(r.PostForm)
-form.ValidateRequired("name", "email")
-form.ValidateEmail("email")
-form.ValidateMinLength("name", 2)
-
-if !form.IsValid() {
-    // Handle errors
+// Handler: Convert ParseErrors to FormData
+var uiErrors []ui.ParseError
+for _, parseErr := range parseErrors.Errors {
+    uiErrors = append(uiErrors, ui.ParseError{
+        Field:   parseErr.Field,
+        Message: parseErr.Message,
+        Code:    parseErr.Code,
+        Meta:    parseErr.Meta,
+    })
 }
+formData := ui.NewFormData(r.PostForm, uiErrors)
 
-// New approach  
-type FormData struct {
-    Name  string `validate:"required,minlen=2"`
-    Email string `validate:"required,email"`
-}
-
-var data FormData
-if err := core.ParseFromURLValues(r.PostForm, &data); err != nil {
-    // Handle structured errors
-}
+// Template: Use FormData with validation components
+ui.FormGroupWithValidation(formData, "name", "Name",
+    ui.TextInputWithValidation(formData, ui.TextInputProps{
+        Name:        "name",
+        Type:        "text",
+        Placeholder: "Enter your name",
+        Required:    true,
+    }),
+    "Please enter your full name",
+)
 ```
 
-### Updating Templates
+### Complete Form Example
 
-Convert form error display:
-
-```html
-<!-- Old template -->
-{{if .Form.HasError "name"}}
-    <div class="error">{{.Form.GetError "name"}}</div>
-{{end}}
-
-<!-- New template (using converted errors) -->
-{{if .Form.HasError "name"}}
-    <div class="error">{{.Form.GetError "name"}}</div>
-{{end}}
-```
-
-Note: The new system maintains compatibility with existing form templates by converting `ParseErrors` to form errors in handlers.
+```go
+func ItemForm(formData *ui.FormData, item *state.Item, csrfToken string) g.Node {
+    return ui.Container(ui.ContainerProps{Variant: "default"},
+        html.Form(
+            html.Method("POST"),
+            ui.CSRFInput(csrfToken),
+            
+            ui.FormGroupWithValidation(formData, "name", "Name",
+                ui.TextInputWithValidation(formData, ui.TextInputProps{
+                    Name:        "name",
+                    Type:        "text",
+                    Placeholder: "Enter item name",
+                    Required:    true,
+                }),
+                "A unique name for this item",
+            ),
+            
+            ui.FormGroupWithValidation(formData, "description", "Description",
+                ui.TextAreaWithValidation(formData, ui.TextAreaProps{
+                    Name:        "description",
+                    Placeholder: "Enter item description",
+                    Rows:        4,
+                    Required:    true,
+                }),
+                "A detailed description of this item",
+            ),
+        ),
+    )
+}
 
 ## Best Practices
 
