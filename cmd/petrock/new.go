@@ -184,23 +184,54 @@ func runComponentGeneration(options GenerateComponentOptions) error {
 		"feature", options.FeatureName, 
 		"entity", options.EntityName)
 	
-	// Create inspector for collision detection
-	inspector := generator.NewComponentInspector(".")
-	
-	// Check if component already exists
-	exists, err := inspector.ComponentExists(options.ComponentType, options.FeatureName, options.EntityName)
+	// Detect current module path for replacements
+	modulePath, err := detectModulePath(".")
 	if err != nil {
-		slog.Debug("Failed to check existing components", "error", err)
-		// Don't fail hard on inspector errors - might be running outside petrock project
-		slog.Warn("Could not check for existing components, proceeding anyway", "error", err.Error())
-	} else if exists {
-		return fmt.Errorf("component %s %s/%s already exists", 
-			options.ComponentType, options.FeatureName, options.EntityName)
+		return fmt.Errorf("failed to detect module path: %w", err)
 	}
 	
-	// TODO: Implement actual component generation logic
-	// This will be implemented in subsequent tasks (Task 1.3)
-	return fmt.Errorf("component generation logic not yet implemented")
+	// Create component generator
+	componentGen := generator.NewComponentGenerator(".")
+	
+	// Prepare generation options
+	genOptions := generator.GenerateOptions{
+		ComponentType: options.ComponentType,
+		FeatureName:   options.FeatureName,
+		EntityName:    options.EntityName,
+		TargetDir:     ".",
+		ModulePath:    modulePath,
+	}
+	
+	// Generate component
+	if err := componentGen.GenerateComponent(genOptions); err != nil {
+		return fmt.Errorf("failed to generate component: %w", err)
+	}
+	
+	slog.Info("Component generated successfully", 
+		"type", options.ComponentType,
+		"feature", options.FeatureName,
+		"entity", options.EntityName)
+	
+	return nil
+}
+
+// detectModulePath reads go.mod to determine the current module path
+func detectModulePath(projectPath string) (string, error) {
+	goModPath := filepath.Join(projectPath, "go.mod")
+	content, err := os.ReadFile(goModPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read go.mod: %w", err)
+	}
+	
+	lines := strings.Split(string(content), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "module ") {
+			return strings.TrimSpace(strings.TrimPrefix(line, "module")), nil
+		}
+	}
+	
+	return "", fmt.Errorf("module directive not found in go.mod")
 }
 
 func runNew(cmd *cobra.Command, args []string) error {
