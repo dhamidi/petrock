@@ -114,6 +114,39 @@ func (e *ParseErrors) AddWithMeta(field, message, code string, meta map[string]i
 	})
 }
 
+// Helper methods for common error patterns
+func (e *ParseErrors) AddRequired(field string) {
+	e.Add(field, "This field is required", "required")
+}
+
+func (e *ParseErrors) AddInvalidType(field, expectedType, actualValue string) {
+	e.AddWithMeta(field, 
+		fmt.Sprintf("Invalid type, expected %s", expectedType), 
+		"invalid_type",
+		map[string]interface{}{
+			"expected_type": expectedType,
+			"actual_value": actualValue,
+		})
+}
+
+func (e *ParseErrors) AddOutOfRange(field string, min, max, actual int64) {
+	var message string
+	var code string
+	var meta map[string]interface{}
+
+	if actual < min {
+		message = fmt.Sprintf("Must be at least %d", min)
+		code = "min_value"
+		meta = map[string]interface{}{"min_value": min, "actual_value": actual}
+	} else {
+		message = fmt.Sprintf("Must be no more than %d", max) 
+		code = "max_value"
+		meta = map[string]interface{}{"max_value": max, "actual_value": actual}
+	}
+
+	e.AddWithMeta(field, message, code, meta)
+}
+
 func (e *ParseErrors) HasErrors() bool {
 	return len(e.Errors) > 0
 }
@@ -125,7 +158,13 @@ func (e ParseErrors) Error() string {
 	if len(e.Errors) == 1 {
 		return e.Errors[0].Error()
 	}
-	return fmt.Sprintf("%d validation errors", len(e.Errors))
+
+	var builder strings.Builder
+	builder.WriteString(fmt.Sprintf("Validation failed with %d errors:\n", len(e.Errors)))
+	for i, err := range e.Errors {
+		builder.WriteString(fmt.Sprintf("  %d. %s\n", i+1, err.Error()))
+	}
+	return builder.String()
 }
 
 // FieldContext provides context about a field being processed
