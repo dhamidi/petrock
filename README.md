@@ -34,7 +34,6 @@ Petrock acts purely as a **code generator**. It creates files based on templates
 ```bash
 go install github.com/dhamidi/petrock@latest
 ```
-*(Replace `github.com/dhamidi/petrock` with the actual repository path)*
 
 ### Creating a New Project
 
@@ -105,17 +104,18 @@ This command will:
       - API and web UI routes
     - `workers/`: Background job definitions and workers.
 4. Automatically update `cmd/myblog/features.go` to import and register the new `posts` feature.
-5. Create a Git commit with the newly added feature files and modifications.
+5. Run `go mod tidy` to update dependencies.
+6. Create a Git commit with the newly added feature files and modifications.
 
 ### Testing Petrock Itself
 
-To run a self-test that verifies the `new` command and basic build process:
+To run a self-test that verifies the `new` and `feature` commands and basic build process:
 
 ```bash
 petrock test
 ```
 
-This creates a temporary project, runs `petrock new`, and attempts to build it.
+This creates a temporary project, runs `petrock new`, adds a test feature, attempts to build it, and tests basic HTTP functionality.
 
 ## Generated Application
 
@@ -133,6 +133,9 @@ go run ./cmd/<project-name> build
 
 # Deploy the binary (requires configuration)
 go run ./cmd/<project-name> deploy --target-host user@hostname
+
+# Inspect the application (view registered commands, queries, routes, etc.)
+go run ./cmd/<project-name> self inspect
 ```
 
 Refer to the generated code and the `docs/` directory within Petrock's repository for more in-depth details on the architecture and specific components.
