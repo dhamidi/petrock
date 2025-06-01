@@ -101,6 +101,24 @@ func (cg *ComponentGeneratorImpl) GenerateComponent(options GenerateOptions) err
 		"feature", options.FeatureName,
 		"entity", options.EntityName)
 
+	// Use specialized generators for each component type
+	switch options.ComponentType {
+	case ComponentTypeCommand:
+		cmdGen := NewCommandGenerator(".")
+		return cmdGen.GenerateCommandComponent(options.FeatureName, options.EntityName, options.TargetDir, options.ModulePath)
+	case ComponentTypeQuery:
+		// Use generic approach for now, will be specialized in Task 3.1
+		return cg.generateGenericComponent(options)
+	case ComponentTypeWorker:
+		// Use generic approach for now, will be specialized in Task 4.1
+		return cg.generateGenericComponent(options)
+	default:
+		return fmt.Errorf("unknown component type: %s", options.ComponentType)
+	}
+}
+
+// generateGenericComponent provides fallback generic component generation
+func (cg *ComponentGeneratorImpl) generateGenericComponent(options GenerateOptions) error {
 	// Check for collisions
 	exists, err := cg.inspector.ComponentExists(options.ComponentType, options.FeatureName, options.EntityName)
 	if err != nil {
