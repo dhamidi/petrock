@@ -110,8 +110,8 @@ func (cg *ComponentGeneratorImpl) GenerateComponent(options GenerateOptions) err
 		queryGen := NewQueryGenerator(".")
 		return queryGen.GenerateQueryComponent(options.FeatureName, options.EntityName, options.TargetDir, options.ModulePath)
 	case ComponentTypeWorker:
-		// Use generic approach for now, will be specialized in Task 4.1
-		return cg.generateGenericComponent(options)
+		workerGen := NewWorkerGenerator(".")
+		return workerGen.GenerateWorkerComponent(options.FeatureName, options.EntityName, options.TargetDir, options.ModulePath)
 	default:
 		return fmt.Errorf("unknown component type: %s", options.ComponentType)
 	}
