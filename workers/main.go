@@ -33,8 +33,8 @@ func NewWorker(app *core.App, state *State, log *core.MessageLog, executor *core
 	}
 
 	worker := core.NewWorker(
-		"posts Worker",
-		"Handles background processing for the posts feature, including content summarization",
+		"test Worker",
+		"Handles background processing for the test feature, including content summarization",
 		workerState,
 	)
 
@@ -42,16 +42,16 @@ func NewWorker(app *core.App, state *State, log *core.MessageLog, executor *core
 	worker.SetDependencies(log, executor, nil)
 
 	// Register command handlers with closures that capture worker state
-	worker.OnCommand("posts/create", func(ctx context.Context, cmd core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
+	worker.OnCommand("test/create", func(ctx context.Context, cmd core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
 		return handleCreateCommand(ctx, cmd, msg, workerState, pctx)
 	})
-	worker.OnCommand("posts/request-summary-generation", func(ctx context.Context, cmd core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
+	worker.OnCommand("test/request-summary-generation", func(ctx context.Context, cmd core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
 		return handleSummaryRequestCommand(ctx, cmd, msg, workerState, pctx)
 	})
-	worker.OnCommand("posts/fail-summary-generation", func(ctx context.Context, cmd core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
+	worker.OnCommand("test/fail-summary-generation", func(ctx context.Context, cmd core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
 		return handleSummaryFailCommand(ctx, cmd, msg, workerState, pctx)
 	})
-	worker.OnCommand("posts/set-generated-summary", func(ctx context.Context, cmd core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
+	worker.OnCommand("test/set-generated-summary", func(ctx context.Context, cmd core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
 		return handleSummarySetCommand(ctx, cmd, msg, workerState, pctx)
 	})
 

@@ -3,8 +3,8 @@ package workers
 import (
 	"time"
 
-	"github.com/dhamidi/petrock/posts/commands"
-	"github.com/dhamidi/petrock/posts/state"
+	"github.com/dhamidi/petrock/test/commands"
+	"github.com/dhamidi/petrock/test/state"
 )
 
 // PendingSummary tracks a content item waiting for summarization
