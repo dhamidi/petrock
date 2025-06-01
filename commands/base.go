@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/dhamidi/petrock/core" // Placeholder for target project's core package
-	"github.com/dhamidi/petrock/posts/state" // Import state package
+	"github.com/dhamidi/petrock/test/state" // Import state package
 )
 
 // Validator defines an interface for commands that require stateful validation.
@@ -40,18 +40,18 @@ func NewExecutor(state *state.State) *Executor {
 // It checks if the command implements the feature's Validator interface
 // and calls its Validate method with the feature's state if it does.
 func (e *Executor) ValidateCommand(ctx context.Context, cmd core.Command) error {
-	slog.Debug("Feature executor validating command", "feature", "posts", "command_type", cmd.CommandName())
+	slog.Debug("Feature executor validating command", "feature", "test", "command_type", cmd.CommandName())
 
 	// Check if the command implements the stateful validator interface defined in commands.go
 	if validator, ok := cmd.(Validator); ok {
-		slog.Debug("Command implements Validator, calling Validate(state)", "feature", "posts", "command_type", cmd.CommandName())
+		slog.Debug("Command implements Validator, calling Validate(state)", "feature", "test", "command_type", cmd.CommandName())
 		// If yes, call the command's Validate method with the feature state
 		return validator.Validate(e.state)
 	}
 
 	// If the command doesn't implement Validator, assume no stateful validation needed by the feature executor.
 	// Basic stateless validation might have happened elsewhere (e.g., in the command struct itself, or HTTP handler).
-	slog.Debug("Command does not implement Validator, skipping stateful validation", "feature", "posts", "command_type", cmd.CommandName())
+	slog.Debug("Command does not implement Validator, skipping stateful validation", "feature", "test", "command_type", cmd.CommandName())
 	return nil
 }
 

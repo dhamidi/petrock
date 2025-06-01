@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/dhamidi/petrock/core" // Placeholder for target project's core package
-	"github.com/dhamidi/petrock/posts/state" // Import state package
+	"github.com/dhamidi/petrock/test/state" // Import state package
 )
 
 // Ensure command implements the marker interfaces
@@ -27,7 +27,7 @@ type CreateCommand struct {
 
 // CommandName returns the unique kebab-case name for this command type.
 func (c *CreateCommand) CommandName() string {
-	return "posts/create" // Removed suffix
+	return "test/create" // Removed suffix
 }
 
 // Validate implements the Validator interface for CreateCommand.
@@ -69,7 +69,7 @@ func (e *Executor) HandleCreate(ctx context.Context, command core.Command, msg *
 		return err // Returning error causes panic in core.Executor
 	}
 
-	slog.Debug("Applying state change for CreateCommand", "feature", "posts", "name", cmd.Name)
+	slog.Debug("Applying state change for CreateCommand", "feature", "test", "name", cmd.Name)
 
 	// Create a new item
 	newItem := &state.Item{
@@ -90,6 +90,6 @@ func (e *Executor) HandleCreate(ctx context.Context, command core.Command, msg *
 		return fmt.Errorf("failed to add item to state: %w", err)
 	}
 
-	slog.Debug("State change applied successfully for CreateCommand", "feature", "posts", "name", cmd.Name)
+	slog.Debug("State change applied successfully for CreateCommand", "feature", "test", "name", cmd.Name)
 	return nil
 }
