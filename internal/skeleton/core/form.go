@@ -1,11 +1,7 @@
 package core
 
 import (
-	"fmt"
-	"net/mail"
 	"net/url"
-	"strings"
-	"unicode/utf8"
 )
 
 // Form holds form data and validation errors.
@@ -54,67 +50,6 @@ func (f *Form) Get(key string) string {
 	return f.Values.Get(key)
 }
 
-// --- Validation Methods ---
-
-// ValidateRequired checks if the specified fields are present and non-empty in f.Values.
-// Adds errors using AddError if validation fails.
-func (f *Form) ValidateRequired(fields ...string) {
-	for _, field := range fields {
-		value := f.Get(field)
-		if strings.TrimSpace(value) == "" {
-			f.AddError(field, "This field cannot be blank")
-		}
-	}
-}
-
-// ValidateMinLength checks if the value of the specified field has at least `length` characters.
-// Adds an error if validation fails. Does not add error if field is empty (use ValidateRequired first).
-func (f *Form) ValidateMinLength(field string, length int) {
-	value := f.Get(field)
-	if value == "" {
-		return // Don't check length if field is empty
-	}
-	if utf8.RuneCountInString(value) < length {
-		f.AddError(field, fmt.Sprintf("This field must be at least %d characters long", length))
-	}
-}
-
-// ValidateMaxLength checks if the value of the specified field has at most `length` characters.
-// Adds an error if validation fails.
-func (f *Form) ValidateMaxLength(field string, length int) {
-	value := f.Get(field)
-	if value == "" {
-		return
-	}
-	if utf8.RuneCountInString(value) > length {
-		f.AddError(field, fmt.Sprintf("This field must be no more than %d characters long", length))
-	}
-}
-
-// ValidateEmail checks if the value of the specified field looks like a valid email address.
-// Adds an error if validation fails. Does not add error if field is empty.
-func (f *Form) ValidateEmail(field string) {
-	value := f.Get(field)
-	if value == "" {
-		return
-	}
-	_, err := mail.ParseAddress(value)
-	if err != nil {
-		f.AddError(field, "This field must be a valid email address")
-	}
-}
-
-// ValidateAllowedValues checks if the value of the specified field is one of the allowed values.
-// Adds an error if validation fails.
-func (f *Form) ValidateAllowedValues(field string, allowed ...string) {
-	value := f.Get(field)
-	if value == "" {
-		return
-	}
-	for _, v := range allowed {
-		if value == v {
-			return // Found a valid value
-		}
-	}
-	f.AddError(field, "This field has an invalid value")
-}
+// Note: Validation methods have been removed in favor of the new tag-based validation system.
+// See docs/form-validation-guide.md for migration guidance.
+// This form is now used only for template rendering and error display.
