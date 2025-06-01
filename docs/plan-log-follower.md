@@ -1,4 +1,4 @@
-# Plan: Log Follower Abstraction
+# Plan: Log Follower Abstraction - DONE
 
 ## Overview
 

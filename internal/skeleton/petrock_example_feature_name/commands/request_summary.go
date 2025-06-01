@@ -44,7 +44,7 @@ func (c *RequestSummaryGenerationCommand) Validate(state *state.State) error {
 }
 
 // HandleRequestSummaryGeneration applies state changes for RequestSummaryGenerationCommand.
-func (e *Executor) HandleRequestSummaryGeneration(ctx context.Context, command core.Command, msg *core.Message) error {
+func (e *Executor) HandleRequestSummaryGeneration(ctx context.Context, command core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
 	// Type assertion for pointer type
 	cmd, ok := command.(*RequestSummaryGenerationCommand)
 	if !ok {

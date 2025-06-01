@@ -70,7 +70,7 @@ func (c *UpdateCommand) Validate(state *state.State) error {
 }
 
 // HandleUpdate applies state changes for UpdateCommand.
-func (e *Executor) HandleUpdate(ctx context.Context, command core.Command, msg *core.Message) error {
+func (e *Executor) HandleUpdate(ctx context.Context, command core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
 	// Type assertion for pointer type
 	cmd, ok := command.(*UpdateCommand)
 	if !ok {

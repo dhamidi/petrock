@@ -38,21 +38,21 @@ func NewWorker(app *core.App, state *State, log *core.MessageLog, executor *core
 		workerState,
 	)
 
-	// Set dependencies
-	worker.SetDependencies(log, executor)
+	// Set dependencies (KVStore will be set by the App when this worker is registered)
+	worker.SetDependencies(log, executor, nil)
 
 	// Register command handlers with closures that capture worker state
-	worker.OnCommand("petrock_example_feature_name/create", func(ctx context.Context, cmd core.Command, msg *core.Message) error {
-		return handleCreateCommand(ctx, cmd, msg, workerState)
+	worker.OnCommand("petrock_example_feature_name/create", func(ctx context.Context, cmd core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
+		return handleCreateCommand(ctx, cmd, msg, workerState, pctx)
 	})
-	worker.OnCommand("petrock_example_feature_name/request-summary-generation", func(ctx context.Context, cmd core.Command, msg *core.Message) error {
-		return handleSummaryRequestCommand(ctx, cmd, msg, workerState)
+	worker.OnCommand("petrock_example_feature_name/request-summary-generation", func(ctx context.Context, cmd core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
+		return handleSummaryRequestCommand(ctx, cmd, msg, workerState, pctx)
 	})
-	worker.OnCommand("petrock_example_feature_name/fail-summary-generation", func(ctx context.Context, cmd core.Command, msg *core.Message) error {
-		return handleSummaryFailCommand(ctx, cmd, msg, workerState)
+	worker.OnCommand("petrock_example_feature_name/fail-summary-generation", func(ctx context.Context, cmd core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
+		return handleSummaryFailCommand(ctx, cmd, msg, workerState, pctx)
 	})
-	worker.OnCommand("petrock_example_feature_name/set-generated-summary", func(ctx context.Context, cmd core.Command, msg *core.Message) error {
-		return handleSummarySetCommand(ctx, cmd, msg, workerState)
+	worker.OnCommand("petrock_example_feature_name/set-generated-summary", func(ctx context.Context, cmd core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
+		return handleSummarySetCommand(ctx, cmd, msg, workerState, pctx)
 	})
 
 	// Set periodic work

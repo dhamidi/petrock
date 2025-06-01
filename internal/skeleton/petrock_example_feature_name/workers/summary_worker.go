@@ -11,7 +11,7 @@ import (
 )
 
 // handleCreateCommand processes new item creation commands
-func handleCreateCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState) error {
+func handleCreateCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState, pctx *core.ProcessingContext) error {
 	// Type assertion for pointer type
 	createCmd, ok := cmd.(*CreateCommand)
 	if !ok {
@@ -19,6 +19,11 @@ func handleCreateCommand(ctx context.Context, cmd core.Command, msg *core.Messag
 			"feature", "petrock_example_feature_name",
 			"type", fmt.Sprintf("%T", cmd))
 		return fmt.Errorf("unexpected command type: %T", cmd)
+	}
+
+	// Skip side effects during replay
+	if pctx.IsReplay {
+		return nil
 	}
 
 	// Request summarization for the new item's content
@@ -44,7 +49,7 @@ func handleCreateCommand(ctx context.Context, cmd core.Command, msg *core.Messag
 }
 
 // handleSummaryRequestCommand tracks summary generation requests
-func handleSummaryRequestCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState) error {
+func handleSummaryRequestCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState, pctx *core.ProcessingContext) error {
 	// Type assertion for pointer type
 	requestCmd, ok := cmd.(*RequestSummaryGenerationCommand)
 	if !ok {
@@ -63,12 +68,17 @@ func handleSummaryRequestCommand(ctx context.Context, cmd core.Command, msg *cor
 		return fmt.Errorf("item not found: %s", requestCmd.ID)
 	}
 
-	// Add to pending summaries
+	// ALWAYS update internal state (both replay and normal)
 	workerState.pendingSummaries[requestCmd.RequestID] = PendingSummary{
 		RequestID: requestCmd.RequestID,
 		ItemID:    requestCmd.ID,
 		Content:   item.Content,
 		CreatedAt: time.Now(),
+	}
+
+	// Skip side effects during replay
+	if pctx.IsReplay {
+		return nil
 	}
 
 	slog.Info("Added content to pending summarization queue",
@@ -80,7 +90,7 @@ func handleSummaryRequestCommand(ctx context.Context, cmd core.Command, msg *cor
 }
 
 // handleSummaryFailCommand removes failed summary requests from pending
-func handleSummaryFailCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState) error {
+func handleSummaryFailCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState, pctx *core.ProcessingContext) error {
 	// Type assertion for pointer type
 	failCmd, ok := cmd.(*FailSummaryGenerationCommand)
 	if !ok {
@@ -90,8 +100,13 @@ func handleSummaryFailCommand(ctx context.Context, cmd core.Command, msg *core.M
 		return fmt.Errorf("unexpected command type: %T", cmd)
 	}
 
-	// Remove from pending summaries
+	// ALWAYS update internal state (both replay and normal)
 	delete(workerState.pendingSummaries, failCmd.RequestID)
+
+	// Skip side effects during replay
+	if pctx.IsReplay {
+		return nil
+	}
 
 	slog.Info("Removed failed summary request from queue",
 		"feature", "petrock_example_feature_name",
@@ -103,7 +118,7 @@ func handleSummaryFailCommand(ctx context.Context, cmd core.Command, msg *core.M
 }
 
 // handleSummarySetCommand removes completed summary requests from pending
-func handleSummarySetCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState) error {
+func handleSummarySetCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState, pctx *core.ProcessingContext) error {
 	// Type assertion for pointer type
 	setCmd, ok := cmd.(*SetGeneratedSummaryCommand)
 	if !ok {
@@ -113,13 +128,10 @@ func handleSummarySetCommand(ctx context.Context, cmd core.Command, msg *core.Me
 		return fmt.Errorf("unexpected command type: %T", cmd)
 	}
 
-	// Remove from pending summaries
+	// ALWAYS update internal state (both replay and normal)
 	delete(workerState.pendingSummaries, setCmd.RequestID)
 
-	slog.Info("Summary successfully set for item",
-		"feature", "petrock_example_feature_name",
-		"itemID", setCmd.ID,
-		"requestID", setCmd.RequestID)
+	// No side effects for this command - it's a state update only
 
 	return nil
 }

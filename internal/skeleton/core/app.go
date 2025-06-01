@@ -18,6 +18,7 @@ type App struct {
 	CommandRegistry *CommandRegistry
 	QueryRegistry   *QueryRegistry
 	Executor        *Executor
+	KVStore         KVStore        // Key-value store for worker state persistence
 	Features        []string       // Track registered feature names
 	Routes          []string       // Track registered routes
 	Mux             *http.ServeMux // Store the HTTP mux
@@ -59,17 +60,27 @@ func NewApp(dbPath string) (*App, error) {
 		return nil, fmt.Errorf("failed to initialize message log: %w", err)
 	}
 
-	// 5. Initialize Central Command Executor
+	// 5. Initialize KVStore
+	slog.Debug("Initializing KV store")
+	kvStore, err := NewSQLiteKVStore(db)
+	if err != nil {
+		// Close the database connection since we're returning an error
+		db.Close()
+		return nil, fmt.Errorf("failed to initialize KV store: %w", err)
+	}
+
+	// 6. Initialize Central Command Executor
 	slog.Debug("Initializing central command executor")
 	executor := NewExecutor(messageLog, commandRegistry)
 
-	// 6. Return the App struct with all dependencies
+	// 7. Return the App struct with all dependencies
 	return &App{
 		DB:              db,
 		MessageLog:      messageLog,
 		CommandRegistry: commandRegistry,
 		QueryRegistry:   queryRegistry,
 		Executor:        executor,
+		KVStore:         kvStore,
 		Features:        []string{},
 		Routes:          []string{},
 		// AppState will be initialized by the caller
@@ -111,7 +122,7 @@ func (a *App) RegisterWorker(worker Worker) {
 	
 	// If it's a CommandWorker, set up its dependencies
 	if cmdWorker, ok := worker.(*CommandWorker); ok {
-		cmdWorker.SetDependencies(a.MessageLog, a.Executor)
+		cmdWorker.SetDependencies(a.MessageLog, a.Executor, a.KVStore)
 	}
 	
 	a.workers = append(a.workers, worker)
@@ -144,10 +155,8 @@ func (a *App) StartWorkers(ctx context.Context) error {
 			// Replay all messages first (synchronously within this goroutine)
 			slog.Debug("Worker replaying messages", "index", index)
 
-			// Worker's lastProcessedID is initialized to 0, so calling Work() will process
-			// all messages from the beginning. Messages are processed in the order they appear
-			// in the log and state is updated.
-			if err := w.Work(); err != nil {
+			// Call the new Replay method to reconstruct state from all messages
+			if err := w.Replay(a.workerCtx); err != nil {
 				slog.Error("Worker message replay failed", "index", index, "error", err)
 			}
 
@@ -281,7 +290,9 @@ func (a *App) ReplayLog() error {
 		// Execute ONLY the state update handler. DO NOT VALIDATE OR LOG AGAIN.
 		// Pass the message metadata to provide context like timestamp during replay
 		slog.Debug("Log replay: Applying state handler", "id", msg.ID, "name", cmd.CommandName())
-		handlerErr := handler(replayCtx, cmd, &msg.Message)
+		// Create replay context for the handler
+		replayPctx := &ProcessingContext{IsReplay: true}
+		handlerErr := handler(replayCtx, cmd, &msg.Message, replayPctx)
 		if handlerErr != nil {
 			// PANIC! If a state handler fails during replay, the state logic is
 			// inconsistent with the previously validated and logged command.
