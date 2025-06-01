@@ -117,26 +117,7 @@ func newQueryCmd() *cobra.Command {
 
 // newWorkerCmd creates the worker subcommand
 func newWorkerCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "worker <feature>/<entity>",
-		Short: "Generate a worker component", 
-		Long:  `Generate worker files for a specific feature and entity from skeleton templates.`,
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			featureName, entityName, err := validateComponentArgs(args)
-			if err != nil {
-				return err
-			}
-			
-			options := GenerateComponentOptions{
-				ComponentType: generator.ComponentTypeWorker,
-				FeatureName:   featureName,
-				EntityName:    entityName,
-			}
-			
-			return runComponentGeneration(options)
-		},
-	}
+	return NewWorkerSubcommand()
 }
 
 // runComponentGeneration handles component generation with collision detection
