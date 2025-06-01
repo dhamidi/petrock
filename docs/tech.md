@@ -15,6 +15,7 @@
 - core/app.go: Central application initialization and state management (no HTTP concerns)
 - core/commands.go: Command registry and execution
 - core/queries.go: Query registry and execution 
+- core/form.go: Tag-based validation system for forms, JSON APIs, and CLI arguments
 - core/log.go: Persistent event log
 - cmd/<project>/serve.go: HTTP server setup and request handling
 
