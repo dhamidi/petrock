@@ -107,26 +107,7 @@ func parseFeatureEntityName(input string) (string, string, error) {
 
 // newCommandCmd creates the command subcommand
 func newCommandCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "command <feature>/<entity>",
-		Short: "Generate a command component",
-		Long:  `Generate command files for a specific feature and entity from skeleton templates.`,
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			featureName, entityName, err := validateComponentArgs(args)
-			if err != nil {
-				return err
-			}
-			
-			options := GenerateComponentOptions{
-				ComponentType: generator.ComponentTypeCommand,
-				FeatureName:   featureName,
-				EntityName:    entityName,
-			}
-			
-			return runComponentGeneration(options)
-		},
-	}
+	return NewCommandSubcommand()
 }
 
 // newQueryCmd creates the query subcommand  
