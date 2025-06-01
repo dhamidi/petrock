@@ -108,6 +108,12 @@ func (a *App) RegisterRoute(pattern string, handler http.HandlerFunc) {
 // Workers are started when StartWorkers is called and stopped during shutdown
 func (a *App) RegisterWorker(worker Worker) {
 	slog.Debug("Registering worker", "type", fmt.Sprintf("%T", worker))
+	
+	// If it's a CommandWorker, set up its dependencies
+	if cmdWorker, ok := worker.(*CommandWorker); ok {
+		cmdWorker.SetDependencies(a.MessageLog, a.Executor)
+	}
+	
 	a.workers = append(a.workers, worker)
 }
 

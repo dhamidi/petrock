@@ -80,7 +80,7 @@ func handleCreate(ctx context.Context, cmd core.Command, msg core.Message) error
 
 ## Plan
 
-### Step 1: Create Worker Infrastructure
+### Step 1: Create Worker Infrastructure - DONE
 **Files Modified:**
 - `core/worker.go` - Add new Worker implementation and supporting types
 - `core/app.go` - Update worker management to support new workers
