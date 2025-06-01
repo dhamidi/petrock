@@ -13,7 +13,6 @@ import (
 	// "github.com/dhamidi/petrock/internal/template" // Removed template import
 	// "github.com/dhamidi/petrock/internal/skeletonfs" // Removed import for skeletonfs
 	petrock "github.com/dhamidi/petrock" // Import root package for embedded FS
-	"github.com/dhamidi/petrock/internal/generator"
 	"github.com/dhamidi/petrock/internal/utils"
 
 	"github.com/spf13/cobra"
@@ -31,12 +30,7 @@ var (
 // //go:embed all:../../internal/skeleton // Removed embed directive here
 // var skeletonFS embed.FS // Removed local embed FS variable
 
-// GenerateComponentOptions holds options for component generation
-type GenerateComponentOptions struct {
-	ComponentType generator.ComponentType
-	FeatureName   string
-	EntityName    string
-}
+
 
 // newCmd represents the new command
 var newCmd = &cobra.Command{
@@ -71,14 +65,7 @@ func init() {
 	// Add flags here if needed in the future (e.g., --template-set)
 }
 
-// validateComponentArgs validates feature/entity format and extracts components
-func validateComponentArgs(args []string) (string, string, error) {
-	if len(args) != 1 {
-		return "", "", fmt.Errorf("expected exactly one argument in format <feature>/<entity>")
-	}
-	
-	return parseFeatureEntityName(args[0])
-}
+
 
 // parseFeatureEntityName parses feature/entity format
 func parseFeatureEntityName(input string) (string, string, error) {
@@ -120,43 +107,7 @@ func newWorkerCmd() *cobra.Command {
 	return NewWorkerSubcommand()
 }
 
-// runComponentGeneration handles component generation with collision detection
-func runComponentGeneration(options GenerateComponentOptions) error {
-	slog.Debug("Component generation requested", 
-		"type", options.ComponentType,
-		"feature", options.FeatureName, 
-		"entity", options.EntityName)
-	
-	// Detect current module path for replacements
-	modulePath, err := detectModulePath(".")
-	if err != nil {
-		return fmt.Errorf("failed to detect module path: %w", err)
-	}
-	
-	// Create component generator
-	componentGen := generator.NewComponentGenerator(".")
-	
-	// Prepare generation options
-	genOptions := generator.GenerateOptions{
-		ComponentType: options.ComponentType,
-		FeatureName:   options.FeatureName,
-		EntityName:    options.EntityName,
-		TargetDir:     ".",
-		ModulePath:    modulePath,
-	}
-	
-	// Generate component
-	if err := componentGen.GenerateComponent(genOptions); err != nil {
-		return fmt.Errorf("failed to generate component: %w", err)
-	}
-	
-	slog.Info("Component generated successfully", 
-		"type", options.ComponentType,
-		"feature", options.FeatureName,
-		"entity", options.EntityName)
-	
-	return nil
-}
+
 
 // detectModulePath reads go.mod to determine the current module path
 func detectModulePath(projectPath string) (string, error) {
