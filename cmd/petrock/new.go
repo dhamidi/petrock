@@ -112,26 +112,7 @@ func newCommandCmd() *cobra.Command {
 
 // newQueryCmd creates the query subcommand  
 func newQueryCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "query <feature>/<entity>",
-		Short: "Generate a query component",
-		Long:  `Generate query files for a specific feature and entity from skeleton templates.`,
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			featureName, entityName, err := validateComponentArgs(args)
-			if err != nil {
-				return err
-			}
-			
-			options := GenerateComponentOptions{
-				ComponentType: generator.ComponentTypeQuery,
-				FeatureName:   featureName,
-				EntityName:    entityName,
-			}
-			
-			return runComponentGeneration(options)
-		},
-	}
+	return NewQuerySubcommand()
 }
 
 // newWorkerCmd creates the worker subcommand
