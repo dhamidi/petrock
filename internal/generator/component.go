@@ -71,7 +71,8 @@ func (cg *ComponentGeneratorImpl) ExtractComponent(options ExtractionOptions) er
 		"type", options.ComponentType,
 		"feature", options.FeatureName,
 		"entity", options.EntityName,
-		"target", options.TargetDir)
+		"target", options.TargetDir,
+		"skeletonFiles", options.SkeletonFiles)
 
 	// Ensure target directory exists
 	if err := utils.EnsureDir(options.TargetDir); err != nil {
@@ -79,7 +80,8 @@ func (cg *ComponentGeneratorImpl) ExtractComponent(options ExtractionOptions) er
 	}
 
 	// Extract each skeleton file
-	for _, sourceFile := range options.SkeletonFiles {
+	for i, sourceFile := range options.SkeletonFiles {
+		slog.Debug("Extracting skeleton file", "index", i, "file", sourceFile)
 		if err := cg.extractSkeletonFile(sourceFile, options); err != nil {
 			return fmt.Errorf("failed to extract %s: %w", sourceFile, err)
 		}
