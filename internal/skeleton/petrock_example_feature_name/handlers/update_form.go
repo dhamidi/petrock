@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/petrock/example_module_path/core"
+	"github.com/petrock/example_module_path/core/ui"
 	"github.com/petrock/example_module_path/petrock_example_feature_name/commands"
 	"github.com/petrock/example_module_path/petrock_example_feature_name/queries"
 )
@@ -35,8 +36,8 @@ func (fs *FeatureServer) HandleEditForm(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Create an empty form
-	form := core.NewForm(nil)
+	// Create empty form data
+	formData := ui.NewFormData(nil, nil)
 
 	// Get CSRF token
 	csrfToken := "token" // Replace with actual CSRF token generation
@@ -54,7 +55,7 @@ func (fs *FeatureServer) HandleEditForm(w http.ResponseWriter, r *http.Request) 
 	pageTitle := fmt.Sprintf("Edit %s", item.Item.Name)
 
 	// Render the page with our helper
-	if err := RenderPage(w, pageTitle, ItemForm(form, &item.Item, csrfToken)); err != nil {
+	if err := RenderPage(w, pageTitle, ItemForm(formData, &item.Item, csrfToken)); err != nil {
 		slog.Error("Error rendering edit form", "error", err)
 		http.Error(w, "Error rendering form", http.StatusInternalServerError)
 	}
@@ -84,13 +85,20 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 	if err := core.ParseFromURLValues(r.PostForm, &cmd); err != nil {
 		// Handle validation errors
 		if parseErrors, ok := err.(*core.ParseErrors); ok {
-			// Create a form for rendering with errors
-			form := core.NewForm(r.PostForm)
-			
-			// Convert ParseErrors to form errors
+			// Convert ParseErrors to ui.ParseError format
+			var uiErrors []ui.ParseError
 			for _, parseErr := range parseErrors.Errors {
-				form.AddError(parseErr.Field, parseErr.Message)
+				uiErrors = append(uiErrors, ui.ParseError{
+					Field:   parseErr.Field,
+					Message: parseErr.Message,
+					Code:    parseErr.Code,
+					Meta:    parseErr.Meta,
+				})
 			}
+
+			// Create FormData with values and errors
+			formData := ui.NewFormData(r.PostForm, uiErrors)
+
 			// Retrieve the original item to re-render the form with both the item and errors
 			query := queries.GetQuery{ID: itemID}
 			result, err := fs.querier.HandleGet(r.Context(), query)
@@ -113,7 +121,7 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 			csrfToken := "token" // Replace with actual CSRF token
 
 			// Render the page with validation errors
-			if err := RenderPage(w, pageTitle, ItemForm(form, &item.Item, csrfToken)); err != nil {
+			if err := RenderPage(w, pageTitle, ItemForm(formData, &item.Item, csrfToken)); err != nil {
 				slog.Error("Error rendering form with validation errors", "error", err)
 				http.Error(w, "Error rendering form", http.StatusInternalServerError)
 			}
@@ -135,9 +143,15 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		// Check if it's a validation error
 		if strings.Contains(err.Error(), "validation failed") || strings.Contains(err.Error(), "not found") {
-			// Create a form for rendering with errors
-			form := core.NewForm(r.PostForm)
-			form.AddError("name", err.Error())
+			// Create FormData with validation error
+			uiErrors := []ui.ParseError{
+				{
+					Field:   "name",
+					Message: err.Error(),
+					Code:    "validation_error",
+				},
+			}
+			formData := ui.NewFormData(r.PostForm, uiErrors)
 
 			// Retrieve the original item to re-render the form
 			query := queries.GetQuery{ID: itemID}
@@ -161,7 +175,7 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 			csrfToken := "token" // Replace with actual CSRF token
 
 			// Render the page with validation errors
-			if err := RenderPage(w, pageTitle, ItemForm(form, &item.Item, csrfToken)); err != nil {
+			if err := RenderPage(w, pageTitle, ItemForm(formData, &item.Item, csrfToken)); err != nil {
 				slog.Error("Error rendering form with validation errors", "error", err)
 				http.Error(w, "Error rendering form", http.StatusInternalServerError)
 			}
