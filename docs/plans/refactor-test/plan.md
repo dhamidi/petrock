@@ -44,18 +44,18 @@ PHASE 2: Extract Individual Test Steps
   - Functions: `NewSelfInspectStep()`, `validateInspectJSON()`
   - Packages: `encoding/json`, `os/exec`
 
-Phase 3: Implement Step Interface Methods
-- Task 3.1: [File: cmd/petrock/test_steps.go] Implement Execute() for setup steps (Effort: Medium, Dependencies: Phase 2)
+PHASE 3: Implement Step Interface Methods
+- Task 3.1: [File: cmd/petrock/test_steps.go] Implement Execute() for setup steps (Effort: Medium, Dependencies: Phase 2) - COMPLETED
   - Types: Methods on `SetupTempDirStep`, `CreateProjectStep`, `AddFeatureStep`
   - Functions: `(*SetupTempDirStep).Execute()`, `(*CreateProjectStep).Execute()`, `(*AddFeatureStep).Execute()`
   - Packages: None (using existing functionality)
 
-- Task 3.2: [File: cmd/petrock/test_steps.go] Implement Execute() for build/server steps (Effort: Medium, Dependencies: Phase 2)
+- Task 3.2: [File: cmd/petrock/test_steps.go] Implement Execute() for build/server steps (Effort: Medium, Dependencies: Phase 2) - COMPLETED
   - Types: Methods on `BuildProjectStep`, `StartServerStep`, `StopServerStep`
   - Functions: `(*BuildProjectStep).Execute()`, `(*StartServerStep).Execute()`, `(*StopServerStep).Execute()`
   - Packages: None (using existing functionality)
 
-- Task 3.3: [File: cmd/petrock/test_steps.go] Implement Execute() for HTTP and inspection steps (Effort: Medium, Dependencies: Phase 2)
+- Task 3.3: [File: cmd/petrock/test_steps.go] Implement Execute() for HTTP and inspection steps (Effort: Medium, Dependencies: Phase 2) - COMPLETED
   - Types: Methods on `HTTPGetStep`, `HTTPPostStep`, `CommandAPIStep`, `SelfInspectStep`
   - Functions: `(*HTTPGetStep).Execute()`, `(*HTTPPostStep).Execute()`, `(*CommandAPIStep).Execute()`, `(*SelfInspectStep).Execute()`
   - Packages: None (using existing functionality)
