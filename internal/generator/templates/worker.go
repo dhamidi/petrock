@@ -26,16 +26,23 @@ func GetWorkerTemplateFiles(entityName string) WorkerFileMap {
 		"internal/skeleton/petrock_example_feature_name/workers/types.go": "{{feature}}/workers/types.go",
 	}
 
-	// Add entity-specific file if it matches known patterns
+	// Convert kebab-case to snake_case for file matching
+	normalizedEntityName := kebabToSnakeCase(entityName)
+
+	// Try to find an exact match first
 	knownEntities := []string{"summary", "notification", "backup", "sync", "process", "analyze"}
 	for _, knownEntity := range knownEntities {
-		if entityName == knownEntity {
-			skeletonFile := fmt.Sprintf("internal/skeleton/petrock_example_feature_name/workers/%s_worker.go", entityName)
-			targetFile := fmt.Sprintf("{{feature}}/workers/%s_worker.go", entityName)
+		if normalizedEntityName == knownEntity {
+			skeletonFile := fmt.Sprintf("internal/skeleton/petrock_example_feature_name/workers/%s_worker.go", knownEntity)
+			targetFile := fmt.Sprintf("{{feature}}/workers/%s_worker.go", normalizedEntityName)
 			baseFiles[skeletonFile] = targetFile
-			break
+			return baseFiles
 		}
 	}
+	
+	// If no exact match, use the summary_worker.go template as a base for new worker
+	baseFiles["internal/skeleton/petrock_example_feature_name/workers/summary_worker.go"] = 
+		fmt.Sprintf("{{feature}}/workers/%s_worker.go", normalizedEntityName)
 
 	return baseFiles
 }
@@ -54,13 +61,15 @@ func GetWorkerReplacements(placeholders WorkerPlaceholders) map[string]string {
 	replacements[fmt.Sprintf("petrock_example_feature_name/%s", placeholders.EntityName)] = 
 		fmt.Sprintf("%s/%s", placeholders.FeatureName, placeholders.EntityName)
 
-	// Add struct name replacements (e.g., SummaryWorker)
+	// Add struct name replacements (e.g., SummaryWorker -> EmailDigestWorker)
 	if placeholders.WorkerStructName != "" {
+		replacements["SummaryWorker"] = placeholders.WorkerStructName
 		replacements["{{worker_struct}}"] = placeholders.WorkerStructName
 	}
 
-	// Add method name replacements (e.g., ProcessSummary)
+	// Add method name replacements (e.g., ProcessSummary -> ProcessEmailDigest)
 	if placeholders.WorkerMethodName != "" {
+		replacements["ProcessSummary"] = placeholders.WorkerMethodName
 		replacements["{{worker_method}}"] = placeholders.WorkerMethodName
 	}
 
@@ -79,21 +88,24 @@ func GetWorkerReplacements(placeholders WorkerPlaceholders) map[string]string {
 
 // BuildWorkerPlaceholders creates WorkerPlaceholders from basic inputs
 func BuildWorkerPlaceholders(featureName, entityName, modulePath string) WorkerPlaceholders {
-	// Generate worker struct name (e.g., "summary" -> "SummaryWorker")
+	// Normalize entity name (convert kebab-case to snake_case)
+	normalizedEntityName := kebabToSnakeCase(entityName)
+	
+	// Generate worker struct name (e.g., "summary" -> "SummaryWorker", "data-export" -> "DataExportWorker")
 	workerStructName := toTitleCase(entityName) + "Worker"
 	
-	// Generate worker method name (e.g., "summary" -> "ProcessSummary")
+	// Generate worker method name (e.g., "summary" -> "ProcessSummary", "data-export" -> "ProcessDataExport")
 	workerMethodName := "Process" + toTitleCase(entityName)
 	
-	// Generate worker file name (e.g., "summary" -> "summary_worker.go")
-	workerFileName := entityName + "_worker.go"
+	// Generate worker file name (e.g., "summary" -> "summary_worker.go", "data-export" -> "data_export_worker.go")
+	workerFileName := normalizedEntityName + "_worker.go"
 	
 	// Generate worker package path
 	workerPackagePath := fmt.Sprintf("%s/%s/workers", modulePath, featureName)
 
 	return WorkerPlaceholders{
 		FeatureName:        featureName,
-		EntityName:         entityName,
+		EntityName:         normalizedEntityName,
 		ModulePath:         modulePath,
 		WorkerStructName:   workerStructName,
 		WorkerMethodName:   workerMethodName,

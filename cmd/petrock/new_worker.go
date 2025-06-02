@@ -38,10 +38,11 @@ Workers are ideal for:
 - Cleanup and maintenance operations
 
 Examples:
-  petrock new worker posts/summary       - Generate SummaryWorker for content summarization
-  petrock new worker users/notification  - Generate NotificationWorker for user alerts
-  petrock new worker orders/backup       - Generate BackupWorker for order data backup
-  petrock new worker analytics/process   - Generate ProcessWorker for data analysis
+  petrock new worker posts/summary           - Generate SummaryWorker for content summarization
+  petrock new worker posts/email-digest      - Generate EmailDigestWorker for sending email digests
+  petrock new worker users/notification      - Generate NotificationWorker for user alerts
+  petrock new worker orders/backup           - Generate BackupWorker for order data backup
+  petrock new worker analytics/process       - Generate ProcessWorker for data analysis
 
 Generated files:
   - <feature>/workers/main.go           - Worker registry and startup logic

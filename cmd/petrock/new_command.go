@@ -27,9 +27,10 @@ Commands handle business logic and state changes in your petrock application.
 They are part of the CQRS (Command Query Responsibility Segregation) pattern.
 
 Examples:
-  petrock new command posts/create     - Generate CreateCommand for posts feature
-  petrock new command users/register   - Generate RegisterCommand for users feature  
-  petrock new command orders/cancel    - Generate CancelCommand for orders feature
+  petrock new command posts/create              - Generate CreateCommand for posts feature
+  petrock new command posts/schedule-publication - Generate SchedulePublicationCommand for posts feature  
+  petrock new command users/register            - Generate RegisterCommand for users feature  
+  petrock new command orders/cancel             - Generate CancelCommand for orders feature
 
 Generated files:
   - <feature>/commands/base.go       - Base command interfaces and types

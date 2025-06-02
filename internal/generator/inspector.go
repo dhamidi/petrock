@@ -125,12 +125,11 @@ func (ci *ComponentInspectorImpl) ComponentExists(componentType ComponentType, f
 			}
 		}
 	case ComponentTypeWorker:
-		// For workers, check if any worker exists for this feature
-		// since each feature typically has one worker infrastructure that handles multiple commands
+		// For workers, check if the specific worker entity exists
+		expectedWorkerName := featureName + "/" + entityName
 		for _, worker := range result.Workers {
-			// Workers are reported as individual command handlers (e.g., "posts/create")
-			// If any worker exists for this feature, the worker infrastructure already exists
-			if strings.HasPrefix(worker.Name, featureName+"/") {
+			// Check for exact match of the worker entity
+			if worker.Name == expectedWorkerName {
 				return true, nil
 			}
 		}

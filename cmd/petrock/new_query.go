@@ -30,10 +30,11 @@ Queries are read-only operations that return data without modifying application 
 They can include filtering, pagination, sorting, and aggregation logic.
 
 Examples:
-  petrock new query posts/get        - Generate GetQuery for retrieving a single post
-  petrock new query users/list       - Generate ListQuery for retrieving user lists
-  petrock new query orders/search    - Generate SearchQuery for searching orders
-  petrock new query analytics/count  - Generate CountQuery for counting entities
+  petrock new query posts/get               - Generate GetQuery for retrieving a single post
+  petrock new query posts/search-published  - Generate SearchPublishedQuery for searching published posts
+  petrock new query users/list              - Generate ListQuery for retrieving user lists
+  petrock new query orders/search           - Generate SearchQuery for searching orders
+  petrock new query analytics/count         - Generate CountQuery for counting entities
 
 Generated files:
   - <feature>/queries/base.go     - Base query interfaces and types

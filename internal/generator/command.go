@@ -32,8 +32,9 @@ func (cg *CommandGenerator) ExtractCommandFiles(featureName, entityName string, 
 		return fmt.Errorf("failed to get command file list: %w", err)
 	}
 
-	// Update extraction options with command files
+	// Update extraction options with command files and file mapping
 	options.SkeletonFiles = commandFiles
+	options.FileMapping = templates.GetCommandTemplateFiles(entityName)
 	
 	// Use base ComponentGenerator extraction logic
 	baseGen := NewComponentGenerator(".")

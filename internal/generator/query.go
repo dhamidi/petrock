@@ -32,8 +32,9 @@ func (qg *QueryGenerator) ExtractQueryFiles(featureName, entityName string, opti
 		return fmt.Errorf("failed to get query file list: %w", err)
 	}
 
-	// Update extraction options with query files
+	// Update extraction options with query files and file mapping
 	options.SkeletonFiles = queryFiles
+	options.FileMapping = templates.GetQueryTemplateFiles(entityName)
 	
 	// Use base ComponentGenerator extraction logic
 	baseGen := NewComponentGenerator(".")

@@ -26,6 +26,7 @@ type ExtractionOptions struct {
 	TargetDir       string
 	SkeletonFiles   []string
 	Replacements    map[string]string
+	FileMapping     map[string]string // Optional mapping from skeleton file to target file path
 }
 
 // GenerateOptions holds options for component generation
@@ -172,10 +173,35 @@ func (cg *ComponentGeneratorImpl) extractSkeletonFile(sourceFile string, options
 		return fmt.Errorf("failed to read skeleton file %s: %w", sourceFile, err)
 	}
 
-	// Apply replacements
+	// Apply replacements in order (most specific first)
 	contentStr := string(content)
+	
+	// First apply specific path replacements that might be affected by general replacements
+	specificReplacements := []string{
+		"petrock_example_feature_name/create",
+		"petrock_example_feature_name/get", 
+		"petrock_example_feature_name/summary",
+	}
+	
+	for _, placeholder := range specificReplacements {
+		if replacement, exists := options.Replacements[placeholder]; exists {
+			contentStr = strings.ReplaceAll(contentStr, placeholder, replacement)
+		}
+	}
+	
+	// Then apply all other replacements
 	for placeholder, replacement := range options.Replacements {
-		contentStr = strings.ReplaceAll(contentStr, placeholder, replacement)
+		// Skip the specific ones we already did
+		isSpecific := false
+		for _, specific := range specificReplacements {
+			if placeholder == specific {
+				isSpecific = true
+				break
+			}
+		}
+		if !isSpecific {
+			contentStr = strings.ReplaceAll(contentStr, placeholder, replacement)
+		}
 	}
 
 	// Determine target file path
@@ -199,7 +225,19 @@ func (cg *ComponentGeneratorImpl) extractSkeletonFile(sourceFile string, options
 
 // buildTargetPath builds the target file path from skeleton source path
 func (cg *ComponentGeneratorImpl) buildTargetPath(sourceFile string, options ExtractionOptions) string {
-	// Remove skeleton prefix (internal/skeleton/petrock_example_feature_name/)
+	// Check if there's a specific mapping for this file
+	if options.FileMapping != nil {
+		if targetPath, exists := options.FileMapping[sourceFile]; exists {
+			// Apply placeholder replacements to the target path
+			resolved := targetPath
+			for placeholder, replacement := range options.Replacements {
+				resolved = strings.ReplaceAll(resolved, placeholder, replacement)
+			}
+			return filepath.Join(options.TargetDir, resolved)
+		}
+	}
+	
+	// Fall back to default path building
 	relativePath := strings.TrimPrefix(sourceFile, "internal/skeleton/petrock_example_feature_name/")
 	
 	// Replace feature name placeholder with actual feature name

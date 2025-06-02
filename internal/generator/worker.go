@@ -32,8 +32,9 @@ func (wg *WorkerGenerator) ExtractWorkerFiles(featureName, entityName string, op
 		return fmt.Errorf("failed to get worker file list: %w", err)
 	}
 
-	// Update extraction options with worker files
+	// Update extraction options with worker files and file mapping
 	options.SkeletonFiles = workerFiles
+	options.FileMapping = templates.GetWorkerTemplateFiles(entityName)
 	
 	// Use base ComponentGenerator extraction logic
 	baseGen := NewComponentGenerator(".")
