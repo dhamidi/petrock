@@ -11,6 +11,18 @@ import (
 	"github.com/dhamidi/petrock/internal/utils"
 )
 
+// CommandField represents a field definition for a command struct
+type CommandField struct {
+	Name string
+	Type string
+}
+
+// QueryField represents a field definition for a query struct
+type QueryField struct {
+	Name string
+	Type string
+}
+
 // ComponentGenerator defines the interface for component generation
 type ComponentGenerator interface {
 	ExtractComponent(options ExtractionOptions) error
@@ -28,6 +40,7 @@ type ExtractionOptions struct {
 	Replacements    map[string]string
 	FileMapping     map[string]string // Optional mapping from skeleton file to target file path
 	Fields          []CommandField    // Optional custom fields for command generation
+	QueryFields     []QueryField      // Optional custom fields for query generation
 }
 
 // GenerateOptions holds options for component generation

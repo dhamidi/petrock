@@ -51,12 +51,6 @@ func (cg *CommandGenerator) ExtractCommandFiles(featureName, entityName string, 
 	return baseGen.ExtractComponent(options)
 }
 
-// CommandField represents a field definition for a command struct
-type CommandField struct {
-	Name string
-	Type string
-}
-
 // GenerateCommandComponent generates a complete command component
 func (cg *CommandGenerator) GenerateCommandComponent(featureName, entityName, targetDir, modulePath string) error {
 	return cg.GenerateCommandComponentWithFields(featureName, entityName, targetDir, modulePath, nil)
