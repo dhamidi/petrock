@@ -366,7 +366,7 @@ func (s *MCPServer) createCommandGeneratorTool() Tool {
 					"type":        "string",
 					"description": "Name of the feature (e.g., 'posts', 'users')",
 				},
-				"entity_name": map[string]interface{}{
+				"name": map[string]interface{}{
 					"type":        "string",
 					"description": "Name of the entity/command (e.g., 'create', 'delete')",
 				},
@@ -389,7 +389,7 @@ func (s *MCPServer) createCommandGeneratorTool() Tool {
 					},
 				},
 			},
-			Required: []string{"feature_name", "entity_name"},
+			Required: []string{"feature_name", "name"},
 		},
 		Handler: s.handleGenerateCommand,
 	}
@@ -407,7 +407,7 @@ func (s *MCPServer) createQueryGeneratorTool() Tool {
 					"type":        "string",
 					"description": "Name of the feature (e.g., 'posts', 'users')",
 				},
-				"entity_name": map[string]interface{}{
+				"name": map[string]interface{}{
 					"type":        "string",
 					"description": "Name of the query entity (e.g., 'get', 'list')",
 				},
@@ -430,7 +430,7 @@ func (s *MCPServer) createQueryGeneratorTool() Tool {
 					},
 				},
 			},
-			Required: []string{"feature_name", "entity_name"},
+			Required: []string{"feature_name", "name"},
 		},
 		Handler: s.handleGenerateQuery,
 	}
@@ -476,7 +476,7 @@ func (s *MCPServer) createComponentGeneratorTool() Tool {
 					"type":        "string",
 					"description": "Name of the feature",
 				},
-				"entity_name": map[string]interface{}{
+				"name": map[string]interface{}{
 					"type":        "string",
 					"description": "Name of the entity/component",
 				},
@@ -499,7 +499,7 @@ func (s *MCPServer) createComponentGeneratorTool() Tool {
 					},
 				},
 			},
-			Required: []string{"component_type", "feature_name", "entity_name"},
+			Required: []string{"component_type", "feature_name", "name"},
 		},
 		Handler: s.handleGenerateComponent,
 	}
@@ -524,9 +524,9 @@ func (s *MCPServer) handleGenerateCommand(params map[string]interface{}) (interf
 		return nil, fmt.Errorf("feature_name must be a string")
 	}
 
-	entityName, ok := params["entity_name"].(string)
+	entityName, ok := params["name"].(string)
 	if !ok {
-		return nil, fmt.Errorf("entity_name must be a string")
+		return nil, fmt.Errorf("name must be a string")
 	}
 
 	// Build command arguments
@@ -588,9 +588,9 @@ func (s *MCPServer) handleGenerateQuery(params map[string]interface{}) (interfac
 		return nil, fmt.Errorf("feature_name must be a string")
 	}
 
-	entityName, ok := params["entity_name"].(string)
+	entityName, ok := params["name"].(string)
 	if !ok {
-		return nil, fmt.Errorf("entity_name must be a string")
+		return nil, fmt.Errorf("name must be a string")
 	}
 
 	// Build command arguments
@@ -699,8 +699,8 @@ func (s *MCPServer) handleGenerateComponent(params map[string]interface{}) (inte
 	case "query":
 		return s.handleGenerateQuery(params)
 	case "worker":
-		// Map entity_name to worker_name for worker handler
-		if entityName, exists := params["entity_name"]; exists {
+		// Map name to worker_name for worker handler
+		if entityName, exists := params["name"]; exists {
 			params["worker_name"] = entityName
 		}
 		return s.handleGenerateWorker(params)
