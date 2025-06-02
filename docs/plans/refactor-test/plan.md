@@ -60,13 +60,13 @@ PHASE 3: Implement Step Interface Methods
   - Functions: `(*HTTPGetStep).Execute()`, `(*HTTPPostStep).Execute()`, `(*CommandAPIStep).Execute()`, `(*SelfInspectStep).Execute()`
   - Packages: None (using existing functionality)
 
-Phase 4: Refactor Main Test Function
-- Task 4.1: [File: cmd/petrock/test.go] Replace runTest with step-based implementation (Effort: Large, Dependencies: Phase 3)
+PHASE 4: Refactor Main Test Function
+- Task 4.1: [File: cmd/petrock/test.go] Replace runTest with step-based implementation (Effort: Large, Dependencies: Phase 3) - COMPLETED
   - Types: Modify `runTest` function signature and implementation
   - Functions: `runTest()`, `setupTestSteps()`, `executeTestSteps()`
   - Packages: None (reorganizing existing code)
 
-- Task 4.2: [File: cmd/petrock/test.go] Add step progress reporting (Effort: Small, Dependencies: Task 4.1)
+- Task 4.2: [File: cmd/petrock/test.go] Add step progress reporting (Effort: Small, Dependencies: Task 4.1) - COMPLETED
   - Types: None
   - Functions: `reportStepProgress()`, `reportFinalResults()`
   - Packages: `fmt`
