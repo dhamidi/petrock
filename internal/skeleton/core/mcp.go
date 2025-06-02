@@ -596,15 +596,18 @@ func (s *MCPServer) handleGenerateQuery(params map[string]interface{}) (interfac
 	// Build command arguments
 	args := []string{"new", "query", fmt.Sprintf("%s/%s", featureName, entityName)}
 
-	// Note: Query generation with custom fields would need CLI support
-	// For now, we'll generate basic queries and mention this limitation
-	if fieldsParam, exists := params["fields"]; exists && fieldsParam != nil {
-		if fields, ok := fieldsParam.([]interface{}); ok && len(fields) > 0 {
+	// Extract optional fields
+	if fieldsParam, exists := params["fields"]; exists {
+		fields, err := s.parseFields(fieldsParam)
+		if err != nil {
 			return map[string]interface{}{
 				"success": false,
-				"error":   "Query generation with custom fields is not yet supported via CLI",
-				"suggestion": "Generate the basic query first, then customize manually",
+				"error":   fmt.Sprintf("Invalid fields: %v", err),
 			}, nil
+		}
+		// Add field definitions to command
+		for _, field := range fields {
+			args = append(args, fmt.Sprintf("%s:%s", field.Name, field.Type))
 		}
 	}
 
