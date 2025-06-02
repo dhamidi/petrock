@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log/slog" // Import slog
 	"os"
 	"strings" // Import strings
@@ -42,6 +41,8 @@ func init() {
 	// Note: newCmd and testCmd are registered in their respective files
 	rootCmd.AddCommand(featureCmd) // From feature.go
 
+	// Use Cobra's default error handling
+
 	// Configure logging level based on environment variable
 	logLevel := slog.LevelInfo // Default level
 	levelStr := strings.ToLower(os.Getenv("PETROCK_LOG_LEVEL"))
@@ -64,7 +65,6 @@ func init() {
 
 func main() {
 	if err := Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }
