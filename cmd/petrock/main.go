@@ -38,8 +38,7 @@ func Execute() error {
 
 func init() {
 	// Add subcommands defined in other files
-	rootCmd.AddCommand(newCmd)     // From new.go
-	rootCmd.AddCommand(testCmd)    // From test.go
+	// Note: newCmd and testCmd are registered in their respective files
 	rootCmd.AddCommand(featureCmd) // From feature.go
 
 	// Configure logging level based on environment variable
