@@ -1,16 +1,65 @@
 package ui
 
 import (
+	"net/url"
+
 	g "maragu.dev/gomponents"
 	"maragu.dev/gomponents/html"
 )
 
-// Form is the core Form type that will be imported from parent core package
-type Form interface {
-	HasError(field string) bool
-	GetError(field string) string
-	Get(key string) string
+// ParseError represents a single validation error
+type ParseError struct {
+	Field   string
+	Message string
+	Code    string
+	Meta    map[string]interface{}
 }
+
+// FormData holds form values and validation errors for template rendering
+type FormData struct {
+	Values url.Values
+	Errors []ParseError
+}
+
+// HasError checks if there are any errors for the given field
+func (f *FormData) HasError(field string) bool {
+	for _, err := range f.Errors {
+		if err.Field == field {
+			return true
+		}
+	}
+	return false
+}
+
+// GetError returns the first error message for the given field
+func (f *FormData) GetError(field string) string {
+	for _, err := range f.Errors {
+		if err.Field == field {
+			return err.Message
+		}
+	}
+	return ""
+}
+
+// Get returns the value for the given field from form values
+func (f *FormData) Get(key string) string {
+	if f.Values == nil {
+		return ""
+	}
+	return f.Values.Get(key)
+}
+
+// NewFormData creates a new FormData instance
+func NewFormData(values url.Values, errors []ParseError) *FormData {
+	return &FormData{
+		Values: values,
+		Errors: errors,
+	}
+}
+
+
+
+
 
 // Layout renders the full HTML page structure.
 // It includes common head elements and wraps the body content.
@@ -51,18 +100,16 @@ func Page(title string, children ...g.Node) g.Node {
 	)
 }
 
-// FormGroupWithValidation creates a form group using the existing FormGroup component
-// and integrates it with core.Form validation. It uses form.HasError(), form.GetError(), 
-// and form.Get() methods directly to provide validation state and error messages.
-func FormGroupWithValidation(form Form, fieldName, label string, input g.Node, helpText ...string) g.Node {
+// FormGroupWithValidation creates a form group using FormData with validation state
+func FormGroupWithValidation(formData *FormData, fieldName, label string, input g.Node, helpText ...string) g.Node {
 	var helpTextStr string
 	if len(helpText) > 0 {
 		helpTextStr = helpText[0]
 	}
 
 	var errorText string
-	if form.HasError(fieldName) {
-		errorText = form.GetError(fieldName)
+	if formData.HasError(fieldName) {
+		errorText = formData.GetError(fieldName)
 	}
 
 	return FormGroup(FormGroupProps{
@@ -74,16 +121,18 @@ func FormGroupWithValidation(form Form, fieldName, label string, input g.Node, h
 	}, input)
 }
 
-// TextInputWithValidation creates a TextInput with validation state from core.Form
-func TextInputWithValidation(form Form, props TextInputProps) g.Node {
+
+
+// TextInputWithValidation creates a TextInput with validation state from FormData
+func TextInputWithValidation(formData *FormData, props TextInputProps) g.Node {
 	// Set the value from the form if not already set
 	if props.Value == "" {
-		props.Value = form.Get(props.Name)
+		props.Value = formData.Get(props.Name)
 	}
 
 	// Set validation state based on form errors
 	if props.ValidationState == "" {
-		if form.HasError(props.Name) {
+		if formData.HasError(props.Name) {
 			props.ValidationState = "invalid"
 		}
 	}
@@ -96,16 +145,18 @@ func TextInputWithValidation(form Form, props TextInputProps) g.Node {
 	return TextInput(props)
 }
 
-// TextAreaWithValidation creates a TextArea with validation state from core.Form
-func TextAreaWithValidation(form Form, props TextAreaProps) g.Node {
+
+
+// TextAreaWithValidation creates a TextArea with validation state from FormData
+func TextAreaWithValidation(formData *FormData, props TextAreaProps) g.Node {
 	// Set the value from the form if not already set
 	if props.Value == "" {
-		props.Value = form.Get(props.Name)
+		props.Value = formData.Get(props.Name)
 	}
 
 	// Set validation state based on form errors
 	if props.ValidationState == "" {
-		if form.HasError(props.Name) {
+		if formData.HasError(props.Name) {
 			props.ValidationState = "invalid"
 		}
 	}
@@ -118,16 +169,18 @@ func TextAreaWithValidation(form Form, props TextAreaProps) g.Node {
 	return TextArea(props)
 }
 
-// SelectWithValidation creates a Select with validation state from core.Form
-func SelectWithValidation(form Form, props SelectProps) g.Node {
+
+
+// SelectWithValidation creates a Select with validation state from FormData
+func SelectWithValidation(formData *FormData, props SelectProps) g.Node {
 	// Set the value from the form if not already set
 	if props.Value == "" {
-		props.Value = form.Get(props.Name)
+		props.Value = formData.Get(props.Name)
 	}
 
 	// Set validation state based on form errors
 	if props.ValidationState == "" {
-		if form.HasError(props.Name) {
+		if formData.HasError(props.Name) {
 			props.ValidationState = "invalid"
 		}
 	}
@@ -140,17 +193,21 @@ func SelectWithValidation(form Form, props SelectProps) g.Node {
 	return Select(props)
 }
 
-// FormError renders error messages for a specific field from a core.Form instance.
+
+
+// FormError renders error messages for a specific field from FormData.
 // Returns nil if there's no error for the field.
-func FormError(form Form, field string) g.Node {
-	if !form.HasError(field) {
+func FormError(formData *FormData, field string) g.Node {
+	if !formData.HasError(field) {
 		return nil
 	}
 	return html.Span(
 		CSSClass("text-red-600", "text-sm", "mt-1"),
-		g.Text(form.GetError(field)),
+		g.Text(formData.GetError(field)),
 	)
 }
+
+
 
 // CSRFInput renders a hidden input field for CSRF token protection.
 func CSRFInput(token string) g.Node {
@@ -165,7 +222,7 @@ func CSRFInput(token string) g.Node {
 //
 // Creating a complete form with validation integration:
 //
-//   func MyFormHandler(form *core.Form) g.Node {
+//   func MyFormHandler(formData *ui.FormData) g.Node {
 //     return ui.Layout("My Form", 
 //       ui.Page("Contact Form",
 //         html.Form(
@@ -173,8 +230,8 @@ func CSRFInput(token string) g.Node {
 //           ui.CSRFInput("csrf-token-here"),
 //           
 //           // Text input with integrated validation
-//           ui.FormGroupWithValidation(form, "name", "Full Name",
-//             ui.TextInputWithValidation(form, ui.TextInputProps{
+//           ui.FormGroupWithValidation(formData, "name", "Full Name",
+//             ui.TextInputWithValidation(formData, ui.TextInputProps{
 //               Name: "name",
 //               Type: "text",
 //               Placeholder: "Enter your full name",
@@ -184,8 +241,8 @@ func CSRFInput(token string) g.Node {
 //           ),
 //           
 //           // Email input with validation
-//           ui.FormGroupWithValidation(form, "email", "Email Address",
-//             ui.TextInputWithValidation(form, ui.TextInputProps{
+//           ui.FormGroupWithValidation(formData, "email", "Email Address",
+//             ui.TextInputWithValidation(formData, ui.TextInputProps{
 //               Name: "email", 
 //               Type: "email",
 //               Placeholder: "your.email@example.com",
@@ -194,8 +251,8 @@ func CSRFInput(token string) g.Node {
 //           ),
 //           
 //           // Textarea with validation
-//           ui.FormGroupWithValidation(form, "message", "Message",
-//             ui.TextAreaWithValidation(form, ui.TextAreaProps{
+//           ui.FormGroupWithValidation(formData, "message", "Message",
+//             ui.TextAreaWithValidation(formData, ui.TextAreaProps{
 //               Name: "message",
 //               Placeholder: "Enter your message...",
 //               Rows: 4,
@@ -212,3 +269,4 @@ func CSRFInput(token string) g.Node {
 //       ),
 //     )
 //   }
+//

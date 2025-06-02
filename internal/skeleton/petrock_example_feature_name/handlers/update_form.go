@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/petrock/example_module_path/core"
+	"github.com/petrock/example_module_path/core/ui"
 	"github.com/petrock/example_module_path/petrock_example_feature_name/commands"
 	"github.com/petrock/example_module_path/petrock_example_feature_name/queries"
 )
@@ -35,8 +36,8 @@ func (fs *FeatureServer) HandleEditForm(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Create an empty form
-	form := core.NewForm(nil)
+	// Create empty form data
+	formData := ui.NewFormData(nil, nil)
 
 	// Get CSRF token
 	csrfToken := "token" // Replace with actual CSRF token generation
@@ -54,7 +55,7 @@ func (fs *FeatureServer) HandleEditForm(w http.ResponseWriter, r *http.Request) 
 	pageTitle := fmt.Sprintf("Edit %s", item.Item.Name)
 
 	// Render the page with our helper
-	if err := RenderPage(w, pageTitle, ItemForm(form, &item.Item, csrfToken)); err != nil {
+	if err := RenderPage(w, pageTitle, ItemForm(formData, &item.Item, csrfToken)); err != nil {
 		slog.Error("Error rendering edit form", "error", err)
 		http.Error(w, "Error rendering form", http.StatusInternalServerError)
 	}
@@ -77,59 +78,80 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Create a form instance with the parsed data
-	form := core.NewForm(r.PostForm)
+	// Create the command and parse from form data
+	var cmd commands.UpdateCommand
+	cmd.ID = itemID // Set the ID from the URL path
+	
+	if err := core.ParseFromURLValues(r.PostForm, &cmd); err != nil {
+		// Handle validation errors
+		if parseErrors, ok := err.(*core.ParseErrors); ok {
+			// Convert ParseErrors to ui.ParseError format
+			var uiErrors []ui.ParseError
+			for _, parseErr := range parseErrors.Errors {
+				uiErrors = append(uiErrors, ui.ParseError{
+					Field:   parseErr.Field,
+					Message: parseErr.Message,
+					Code:    parseErr.Code,
+					Meta:    parseErr.Meta,
+				})
+			}
 
-	// Validate required fields
-	form.ValidateRequired("name", "description")
+			// Create FormData with values and errors
+			formData := ui.NewFormData(r.PostForm, uiErrors)
 
-	// If the form has errors, re-render it with validation messages
-	if !form.IsValid() {
-		// Retrieve the original item to re-render the form with both the item and errors
-		query := queries.GetQuery{ID: itemID}
-		result, err := fs.querier.HandleGet(r.Context(), query)
-		if err != nil {
-			slog.Error("Error retrieving item for form re-render", "error", err, "id", itemID)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			// Retrieve the original item to re-render the form with both the item and errors
+			query := queries.GetQuery{ID: itemID}
+			result, err := fs.querier.HandleGet(r.Context(), query)
+			if err != nil {
+				slog.Error("Error retrieving item for form re-render", "error", err, "id", itemID)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+
+			// Cast the result and render the form with errors
+			item, ok := result.(*queries.GetQueryResult)
+			if !ok {
+				slog.Error("Invalid result type for edit form", "type", fmt.Sprintf("%T", result))
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+
+			// Create page title for validation error
+			pageTitle := fmt.Sprintf("Edit %s", item.Item.Name)
+			csrfToken := "token" // Replace with actual CSRF token
+
+			// Render the page with validation errors
+			if err := RenderPage(w, pageTitle, ItemForm(formData, &item.Item, csrfToken)); err != nil {
+				slog.Error("Error rendering form with validation errors", "error", err)
+				http.Error(w, "Error rendering form", http.StatusInternalServerError)
+			}
 			return
 		}
 
-		// Cast the result and render the form with errors
-		item, ok := result.(*queries.GetQueryResult)
-		if !ok {
-			slog.Error("Invalid result type for edit form", "type", fmt.Sprintf("%T", result))
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
-		}
-
-		// Create page title for validation error
-		pageTitle := fmt.Sprintf("Edit %s", item.Item.Name)
-		csrfToken := "token" // Replace with actual CSRF token
-
-		// Render the page with validation errors
-		if err := RenderPage(w, pageTitle, ItemForm(form, &item.Item, csrfToken)); err != nil {
-			slog.Error("Error rendering form with validation errors", "error", err)
-			http.Error(w, "Error rendering form", http.StatusInternalServerError)
-		}
+		// Handle other parsing errors
+		slog.Error("Failed to parse form data", "error", err)
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
 		return
 	}
 
-	// Create the update command from form data
-	cmd := commands.UpdateCommand{
-		ID:          itemID,
-		Name:        form.Get("name"),
-		Description: form.Get("description"),
-		UpdatedBy:   "user", // Replace with actual user ID if authentication is implemented
-		UpdatedAt:   time.Now().UTC(),
-	}
+	// Set additional fields not from form
+	cmd.UpdatedBy = "user" // Replace with actual user ID if authentication is implemented
+	cmd.UpdatedAt = time.Now().UTC()
 
 	// Execute the command
 	err := fs.app.Executor.Execute(r.Context(), &cmd)
 	if err != nil {
 		// Check if it's a validation error
 		if strings.Contains(err.Error(), "validation failed") || strings.Contains(err.Error(), "not found") {
-			// Add the error to the form and re-render
-			form.AddError("name", err.Error())
+			// Create FormData with validation error
+			uiErrors := []ui.ParseError{
+				{
+					Field:   "name",
+					Message: err.Error(),
+					Code:    "validation_error",
+				},
+			}
+			formData := ui.NewFormData(r.PostForm, uiErrors)
 
 			// Retrieve the original item to re-render the form
 			query := queries.GetQuery{ID: itemID}
@@ -153,7 +175,7 @@ func (fs *FeatureServer) HandleUpdateForm(w http.ResponseWriter, r *http.Request
 			csrfToken := "token" // Replace with actual CSRF token
 
 			// Render the page with validation errors
-			if err := RenderPage(w, pageTitle, ItemForm(form, &item.Item, csrfToken)); err != nil {
+			if err := RenderPage(w, pageTitle, ItemForm(formData, &item.Item, csrfToken)); err != nil {
 				slog.Error("Error rendering form with validation errors", "error", err)
 				http.Error(w, "Error rendering form", http.StatusInternalServerError)
 			}
