@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -572,4 +573,360 @@ func validateInspectJSON(jsonData []byte) error {
 	}
 	
 	return nil
+}
+
+// MCP Server Test Steps
+
+// StartMCPServerStep starts the MCP server for testing
+type StartMCPServerStep struct{}
+
+// NewStartMCPServerStep creates a new start MCP server step
+func NewStartMCPServerStep() *StartMCPServerStep {
+	return &StartMCPServerStep{}
+}
+
+// Name returns the step name
+func (s *StartMCPServerStep) Name() string {
+	return "Start MCP Server"
+}
+
+// Execute starts the MCP server
+func (s *StartMCPServerStep) Execute(ctx *TestContext) *StepResult {
+	result := NewStepResult(s.Name())
+	
+	slog.Debug("Starting MCP server for integration test")
+	result.AddLog("Starting MCP server in project directory")
+	
+	// Start the MCP server
+	mcpCmd := exec.Command("./"+ctx.ProjectName+"-server", "mcp")
+	
+	// Create pipes for stdin/stdout communication
+	stdin, err := mcpCmd.StdinPipe()
+	if err != nil {
+		return result.MarkFailure(fmt.Errorf("failed to create stdin pipe: %w", err))
+	}
+	
+	stdout, err := mcpCmd.StdoutPipe()
+	if err != nil {
+		return result.MarkFailure(fmt.Errorf("failed to create stdout pipe: %w", err))
+	}
+	
+	mcpCmd.Stderr = os.Stderr
+	
+	if err := mcpCmd.Start(); err != nil {
+		return result.MarkFailure(fmt.Errorf("failed to start MCP server: %w", err))
+	}
+	
+	// Store MCP server details in context for other steps
+	if ctx.MCPCmd == nil {
+		ctx.MCPCmd = &MCPServerState{}
+	}
+	ctx.MCPCmd.Cmd = mcpCmd
+	ctx.MCPCmd.Stdin = stdin
+	ctx.MCPCmd.Stdout = stdout
+	
+	// Add cleanup function
+	ctx.AddCleanup(func() error {
+		if ctx.MCPCmd != nil && ctx.MCPCmd.Cmd != nil && ctx.MCPCmd.Cmd.Process != nil {
+			slog.Debug("Terminating MCP server")
+			if err := ctx.MCPCmd.Cmd.Process.Kill(); err != nil {
+				slog.Error("Failed to kill MCP server process", "error", err)
+				return err
+			}
+			_ = ctx.MCPCmd.Cmd.Wait()
+		}
+		return nil
+	})
+	
+	// Wait a moment for the server to start
+	time.Sleep(100 * time.Millisecond)
+	
+	result.AddLog("MCP server started successfully")
+	return result.MarkSuccess()
+}
+
+// MCPInitializeStep tests MCP protocol initialization
+type MCPInitializeStep struct{}
+
+// NewMCPInitializeStep creates a new MCP initialize step
+func NewMCPInitializeStep() *MCPInitializeStep {
+	return &MCPInitializeStep{}
+}
+
+// Name returns the step name
+func (s *MCPInitializeStep) Name() string {
+	return "MCP Initialize Protocol"
+}
+
+// Execute tests MCP initialization
+func (s *MCPInitializeStep) Execute(ctx *TestContext) *StepResult {
+	result := NewStepResult(s.Name())
+	
+	if ctx.MCPCmd == nil || ctx.MCPCmd.Stdin == nil || ctx.MCPCmd.Stdout == nil {
+		return result.MarkFailure(fmt.Errorf("MCP server not started"))
+	}
+	
+	// Send initialize request
+	initRequest := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      1,
+		"method":  "initialize",
+		"params": map[string]interface{}{
+			"protocolVersion": "2024-11-05",
+			"capabilities":    map[string]interface{}{},
+			"clientInfo": map[string]interface{}{
+				"name":    "petrock-test",
+				"version": "1.0.0",
+			},
+		},
+	}
+	
+	requestBytes, err := json.Marshal(initRequest)
+	if err != nil {
+		return result.MarkFailure(fmt.Errorf("failed to marshal init request: %w", err))
+	}
+	
+	// Send request
+	if _, err := ctx.MCPCmd.Stdin.Write(append(requestBytes, '\n')); err != nil {
+		return result.MarkFailure(fmt.Errorf("failed to send init request: %w", err))
+	}
+	
+	// Read response
+	scanner := bufio.NewScanner(ctx.MCPCmd.Stdout)
+	if !scanner.Scan() {
+		return result.MarkFailure(fmt.Errorf("failed to read init response"))
+	}
+	
+	responseBytes := scanner.Bytes()
+	var response map[string]interface{}
+	if err := json.Unmarshal(responseBytes, &response); err != nil {
+		return result.MarkFailure(fmt.Errorf("failed to unmarshal init response: %w", err))
+	}
+	
+	// Verify response
+	if response["id"] != float64(1) {
+		return result.MarkFailure(fmt.Errorf("unexpected response ID: %v", response["id"]))
+	}
+	
+	if response["jsonrpc"] != "2.0" {
+		return result.MarkFailure(fmt.Errorf("unexpected jsonrpc version: %v", response["jsonrpc"]))
+	}
+	
+	result.AddLog("MCP initialization successful")
+	return result.MarkSuccess()
+}
+
+// MCPListToolsStep tests the tools/list endpoint
+type MCPListToolsStep struct{}
+
+// NewMCPListToolsStep creates a new MCP list tools step
+func NewMCPListToolsStep() *MCPListToolsStep {
+	return &MCPListToolsStep{}
+}
+
+// Name returns the step name
+func (s *MCPListToolsStep) Name() string {
+	return "MCP List Tools"
+}
+
+// Execute tests MCP tools/list
+func (s *MCPListToolsStep) Execute(ctx *TestContext) *StepResult {
+	result := NewStepResult(s.Name())
+	
+	if ctx.MCPCmd == nil || ctx.MCPCmd.Stdin == nil || ctx.MCPCmd.Stdout == nil {
+		return result.MarkFailure(fmt.Errorf("MCP server not started"))
+	}
+	
+	// Send tools/list request
+	listRequest := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      2,
+		"method":  "tools/list",
+		"params":  map[string]interface{}{},
+	}
+	
+	requestBytes, err := json.Marshal(listRequest)
+	if err != nil {
+		return result.MarkFailure(fmt.Errorf("failed to marshal list request: %w", err))
+	}
+	
+	// Send request
+	if _, err := ctx.MCPCmd.Stdin.Write(append(requestBytes, '\n')); err != nil {
+		return result.MarkFailure(fmt.Errorf("failed to send list request: %w", err))
+	}
+	
+	// Read response
+	scanner := bufio.NewScanner(ctx.MCPCmd.Stdout)
+	if !scanner.Scan() {
+		return result.MarkFailure(fmt.Errorf("failed to read list response"))
+	}
+	
+	responseBytes := scanner.Bytes()
+	var response map[string]interface{}
+	if err := json.Unmarshal(responseBytes, &response); err != nil {
+		return result.MarkFailure(fmt.Errorf("failed to unmarshal list response: %w", err))
+	}
+	
+	// Verify response structure
+	resultData, ok := response["result"].(map[string]interface{})
+	if !ok {
+		return result.MarkFailure(fmt.Errorf("missing or invalid result field"))
+	}
+	
+	tools, ok := resultData["tools"].([]interface{})
+	if !ok {
+		return result.MarkFailure(fmt.Errorf("missing or invalid tools field"))
+	}
+	
+	// Verify expected tools are present
+	expectedTools := []string{"generate_command", "generate_query", "generate_worker", "generate_component"}
+	foundTools := make(map[string]bool)
+	
+	for _, tool := range tools {
+		toolMap, ok := tool.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if name, ok := toolMap["name"].(string); ok {
+			foundTools[name] = true
+		}
+	}
+	
+	for _, expectedTool := range expectedTools {
+		if !foundTools[expectedTool] {
+			return result.MarkFailure(fmt.Errorf("expected tool not found: %s", expectedTool))
+		}
+	}
+	
+	result.AddLog("Found %d tools including all expected generator tools", len(tools))
+	return result.MarkSuccess()
+}
+
+// MCPGenerateCommandStep tests the generate_command tool
+type MCPGenerateCommandStep struct{}
+
+// NewMCPGenerateCommandStep creates a new MCP generate command step
+func NewMCPGenerateCommandStep() *MCPGenerateCommandStep {
+	return &MCPGenerateCommandStep{}
+}
+
+// Name returns the step name
+func (s *MCPGenerateCommandStep) Name() string {
+	return "MCP Generate Command Tool"
+}
+
+// Execute tests the generate_command tool
+func (s *MCPGenerateCommandStep) Execute(ctx *TestContext) *StepResult {
+	result := NewStepResult(s.Name())
+	
+	if ctx.MCPCmd == nil || ctx.MCPCmd.Stdin == nil || ctx.MCPCmd.Stdout == nil {
+		return result.MarkFailure(fmt.Errorf("MCP server not started"))
+	}
+	
+	// Send tools/call request for generate_command
+	callRequest := map[string]interface{}{
+		"jsonrpc": "2.0",
+		"id":      3,
+		"method":  "tools/call",
+		"params": map[string]interface{}{
+			"name": "generate_command",
+			"arguments": map[string]interface{}{
+				"feature_name": "testfeature",
+				"name":         "testcommand",
+				"fields": []map[string]interface{}{
+					{"name": "title", "type": "string"},
+					{"name": "count", "type": "int"},
+				},
+			},
+		},
+	}
+	
+	requestBytes, err := json.Marshal(callRequest)
+	if err != nil {
+		return result.MarkFailure(fmt.Errorf("failed to marshal call request: %w", err))
+	}
+	
+	// Send request
+	if _, err := ctx.MCPCmd.Stdin.Write(append(requestBytes, '\n')); err != nil {
+		return result.MarkFailure(fmt.Errorf("failed to send call request: %w", err))
+	}
+	
+	// Read response
+	scanner := bufio.NewScanner(ctx.MCPCmd.Stdout)
+	if !scanner.Scan() {
+		return result.MarkFailure(fmt.Errorf("failed to read call response"))
+	}
+	
+	responseBytes := scanner.Bytes()
+	var response map[string]interface{}
+	if err := json.Unmarshal(responseBytes, &response); err != nil {
+		return result.MarkFailure(fmt.Errorf("failed to unmarshal call response: %w", err))
+	}
+	
+	// Verify response
+	resultData, ok := response["result"].(map[string]interface{})
+	if !ok {
+		return result.MarkFailure(fmt.Errorf("missing or invalid result field"))
+	}
+	
+	content, ok := resultData["content"].([]interface{})
+	if !ok || len(content) == 0 {
+		return result.MarkFailure(fmt.Errorf("missing or empty content field"))
+	}
+	
+	// Check if error occurred
+	if isError, ok := resultData["isError"].(bool); ok && isError {
+		contentMap := content[0].(map[string]interface{})
+		errorText := contentMap["text"].(string)
+		result.AddLog("Tool execution failed (expected): %s", errorText)
+	} else {
+		result.AddLog("Tool executed successfully")
+	}
+	
+	return result.MarkSuccess()
+}
+
+// StopMCPServerStep stops the MCP server
+type StopMCPServerStep struct{}
+
+// NewStopMCPServerStep creates a new stop MCP server step
+func NewStopMCPServerStep() *StopMCPServerStep {
+	return &StopMCPServerStep{}
+}
+
+// Name returns the step name
+func (s *StopMCPServerStep) Name() string {
+	return "Stop MCP Server"
+}
+
+// Execute stops the MCP server
+func (s *StopMCPServerStep) Execute(ctx *TestContext) *StepResult {
+	result := NewStepResult(s.Name())
+	
+	if ctx.MCPCmd != nil && ctx.MCPCmd.Cmd != nil && ctx.MCPCmd.Cmd.Process != nil {
+		slog.Debug("Stopping MCP server")
+		result.AddLog("Terminating MCP server process")
+		
+		if err := ctx.MCPCmd.Cmd.Process.Kill(); err != nil {
+			result.AddLog("Warning: Failed to kill MCP server process: %v", err)
+		}
+		
+		// Wait for process to exit
+		_ = ctx.MCPCmd.Cmd.Wait()
+		
+		// Close pipes
+		if ctx.MCPCmd.Stdin != nil {
+			ctx.MCPCmd.Stdin.Close()
+		}
+		if ctx.MCPCmd.Stdout != nil {
+			ctx.MCPCmd.Stdout.Close()
+		}
+		
+		ctx.MCPCmd = nil
+		result.AddLog("MCP server stopped")
+	} else {
+		result.AddLog("MCP server was not running")
+	}
+	
+	return result.MarkSuccess()
 }

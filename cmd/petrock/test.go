@@ -84,6 +84,13 @@ func setupTestSteps(runner *TestRunner) {
 	
 	// Server cleanup step
 	runner.AddStep(NewStopServerStep())
+	
+	// MCP Server testing steps
+	runner.AddStep(NewStartMCPServerStep())
+	runner.AddStep(NewMCPInitializeStep())
+	runner.AddStep(NewMCPListToolsStep())
+	runner.AddStep(NewMCPGenerateCommandStep())
+	runner.AddStep(NewStopMCPServerStep())
 }
 
 // reportFinalResults provides a summary of test execution

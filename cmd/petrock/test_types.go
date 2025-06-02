@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"os/exec"
 	"time"
@@ -26,6 +27,13 @@ type StepResult struct {
 	StartTime time.Time     // When step started
 }
 
+// MCPServerState holds MCP server process and communication channels
+type MCPServerState struct {
+	Cmd    *exec.Cmd // MCP server process
+	Stdin  io.WriteCloser // stdin pipe for sending requests
+	Stdout io.ReadCloser  // stdout pipe for reading responses
+}
+
 // TestContext holds shared state and resources during test execution
 type TestContext struct {
 	TempDir     string          // Base temporary directory
@@ -34,6 +42,7 @@ type TestContext struct {
 	ModulePath  string          // Go module path
 	ServerCmd   *exec.Cmd       // Running server process
 	ServerPort  string          // Server port number
+	MCPCmd      *MCPServerState // MCP server state
 	Cleanup     []func() error  // Cleanup functions
 }
 
