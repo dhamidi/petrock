@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 
+	"github.com/petrock/example_module_path/core/ui"
 	"github.com/spf13/cobra"
 	// Placeholder for SSH library: "golang.org/x/crypto/ssh"
 )
@@ -42,11 +42,11 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 	sshPort, _ := cmd.Flags().GetInt("ssh-port")
 	binaryPath, _ := cmd.Flags().GetString("binary-path")
 
-	slog.Info("Starting deployment", "target", targetHost, "path", targetPath)
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "Starting deployment to %s:%s\n", targetHost, targetPath)
 
 	// 1. Ensure binary exists (build if not provided)
 	if binaryPath == "" {
-		slog.Info("Binary path not provided, running build step first...")
+		cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "Binary path not provided, running build step first...\n")
 		// Determine default binary name based on OS
 		outputName := "petrock_example_project_name"
 		if runtime.GOOS == "windows" {
@@ -61,7 +61,7 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("build step failed during deploy: %w", err)
 		}
 		binaryPath = outputName // Use the newly built binary
-		slog.Info("Build completed", "binary", binaryPath)
+		cmdCtx.UI.ShowSuccess(cmdCtx.Ctx, "Build completed: %s\n", binaryPath)
 	}
 
 	// Ensure the local binary path exists
@@ -74,7 +74,7 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 	}
 
 	// 2. Connect via SSH (Placeholder - requires SSH library)
-	slog.Info("Connecting via SSH...", "host", targetHost, "port", sshPort)
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "Connecting via SSH to %s:%d...\n", targetHost, sshPort)
 	// --- SSH Connection Logic ---
 	// Use golang.org/x/crypto/ssh or os/exec with scp/ssh commands
 	// Example using os/exec (simpler, less secure key handling):
@@ -91,11 +91,11 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 	scpCmd := exec.Command("scp", scpArgs...)
 	scpCmd.Stdout = os.Stdout
 	scpCmd.Stderr = os.Stderr
-	slog.Info("Executing scp", "command", scpCmd.String())
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "Copying binary with scp...\n")
 	if err := scpCmd.Run(); err != nil {
 		return fmt.Errorf("scp failed: %w", err)
 	}
-	slog.Info("Binary copied successfully")
+	cmdCtx.UI.ShowSuccess(cmdCtx.Ctx, "Binary copied successfully\n")
 
 	// 3. Execute remote commands (Placeholder)
 	// Example: ssh -p <port> -i <key_path> <user@host> "sudo systemctl restart myapp.service"
@@ -104,8 +104,7 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 	// sshArgs = append(sshArgs, "your remote command here") // e.g., "sudo systemctl restart petrock_example_project_name"
 	// sshCmd := exec.Command("ssh", sshArgs...)
 	// ... run command ...
-	slog.Warn("Remote command execution (e.g., service restart) not implemented yet.")
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeWarning, "Remote command execution (e.g., service restart) not implemented yet.\n")
 
-	slog.Info("Deployment finished successfully (manual service restart might be required).")
-	return nil
+	return cmdCtx.UI.ShowSuccess(cmdCtx.Ctx, "Deployment finished successfully (manual service restart might be required).\n")
 }

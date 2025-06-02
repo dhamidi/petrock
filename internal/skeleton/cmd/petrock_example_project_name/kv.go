@@ -1,11 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"github.com/petrock/example_module_path/core"
+	"github.com/petrock/example_module_path/core/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -90,13 +91,14 @@ func runKVGet(cmd *cobra.Command, args []string) error {
 	}
 
 	// Pretty print the value as JSON
-	encoder := json.NewEncoder(os.Stdout)
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
 	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(value); err != nil {
 		return fmt.Errorf("failed to encode value as JSON: %w", err)
 	}
 
-	return nil
+	return cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, buf.String())
 }
 
 func runKVSet(cmd *cobra.Command, args []string) error {
@@ -128,8 +130,7 @@ func runKVSet(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to set value for key '%s': %w", key, err)
 	}
 
-	fmt.Printf("Successfully set key '%s'\n", key)
-	return nil
+	return cmdCtx.UI.ShowSuccess(cmdCtx.Ctx, "Successfully set key '%s'\n", key)
 }
 
 func runKVList(cmd *cobra.Command, args []string) error {
@@ -156,7 +157,9 @@ func runKVList(cmd *cobra.Command, args []string) error {
 
 	// Print each key on a separate line
 	for _, key := range keys {
-		fmt.Println(key)
+		if err := cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "%s\n", key); err != nil {
+			return err
+		}
 	}
 
 	return nil

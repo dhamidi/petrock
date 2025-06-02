@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 
+	"github.com/petrock/example_module_path/core/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -40,7 +40,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	goarch, _ := cmd.Flags().GetString("goarch")
 	ldflags, _ := cmd.Flags().GetString("ldflags")
 
-	slog.Info("Starting build process", "output", output, "goos", goos, "goarch", goarch, "ldflags", ldflags)
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "Starting build process...\n")
 
 	// Ensure the output path is absolute or relative to the current dir
 	if !filepath.IsAbs(output) {
@@ -66,13 +66,12 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	buildCmd.Stdout = os.Stdout
 	buildCmd.Stderr = os.Stderr
 
-	slog.Info("Executing go build", "command", buildCmd.String())
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "Executing go build for %s/%s...\n", goos, goarch)
 
 	err := buildCmd.Run()
 	if err != nil {
 		return fmt.Errorf("build failed: %w", err)
 	}
 
-	slog.Info("Build successful", "output", output)
-	return nil
+	return cmdCtx.UI.ShowSuccess(cmdCtx.Ctx, "Build successful: %s\n", output)
 }

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/petrock/example_module_path/core" // Assuming core package exists
+	"github.com/petrock/example_module_path/core/ui"
 	"github.com/petrock/example_module_path/core/ui/gallery"
 
 	// Use standard library for routing
@@ -95,7 +96,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 		level = slog.LevelError
 	default:
 		// Invalid log level, default to info and warn
-		fmt.Fprintf(os.Stderr, "Warning: invalid log level '%s', using 'info'\n", logLevelStr)
+		cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeWarning, "Warning: invalid log level '%s', using 'info'\n", logLevelStr)
 		level = slog.LevelInfo
 	}
 
@@ -104,7 +105,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 		Level: level,
 	})
 	slog.SetDefault(slog.New(logHandler))
-	slog.Info("Log level set", "level", logLevelStr)
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "Log level set to: %s\n", logLevelStr)
 
 	port, _ := cmd.Flags().GetInt("port")
 	host, _ := cmd.Flags().GetString("host")
@@ -139,7 +140,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	}
 	
 	// Start workers after log replay
-	slog.Info("Starting background workers...")
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "Starting background workers...\n")
 	if err := app.StartWorkers(context.Background()); err != nil {
 		return fmt.Errorf("failed to start workers: %w", err)
 	}
@@ -156,7 +157,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// TODO: Add handlers for feature assets
 
 	// Setup core HTTP routes
-	slog.Info("Setting up HTTP server routes...")
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "Setting up HTTP server routes...\n")
 	
 	// Setup index route
 	app.RegisterRoute("GET /", core.HandleIndex(app.CommandRegistry, app.QueryRegistry))
@@ -218,7 +219,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	}()
 	
 	// Start the server
-	slog.Info("Starting server", "address", addr)
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "Starting server at %s\n", addr)
 	err = server.ListenAndServe()
 	if err != http.ErrServerClosed {
 		// Only return an error if it's not due to graceful shutdown
@@ -226,7 +227,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("server error: %w", err)
 	}
 	
-	slog.Info("Server shut down successfully")
+	cmdCtx.UI.ShowSuccess(cmdCtx.Ctx, "Server shut down successfully\n")
 	return nil
 }
 

@@ -1,14 +1,23 @@
 package main
 
 import (
-	"fmt"
+	"context"
+	"log/slog"
 	"os"
+	"strings"
 
-	// "github.com/petrock/example_module_path/core" // Removed as it's not directly used in main.go anymore
-	// Core components are initialized/used within specific commands (e.g., serve)
-
+	"github.com/petrock/example_module_path/core/ui"
 	"github.com/spf13/cobra"
 )
+
+// CommandContext holds shared dependencies for all commands
+type CommandContext struct {
+	UI  ui.UI
+	Ctx context.Context
+}
+
+// Global command context
+var cmdCtx *CommandContext
 
 var rootCmd = &cobra.Command{
 	Use:   "petrock_example_project_name",
@@ -39,11 +48,45 @@ func init() {
 	rootCmd.AddCommand(NewDeployCmd())
 	rootCmd.AddCommand(NewSelfCmd())
 	rootCmd.AddCommand(NewKVCmd())
+
+	// Configure logging level based on environment variable
+	logLevel := slog.LevelInfo // Default level
+	levelStr := strings.ToLower(os.Getenv("PETROCK_LOG_LEVEL"))
+	switch levelStr {
+	case "debug":
+		logLevel = slog.LevelDebug
+	case "warn":
+		logLevel = slog.LevelWarn
+	case "error":
+		logLevel = slog.LevelError
+	}
+
+	opts := &slog.HandlerOptions{
+		Level:     logLevel,
+		AddSource: logLevel <= slog.LevelDebug, // Add source only for debug or lower
+	}
+	handler := slog.NewTextHandler(os.Stderr, opts)
+	slog.SetDefault(slog.New(handler))
+}
+
+// newCommandContext creates a new command context with UI
+func newCommandContext() *CommandContext {
+	return &CommandContext{
+		UI:  ui.NewConsoleUI(),
+		Ctx: context.Background(),
+	}
+}
+
+// configureUI makes the UI available to commands
+func configureUI() {
+	cmdCtx = newCommandContext()
 }
 
 func main() {
+	// Initialize UI before executing commands
+	configureUI()
+	
 	if err := Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }

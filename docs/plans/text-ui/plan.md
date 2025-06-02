@@ -94,39 +94,39 @@ Refactor command-line I/O in `./cmd/` and `./internal/skeleton/cmd/petrock_examp
 ### Phase 2: Refactor ./internal/skeleton/cmd/petrock_example_project_name/
 
 **Phase 2.1: Copy UI Interface to Skeleton**
-- Task 2.1.1: [File: internal/skeleton/core/ui/interface.go] Copy UI interface to skeleton (Effort: 1h, Dependencies: Phase 1 complete)
+- Task 2.1.1: [File: internal/skeleton/core/ui/interface.go] Copy UI interface to skeleton (Effort: 1h, Dependencies: Phase 1 complete) - COMPLETED
   - Types: UI interface, MessageType enum, ProgressState struct
   - Functions: Present(), Prompt(), ShowProgress(), ShowError(), ShowSuccess()
   - Packages: context, io
 
-- Task 2.1.2: [File: internal/skeleton/core/ui/console.go] Copy console UI implementation (Effort: 1h, Dependencies: 2.1.1)
+- Task 2.1.2: [File: internal/skeleton/core/ui/console.go] Copy console UI implementation (Effort: 1h, Dependencies: 2.1.1) - COMPLETED
   - Types: ConsoleUI struct, OutputWriter interface
   - Functions: NewConsoleUI(), Present(), Prompt(), ShowProgress()
   - Packages: fmt, os, bufio, strings
 
 **Phase 2.2: Refactor skeleton main.go**
-- Task 2.2.1: [File: internal/skeleton/cmd/petrock_example_project_name/main.go] Add UI dependency injection (Effort: 2h, Dependencies: 2.1.2)
+- Task 2.2.1: [File: internal/skeleton/cmd/petrock_example_project_name/main.go] Add UI dependency injection (Effort: 2h, Dependencies: 2.1.2) - COMPLETED
   - Types: CommandContext struct
   - Functions: newCommandContext(), configureUI()
   - Packages: github.com/petrock/example_module_path/core/ui
 
 **Phase 2.3: Refactor skeleton commands**
-- Task 2.3.1: [File: internal/skeleton/cmd/petrock_example_project_name/kv.go] Replace fmt.Printf with UI.Present() (Effort: 1h, Dependencies: 2.2.1)
+- Task 2.3.1: [File: internal/skeleton/cmd/petrock_example_project_name/kv.go] Replace fmt.Printf with UI.Present() (Effort: 1h, Dependencies: 2.2.1) - COMPLETED
   - Types: modify kvSetCmd and kvListCmd cobra.Commands
   - Functions: runKvSet(), runKvList()
   - Packages: github.com/petrock/example_module_path/core/ui
 
-- Task 2.3.2: [File: internal/skeleton/cmd/petrock_example_project_name/serve.go] Replace slog.Info user messages with UI.Present() (Effort: 2h, Dependencies: 2.2.1)
+- Task 2.3.2: [File: internal/skeleton/cmd/petrock_example_project_name/serve.go] Replace slog.Info user messages with UI.Present() (Effort: 2h, Dependencies: 2.2.1) - COMPLETED
   - Types: modify serveCmd cobra.Command
   - Functions: runServe(), showStartupProgress()
   - Packages: github.com/petrock/example_module_path/core/ui
 
-- Task 2.3.3: [File: internal/skeleton/cmd/petrock_example_project_name/build.go] Replace slog.Info user messages with UI.Present() (Effort: 1h, Dependencies: 2.2.1)
+- Task 2.3.3: [File: internal/skeleton/cmd/petrock_example_project_name/build.go] Replace slog.Info user messages with UI.Present() (Effort: 1h, Dependencies: 2.2.1) - COMPLETED
   - Types: modify buildCmd cobra.Command
   - Functions: runBuild(), showBuildProgress()
   - Packages: github.com/petrock/example_module_path/core/ui
 
-- Task 2.3.4: [File: internal/skeleton/cmd/petrock_example_project_name/deploy.go] Replace slog.Info user messages with UI.Present() (Effort: 2h, Dependencies: 2.2.1)
+- Task 2.3.4: [File: internal/skeleton/cmd/petrock_example_project_name/deploy.go] Replace slog.Info user messages with UI.Present() (Effort: 2h, Dependencies: 2.2.1) - COMPLETED
   - Types: modify deployCmd cobra.Command
   - Functions: runDeploy(), showDeploymentProgress()
   - Packages: github.com/petrock/example_module_path/core/ui
