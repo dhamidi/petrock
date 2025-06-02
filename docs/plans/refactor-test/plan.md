@@ -23,23 +23,23 @@ PHASE 1: Define Core Testing Types
   - Functions: `NewTestRunner()`, `(*TestRunner).RunStep()`, `(*TestRunner).RunAllSteps()`
   - Packages: `context`
 
-Phase 2: Extract Individual Test Steps
-- Task 2.1: [File: cmd/petrock/test_steps.go] Create environment setup steps (Effort: Medium, Dependencies: Phase 1)
+PHASE 2: Extract Individual Test Steps
+- Task 2.1: [File: cmd/petrock/test_steps.go] Create environment setup steps (Effort: Medium, Dependencies: Phase 1) - COMPLETED
   - Types: `SetupTempDirStep`, `CreateProjectStep`, `AddFeatureStep`
   - Functions: `NewSetupTempDirStep()`, `NewCreateProjectStep()`, `NewAddFeatureStep()`
   - Packages: `os`, `path/filepath`
 
-- Task 2.2: [File: cmd/petrock/test_steps.go] Create build and server steps (Effort: Medium, Dependencies: Phase 1)
+- Task 2.2: [File: cmd/petrock/test_steps.go] Create build and server steps (Effort: Medium, Dependencies: Phase 1) - COMPLETED
   - Types: `BuildProjectStep`, `StartServerStep`, `StopServerStep`
   - Functions: `NewBuildProjectStep()`, `NewStartServerStep()`, `NewStopServerStep()`
   - Packages: `os/exec`, `time`
 
-- Task 2.3: [File: cmd/petrock/test_steps.go] Create HTTP testing steps (Effort: Medium, Dependencies: Phase 1)
+- Task 2.3: [File: cmd/petrock/test_steps.go] Create HTTP testing steps (Effort: Medium, Dependencies: Phase 1) - COMPLETED
   - Types: `HTTPGetStep`, `HTTPPostStep`, `CommandAPIStep`
   - Functions: `NewHTTPGetStep()`, `NewHTTPPostStep()`, `NewCommandAPIStep()`
   - Packages: `net/http`, `encoding/json`, `bytes`, `net/url`
 
-- Task 2.4: [File: cmd/petrock/test_steps.go] Create inspection testing steps (Effort: Small, Dependencies: Phase 1)
+- Task 2.4: [File: cmd/petrock/test_steps.go] Create inspection testing steps (Effort: Small, Dependencies: Phase 1) - COMPLETED
   - Types: `SelfInspectStep`
   - Functions: `NewSelfInspectStep()`, `validateInspectJSON()`
   - Packages: `encoding/json`, `os/exec`
