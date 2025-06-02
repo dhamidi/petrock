@@ -22,9 +22,9 @@ func NewWorkerGenerator(projectPath string) *WorkerGenerator {
 
 // ExtractWorkerFiles extracts worker-specific files from skeleton
 func (wg *WorkerGenerator) ExtractWorkerFiles(featureName, entityName string, options ExtractionOptions) error {
-	slog.Debug("Extracting worker files", 
-		"feature", featureName, 
-		"entity", entityName)
+	slog.Debug("Extracting worker files",
+	"feature", featureName,
+	"name", entityName)
 
 	// Get worker-specific file list
 	workerFiles, err := wg.getWorkerFileList(featureName, entityName)
@@ -45,7 +45,7 @@ func (wg *WorkerGenerator) ExtractWorkerFiles(featureName, entityName string, op
 func (wg *WorkerGenerator) GenerateWorkerComponent(featureName, entityName, targetDir, modulePath string) error {
 	slog.Debug("Generating worker component", 
 		"feature", featureName, 
-		"entity", entityName,
+		"name", entityName,
 		"target", targetDir)
 
 	// Validate entity name  

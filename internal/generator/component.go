@@ -71,7 +71,7 @@ func (cg *ComponentGeneratorImpl) ExtractComponent(options ExtractionOptions) er
 	slog.Debug("Extracting component", 
 		"type", options.ComponentType,
 		"feature", options.FeatureName,
-		"entity", options.EntityName,
+		"name", options.EntityName,
 		"target", options.TargetDir,
 		"skeletonFiles", options.SkeletonFiles)
 
@@ -100,7 +100,7 @@ func (cg *ComponentGeneratorImpl) GenerateComponent(options GenerateOptions) err
 	slog.Debug("Generating component", 
 		"type", options.ComponentType,
 		"feature", options.FeatureName,
-		"entity", options.EntityName)
+		"name", options.EntityName)
 
 	// Use specialized generators for each component type
 	switch options.ComponentType {
@@ -289,7 +289,7 @@ func (cg *ComponentGeneratorImpl) getCommandTemplate(featureName, entityName str
 		sourceFiles = append(sourceFiles, entityFile)
 	} else {
 		slog.Debug("Entity-specific command file not found in skeleton, will generate from base pattern", 
-			"entity", entityName, "expectedFile", entityFile)
+			"name", entityName, "expectedFile", entityFile)
 	}
 	
 	return &ComponentTemplate{
@@ -311,7 +311,7 @@ func (cg *ComponentGeneratorImpl) getQueryTemplate(featureName, entityName strin
 		sourceFiles = append(sourceFiles, entityFile)
 	} else {
 		slog.Debug("Entity-specific query file not found in skeleton, will generate from base pattern", 
-			"entity", entityName, "expectedFile", entityFile)
+			"name", entityName, "expectedFile", entityFile)
 	}
 	
 	return &ComponentTemplate{
@@ -334,7 +334,7 @@ func (cg *ComponentGeneratorImpl) getWorkerTemplate(featureName, entityName stri
 		sourceFiles = append(sourceFiles, entityFile)
 	} else {
 		slog.Debug("Entity-specific worker file not found in skeleton, will generate from base pattern", 
-			"entity", entityName, "expectedFile", entityFile)
+			"name", entityName, "expectedFile", entityFile)
 	}
 	
 	return &ComponentTemplate{

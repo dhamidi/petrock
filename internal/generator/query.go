@@ -22,9 +22,9 @@ func NewQueryGenerator(projectPath string) *QueryGenerator {
 
 // ExtractQueryFiles extracts query-specific files from skeleton
 func (qg *QueryGenerator) ExtractQueryFiles(featureName, entityName string, options ExtractionOptions) error {
-	slog.Debug("Extracting query files", 
-		"feature", featureName, 
-		"entity", entityName)
+	slog.Debug("Extracting query files",
+	"feature", featureName,
+	"name", entityName)
 
 	// Get query-specific file list
 	queryFiles, err := qg.getQueryFileList(featureName, entityName)
@@ -45,7 +45,7 @@ func (qg *QueryGenerator) ExtractQueryFiles(featureName, entityName string, opti
 func (qg *QueryGenerator) GenerateQueryComponent(featureName, entityName, targetDir, modulePath string) error {
 	slog.Debug("Generating query component", 
 		"feature", featureName, 
-		"entity", entityName,
+		"name", entityName,
 		"target", targetDir)
 
 	// Validate entity name  

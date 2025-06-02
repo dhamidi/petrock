@@ -22,9 +22,9 @@ func NewCommandGenerator(projectPath string) *CommandGenerator {
 
 // ExtractCommandFiles extracts command-specific files from skeleton
 func (cg *CommandGenerator) ExtractCommandFiles(featureName, entityName string, options ExtractionOptions) error {
-	slog.Debug("Extracting command files", 
-		"feature", featureName, 
-		"entity", entityName)
+	slog.Debug("Extracting command files",
+	"feature", featureName,
+	"name", entityName)
 
 	// Get command-specific file list
 	commandFiles, err := cg.getCommandFileList(featureName, entityName)
@@ -45,7 +45,7 @@ func (cg *CommandGenerator) ExtractCommandFiles(featureName, entityName string, 
 func (cg *CommandGenerator) GenerateCommandComponent(featureName, entityName, targetDir, modulePath string) error {
 	slog.Debug("Generating command component", 
 		"feature", featureName, 
-		"entity", entityName,
+		"name", entityName,
 		"target", targetDir)
 
 	// Validate entity name
