@@ -49,7 +49,7 @@ petrock-generated-app
 
 3. **Create `cmd/petrock_example_project_name/mcp.go`** - MCP command
    - Cobra command setup
-   - Server initialization 
+   - Server initialization
    - Stdio connection handling
 
 4. **Update `cmd/petrock_example_project_name/main.go`** - Register MCP command
@@ -74,16 +74,23 @@ petrock-generated-app
 The server will provide:
 
 ### Resources
+
 - `app://info` - Application metadata and version
 - `app://features` - List of registered features
 - `app://config` - Application configuration (sanitized)
 
 ### Tools  
+
 - `query_database` - Execute read-only SQL queries
 - `get_kv` - Retrieve key-value store entries
 - `list_kv_keys` - List available keys in KV store
+- `generate_command` - Generate new command components with optional custom fields
+- `generate_query` - Generate new query components with optional custom fields  
+- `generate_worker` - Generate new worker components
+- `generate_component` - Universal component generator supporting all types
 
 ### Prompts
+
 - `analyze_app` - Template for analyzing the application structure
 - `debug_feature` - Template for debugging specific features
 
