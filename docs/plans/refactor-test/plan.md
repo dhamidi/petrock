@@ -71,13 +71,13 @@ PHASE 4: Refactor Main Test Function
   - Functions: `reportStepProgress()`, `reportFinalResults()`
   - Packages: `fmt`
 
-Phase 5: Add Context and Cleanup Management
-- Task 5.1: [File: cmd/petrock/test_context.go] Implement shared test context (Effort: Medium, Dependencies: Phase 4)
+PHASE 5: Add Context and Cleanup Management
+- Task 5.1: [File: cmd/petrock/test_context.go] Implement shared test context (Effort: Medium, Dependencies: Phase 4) - COMPLETED
   - Types: `TestContext` struct with fields for temp dirs, server processes, etc.
   - Functions: `NewTestContext()`, `(*TestContext).Cleanup()`, `(*TestContext).SetTempDir()`
   - Packages: `os`, `os/exec`
 
-- Task 5.2: [File: cmd/petrock/test.go] Integrate context management (Effort: Small, Dependencies: Task 5.1)
+- Task 5.2: [File: cmd/petrock/test.go] Integrate context management (Effort: Small, Dependencies: Task 5.1) - COMPLETED
   - Types: Update step implementations to use context
   - Functions: Modify step Execute methods to accept and use TestContext
   - Packages: None
