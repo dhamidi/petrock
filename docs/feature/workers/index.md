@@ -27,3 +27,4 @@ Workers follow a background processing pattern where:
 ## Usage
 
 Workers are typically registered during feature initialization and handle operations that are too time-consuming for synchronous processing in HTTP handlers.
+
