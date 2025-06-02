@@ -41,9 +41,9 @@ with the given module path, sets up a git repository, and generates the
 initial project files based on Petrock templates.
 
 For component generation, use the subcommands:
-  petrock new command <feature>/<entity>   - Generate command component
-  petrock new query <feature>/<entity>     - Generate query component  
-  petrock new worker <feature>/<entity>    - Generate worker component
+  petrock new command <feature>/<name-of-thing>   - Generate command component
+  petrock new query <feature>/<name-of-thing>     - Generate query component  
+  petrock new worker <feature>/<name-of-thing>    - Generate worker component
 
 Examples:
   petrock new myblog github.com/youruser/myblog
@@ -71,7 +71,7 @@ func init() {
 func parseFeatureEntityName(input string) (string, string, error) {
 	parts := strings.Split(input, "/")
 	if len(parts) != 2 {
-		return "", "", fmt.Errorf("invalid format %q: expected <feature>/<entity>", input)
+		return "", "", fmt.Errorf("invalid format %q: expected <feature>/<name-of-thing>", input)
 	}
 	
 	featureName := strings.TrimSpace(parts[0])

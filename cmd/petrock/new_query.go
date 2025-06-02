@@ -19,7 +19,7 @@ type NewQueryOptions struct {
 // NewQuerySubcommand creates the query-specific subcommand
 func NewQuerySubcommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "query <feature>/<entity>",
+		Use:   "query <feature>/<name-of-thing>",
 		Short: "Generate a query component",
 		Long: `Generate query files for a specific feature and entity from skeleton templates.
 
@@ -38,7 +38,7 @@ Examples:
 
 Generated files:
   - <feature>/queries/base.go     - Base query interfaces and types
-  - <feature>/queries/<entity>.go - Entity-specific query implementation
+  - <feature>/queries/<name-of-thing>.go - Entity-specific query implementation
 
 Common query patterns:
   - get: Retrieve a single entity by ID

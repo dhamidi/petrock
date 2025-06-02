@@ -16,13 +16,13 @@ The petrock component generators allow you to quickly create individual componen
 All component generators follow the same pattern:
 
 ```bash
-petrock new <component-type> <feature>/<entity>
+petrock new <component-type> <feature>/<name-of-thing>
 ```
 
 Where:
 - `<component-type>` is one of: `command`, `query`, `worker`
 - `<feature>` is the feature name (e.g., `posts`, `users`, `orders`)
-- `<entity>` is the specific operation name (e.g., `create`, `get`, `summary`)
+- `<name-of-thing>` is the specific operation name (e.g., `create`, `get`, `summary`)
 
 ## Command Generation Examples
 

@@ -19,7 +19,7 @@ type NewCommandOptions struct {
 // NewCommandSubcommand creates the command-specific subcommand
 func NewCommandSubcommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "command <feature>/<entity>",
+		Use:   "command <feature>/<name-of-thing>",
 		Short: "Generate a command component",
 		Long: `Generate command files for a specific feature and entity from skeleton templates.
 
@@ -35,7 +35,7 @@ Examples:
 Generated files:
   - <feature>/commands/base.go       - Base command interfaces and types
   - <feature>/commands/register.go   - Command registration logic
-  - <feature>/commands/<entity>.go   - Entity-specific command implementation`,
+  - <feature>/commands/<name-of-thing>.go   - Entity-specific command implementation`,
 		Args: cobra.ExactArgs(1),
 		RunE: runCommandGeneration,
 	}

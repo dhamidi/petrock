@@ -21,7 +21,7 @@ type NewWorkerOptions struct {
 // NewWorkerSubcommand creates the worker-specific subcommand
 func NewWorkerSubcommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "worker <feature>/<entity>",
+		Use:   "worker <feature>/<name-of-thing>",
 		Short: "Generate a worker component",
 		Long: `Generate worker files for a specific feature and entity from skeleton templates.
 
@@ -47,7 +47,7 @@ Examples:
 Generated files:
   - <feature>/workers/main.go           - Worker registry and startup logic
   - <feature>/workers/types.go          - Worker state and type definitions
-  - <feature>/workers/<entity>_worker.go - Entity-specific worker implementation
+  - <feature>/workers/<name-of-thing>_worker.go - Entity-specific worker implementation
 
 Common worker patterns:` + formatWorkerPatterns(),
 		Args: cobra.ExactArgs(1),
