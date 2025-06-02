@@ -57,7 +57,8 @@ func (qg *QueryGenerator) GenerateQueryComponent(featureName, entityName, target
 	exists, err := qg.inspector.ComponentExists(ComponentTypeQuery, featureName, entityName)
 	if err != nil {
 		slog.Warn("Could not check for existing queries", "error", err.Error())
-	} else if exists {
+	}
+	if exists {
 		return fmt.Errorf("query %s/%s already exists", featureName, entityName)
 	}
 

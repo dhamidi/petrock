@@ -57,7 +57,8 @@ func (cg *CommandGenerator) GenerateCommandComponent(featureName, entityName, ta
 	exists, err := cg.inspector.ComponentExists(ComponentTypeCommand, featureName, entityName)
 	if err != nil {
 		slog.Warn("Could not check for existing commands", "error", err.Error())
-	} else if exists {
+	}
+	if exists {
 		return fmt.Errorf("command %s/%s already exists", featureName, entityName)
 	}
 

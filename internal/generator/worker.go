@@ -57,7 +57,8 @@ func (wg *WorkerGenerator) GenerateWorkerComponent(featureName, entityName, targ
 	exists, err := wg.inspector.ComponentExists(ComponentTypeWorker, featureName, entityName)
 	if err != nil {
 		slog.Warn("Could not check for existing workers", "error", err.Error())
-	} else if exists {
+	}
+	if exists {
 		return fmt.Errorf("worker %s/%s already exists", featureName, entityName)
 	}
 
