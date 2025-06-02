@@ -8,13 +8,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/petrock/example_module_path/core" // Placeholder for target project's core package
+	"github.com/petrock/example_module_path/core"                               // Placeholder for target project's core package
 	"github.com/petrock/example_module_path/petrock_example_feature_name/state" // Import state package
 )
 
 // Ensure command implements the marker interfaces
-var _ core.Command = (*CreateCommand)(nil)
-var _ Validator = (*CreateCommand)(nil)
+var (
+	_ core.Command = (*CreateCommand)(nil)
+	_ Validator    = (*CreateCommand)(nil)
+)
 
 // CreateCommand holds data needed to create a new entity.
 type CreateCommand struct {
@@ -82,7 +84,7 @@ func (e *Executor) HandleCreate(ctx context.Context, command core.Command, msg *
 		UpdatedAt: getTimestamp(msg),
 		Version:   1,
 	}
-	
+
 	// Add item to state
 	if err := e.state.AddItem(newItem); err != nil {
 		// Log the error, but return it to trigger panic in core.Executor

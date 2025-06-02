@@ -27,6 +27,7 @@ type ExtractionOptions struct {
 	SkeletonFiles   []string
 	Replacements    map[string]string
 	FileMapping     map[string]string // Optional mapping from skeleton file to target file path
+	Fields          []CommandField    // Optional custom fields for command generation
 }
 
 // GenerateOptions holds options for component generation
