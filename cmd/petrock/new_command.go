@@ -72,7 +72,7 @@ func runCommandGeneration(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to generate command: %w", err)
 	}
 
-	slog.Info("Command component generated successfully",
+	slog.Debug("Command component generated successfully",
 		"feature", options.FeatureName,
 		"entity", options.EntityName)
 

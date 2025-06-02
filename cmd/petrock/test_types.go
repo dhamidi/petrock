@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"os/exec"
 	"time"
+
+	"github.com/dhamidi/petrock/internal/ui"
 )
 
 // TestStep represents a single step in the test execution process
@@ -118,6 +120,10 @@ func (tr *TestRunner) AddStep(step TestStep) {
 // RunStep executes a single step and returns its result
 func (tr *TestRunner) RunStep(step TestStep) *StepResult {
 	slog.Info("Starting test step", "step", step.Name())
+	cmdCtx.UI.ShowProgress(cmdCtx.Ctx, ui.ProgressState{
+		Step: step.Name(),
+		Progress: -1,
+	})
 	
 	result := step.Execute(tr.ctx)
 	tr.results = append(tr.results, result)

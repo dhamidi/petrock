@@ -98,7 +98,7 @@ func runWorkerGeneration(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to generate worker: %w", err)
 	}
 
-	slog.Info("Worker component generated successfully",
+	slog.Debug("Worker component generated successfully",
 		"feature", options.FeatureName,
 		"entity", options.EntityName)
 

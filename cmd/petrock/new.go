@@ -13,6 +13,7 @@ import (
 	// "github.com/dhamidi/petrock/internal/template" // Removed template import
 	// "github.com/dhamidi/petrock/internal/skeletonfs" // Removed import for skeletonfs
 	petrock "github.com/dhamidi/petrock" // Import root package for embedded FS
+	"github.com/dhamidi/petrock/internal/ui"
 	"github.com/dhamidi/petrock/internal/utils"
 
 	"github.com/spf13/cobra"
@@ -153,12 +154,20 @@ func runNew(cmd *cobra.Command, args []string) error {
 
 	// Create project directory
 	slog.Debug("Creating project directory", "path", projectName)
+	cmdCtx.UI.ShowProgress(cmdCtx.Ctx, ui.ProgressState{
+		Step: "Creating project directory",
+		Progress: -1, // Indeterminate
+	})
 	if err := utils.EnsureDir(projectName); err != nil {
 		return fmt.Errorf("failed to create project directory %q: %w", projectName, err)
 	}
 
 	// Initialize Git repository
 	slog.Debug("Initializing Git repository", "path", projectName)
+	cmdCtx.UI.ShowProgress(cmdCtx.Ctx, ui.ProgressState{
+		Step: "Initializing Git repository",
+		Progress: -1,
+	})
 	if err := utils.GitInit(projectName); err != nil {
 		return fmt.Errorf("failed to initialize git repository: %w", err)
 	}
@@ -169,6 +178,10 @@ func runNew(cmd *cobra.Command, args []string) error {
 
 	// Copy skeleton directory structure from embedded FS, excluding the feature template
 	slog.Debug("Copying skeleton project structure from embedded FS", "to", projectName)
+	cmdCtx.UI.ShowProgress(cmdCtx.Ctx, ui.ProgressState{
+		Step: "Copying project template",
+		Progress: -1,
+	})
 	// Pass the embedded FS from the root petrock package
 	// Start copying from the 'internal/skeleton' directory within the embed FS
 	exclude := []string{"internal/skeleton/petrock_example_feature_name"}
@@ -198,6 +211,10 @@ func runNew(cmd *cobra.Command, args []string) error {
 
 	// Replace placeholders in copied files
 	slog.Debug("Replacing placeholders in project files", "path", projectName)
+	cmdCtx.UI.ShowProgress(cmdCtx.Ctx, ui.ProgressState{
+		Step: "Configuring project files",
+		Progress: -1,
+	})
 	if err := utils.ReplaceInFiles(projectName, replacements); err != nil {
 		return fmt.Errorf("failed to replace placeholders in project files: %w", err)
 	}
@@ -205,12 +222,20 @@ func runNew(cmd *cobra.Command, args []string) error {
 
 	// Tidy Go module dependencies (after go.mod and source files are created)
 	slog.Debug("Running go mod tidy", "path", projectName)
+	cmdCtx.UI.ShowProgress(cmdCtx.Ctx, ui.ProgressState{
+		Step: "Installing dependencies",
+		Progress: -1,
+	})
 	if err := utils.GoModTidy(projectName); err != nil {
 		return fmt.Errorf("failed to run go mod tidy: %w", err)
 	}
 
 	// Initial Git commit
 	slog.Debug("Creating initial Git commit", "path", projectName)
+	cmdCtx.UI.ShowProgress(cmdCtx.Ctx, ui.ProgressState{
+		Step: "Creating initial Git commit",
+		Progress: -1,
+	})
 	if err := utils.GitAddAll(projectName); err != nil {
 		return fmt.Errorf("failed to stage files in git: %w", err)
 	}
@@ -220,11 +245,13 @@ func runNew(cmd *cobra.Command, args []string) error {
 	}
 
 	slog.Debug("Project created successfully!", "path", projectName) // Changed to Debug
-	fmt.Printf("\nSuccess! Created project %s at ./%s\n", projectName, projectName)
-	fmt.Printf("Module path: %s\n", modulePath)
-	fmt.Println("\nNext steps:")
-	fmt.Printf("  cd ./%s\n", projectName)
-	fmt.Printf("  go run ./cmd/%s serve\n", projectName)
+	
+	// Use UI for user-facing output
+	cmdCtx.UI.ShowSuccess(cmdCtx.Ctx, "\nSuccess! Created project %s at ./%s\n", projectName, projectName)
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "Module path: %s\n", modulePath)
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "\nNext steps:\n")
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "  cd ./%s\n", projectName)
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "  go run ./cmd/%s serve\n", projectName)
 
 	return nil
 }

@@ -1,13 +1,24 @@
 package main
 
 import (
+	"context"
 	"log/slog" // Import slog
 	"os"
 	"strings" // Import strings
 
+	"github.com/dhamidi/petrock/internal/ui"
 	"github.com/dhamidi/petrock/internal/utils" // Import the utils package
 	"github.com/spf13/cobra"
 )
+
+// CommandContext holds shared dependencies for all commands
+type CommandContext struct {
+	UI  ui.UI
+	Ctx context.Context
+}
+
+// Global command context
+var cmdCtx *CommandContext
 
 var rootCmd = &cobra.Command{
 	Use:   "petrock",
@@ -63,7 +74,23 @@ func init() {
 	slog.SetDefault(slog.New(handler))
 }
 
+// newCommandContext creates a new command context with UI
+func newCommandContext() *CommandContext {
+	return &CommandContext{
+		UI:  ui.NewConsoleUI(),
+		Ctx: context.Background(),
+	}
+}
+
+// injectUI makes the UI available to commands
+func injectUI() {
+	cmdCtx = newCommandContext()
+}
+
 func main() {
+	// Initialize UI before executing commands
+	injectUI()
+	
 	if err := Execute(); err != nil {
 		os.Exit(1)
 	}

@@ -11,6 +11,7 @@ import (
 	"strings" // Import strings package
 
 	petrock "github.com/dhamidi/petrock"        // Import root package for embedded FS
+	"github.com/dhamidi/petrock/internal/ui"
 	"github.com/dhamidi/petrock/internal/utils" // Import utils
 	"github.com/spf13/cobra"
 )
@@ -78,10 +79,14 @@ func runFeature(cmd *cobra.Command, args []string) error {
 	}
 	slog.Debug("Feature directory does not already exist", "name", featureName)
 
-	slog.Info("Pre-run checks passed.")
+	slog.Debug("Pre-run checks passed.")
 
 	// --- Step 4: Implement Skeleton Copying ---
 	slog.Debug("Copying feature skeleton...")
+	cmdCtx.UI.ShowProgress(cmdCtx.Ctx, ui.ProgressState{
+		Step: "Copying feature template",
+		Progress: -1,
+	})
 
 	// 1. Get module path (needed for replacements later, good to have now)
 	modulePath, err := utils.GetModuleName(".")
@@ -108,10 +113,14 @@ func runFeature(cmd *cobra.Command, args []string) error {
 
 	// Note: No need to rename or modify a nested go.mod file anymore.
 
-	slog.Info("Feature skeleton copied successfully.", "feature", featureName)
+	slog.Debug("Feature skeleton copied successfully.", "feature", featureName)
 
 	// --- Step 5: Implement Placeholder Replacement ---
 	slog.Debug("Replacing placeholders in feature files...")
+	cmdCtx.UI.ShowProgress(cmdCtx.Ctx, ui.ProgressState{
+		Step: "Configuring feature files",
+		Progress: -1,
+	})
 
 	// 1. Define placeholder map
 	// Use the same placeholder string as defined in the skeleton files
@@ -127,10 +136,14 @@ func runFeature(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to replace placeholders in feature directory %s: %w", destinationPath, err)
 	}
 
-	slog.Info("Placeholders replaced successfully.", "feature", featureName)
+	slog.Debug("Placeholders replaced successfully.", "feature", featureName)
 
 	// --- Step 6: Implement Feature Registration in Project Code ---
 	slog.Debug("Modifying project features.go file...")
+	cmdCtx.UI.ShowProgress(cmdCtx.Ctx, ui.ProgressState{
+		Step: "Registering feature in project",
+		Progress: -1,
+	})
 
 	// 1. Determine project name
 	projectName, err := getProjectName(".")
@@ -179,10 +192,14 @@ func runFeature(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to write modified features file %s: %w", featuresFilePath, err)
 	}
 
-	slog.Info("Feature registration added successfully.", "file", featuresFilePath)
+	slog.Debug("Feature registration added successfully.", "file", featuresFilePath)
 
 	// --- Step 7: Run Go Mod Tidy ---
 	slog.Debug("Running go mod tidy...")
+	cmdCtx.UI.ShowProgress(cmdCtx.Ctx, ui.ProgressState{
+		Step: "Installing dependencies",
+		Progress: -1,
+	})
 	if err := utils.GoModTidy("."); err != nil {
 		// Log the error but don't necessarily fail the whole process,
 		// as the user might need to resolve dependency issues manually.
@@ -191,11 +208,15 @@ func runFeature(cmd *cobra.Command, args []string) error {
 		// Optionally return the error to halt the process:
 		// return fmt.Errorf("go mod tidy failed: %w", err)
 	} else {
-		slog.Info("go mod tidy completed successfully.")
+		slog.Debug("go mod tidy completed successfully.")
 	}
 
 	// --- Step 8: Create Git Commit ---
 	slog.Debug("Staging changes and creating Git commit...")
+	cmdCtx.UI.ShowProgress(cmdCtx.Ctx, ui.ProgressState{
+		Step: "Committing changes",
+		Progress: -1,
+	})
 
 	// 1. Stage all changes
 	slog.Debug("Running git add .")
@@ -219,23 +240,23 @@ func runFeature(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create git commit: %w", err)
 	}
 
-	slog.Info("Git commit created successfully.", "message", commitMessage)
+	slog.Debug("Git commit created successfully.", "message", commitMessage)
 
 	// --- Step 9: Final Output and Cleanup ---
-	slog.Info("Feature generation process completed successfully", "feature", featureName)
+	slog.Debug("Feature generation process completed successfully", "feature", featureName)
 
-	// Print success messages to the user
-	fmt.Printf("\nSuccess! Generated feature '%s' in ./%s\n", featureName, featureName)
-	fmt.Printf("Feature registered in %s\n", featuresFilePath)
-	fmt.Printf("Changes committed with message: %s\n", commitMessage)
+	// Use UI for user-facing output
+	cmdCtx.UI.ShowSuccess(cmdCtx.Ctx, "\nSuccess! Generated feature '%s' in ./%s\n", featureName, featureName)
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "Feature registered in %s\n", featuresFilePath)
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "Changes committed with message: %s\n", commitMessage)
 
-	// Print next steps hints
-	fmt.Println("\nNext steps:")
-	fmt.Printf("  1. Implement your command handlers in ./%s/execute.go\n", featureName)
-	fmt.Printf("  2. Implement your query handlers in ./%s/query.go\n", featureName)
-	fmt.Printf("  3. Define your feature's state logic in ./%s/state.go\n", featureName)
-	fmt.Printf("  4. Create UI components in ./%s/view.go\n", featureName)
-	fmt.Printf("  5. Add HTTP routes and handlers in cmd/%s/serve.go (or similar)\n", projectName)
+	// Present next steps hints
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "\nNext steps:\n")
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "  1. Implement your command handlers in ./%s/execute.go\n", featureName)
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "  2. Implement your query handlers in ./%s/query.go\n", featureName)
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "  3. Define your feature's state logic in ./%s/state.go\n", featureName)
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "  4. Create UI components in ./%s/view.go\n", featureName)
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "  5. Add HTTP routes and handlers in cmd/%s/serve.go (or similar)\n", projectName)
 
 	return nil // Return nil on success
 }

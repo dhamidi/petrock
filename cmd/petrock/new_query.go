@@ -82,7 +82,7 @@ func runQueryGeneration(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to generate query: %w", err)
 	}
 
-	slog.Info("Query component generated successfully",
+	slog.Debug("Query component generated successfully",
 		"feature", options.FeatureName,
 		"entity", options.EntityName)
 

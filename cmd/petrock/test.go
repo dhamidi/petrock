@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/dhamidi/petrock/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -42,7 +43,7 @@ func runTest(cmd *cobra.Command, args []string) error {
 	}
 	
 	reportFinalResults(runner, true)
-	fmt.Println("\nSuccess! The generated project builds correctly and serves content.")
+	cmdCtx.UI.ShowSuccess(cmdCtx.Ctx, "\nSuccess! The generated project builds correctly and serves content.\n")
 	return nil
 }
 
@@ -90,26 +91,30 @@ func reportFinalResults(runner *TestRunner, success bool) {
 	results := runner.GetResults()
 	
 	if success {
-		fmt.Printf("\n✅ Test Suite Completed Successfully\n")
-		fmt.Printf("   %d steps executed\n", len(results))
+		cmdCtx.UI.ShowSuccess(cmdCtx.Ctx, "\n✅ Test Suite Completed Successfully\n")
+		cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "   %d steps executed\n", len(results))
 	} else {
-		fmt.Printf("\n❌ Test Suite Failed\n")
+		cmdCtx.UI.ShowError(cmdCtx.Ctx, fmt.Errorf("❌ Test Suite Failed"))
 		failedCount := 0
 		for _, result := range results {
 			if !result.Success {
 				failedCount++
 			}
 		}
-		fmt.Printf("   %d/%d steps failed\n", failedCount, len(results))
+		cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeError, "   %d/%d steps failed\n", failedCount, len(results))
 	}
 	
 	// Show step summary
-	fmt.Printf("\nStep Summary:\n")
+	cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "\nStep Summary:\n")
 	for _, result := range results {
 		status := "✅"
 		if !result.Success {
 			status = "❌"
 		}
-		fmt.Printf("  %s %s (%v)\n", status, result.StepName, result.Duration.Round(10_000_000)) // Round to 10ms
+		msgType := ui.MessageTypeInfo
+		if !result.Success {
+			msgType = ui.MessageTypeError
+		}
+		cmdCtx.UI.Present(cmdCtx.Ctx, msgType, "  %s %s (%v)\n", status, result.StepName, result.Duration.Round(10_000_000)) // Round to 10ms
 	}
 }
