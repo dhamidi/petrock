@@ -12,13 +12,13 @@
 
 **IMPLEMENTATION PHASES**:
 
-Phase 1: Define Core Testing Types
-- Task 1.1: [File: cmd/petrock/test_types.go] Create step and result types (Effort: Small, Dependencies: None)
+PHASE 1: Define Core Testing Types
+- Task 1.1: [File: cmd/petrock/test_types.go] Create step and result types (Effort: Small, Dependencies: None) - COMPLETED
   - Types: `TestStep` interface, `StepResult` struct, `TestContext` struct, `StepFunc` type
   - Functions: `NewStepResult()`, `(*StepResult).Success()`, `(*StepResult).Failure()`
   - Packages: `fmt`, `time`, `log/slog`
 
-- Task 1.2: [File: cmd/petrock/test_types.go] Add step execution framework (Effort: Small, Dependencies: Task 1.1)
+- Task 1.2: [File: cmd/petrock/test_types.go] Add step execution framework (Effort: Small, Dependencies: Task 1.1) - COMPLETED
   - Types: `TestRunner` struct
   - Functions: `NewTestRunner()`, `(*TestRunner).RunStep()`, `(*TestRunner).RunAllSteps()`
   - Packages: `context`
