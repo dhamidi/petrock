@@ -19,8 +19,8 @@ var _ Validator = (*CreateCommand)(nil)
 // CreateCommand holds data needed to create a new entity.
 type CreateCommand struct {
 	// Example fields - replace with actual data needed for creation
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
+	Name        string    `json:"name" validate:"required,minlen=2,maxlen=100"`
+	Description string    `json:"description" validate:"required,minlen=5,maxlen=500"`
 	CreatedBy   string    `json:"created_by"` // e.g., User ID
 	CreatedAt   time.Time `json:"created_at"` // Timestamp when created
 }

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -165,7 +167,68 @@ func runTest(cmd *cobra.Command, args []string) error {
 	}
 	slog.Info("HTTP endpoint test successful", "status", resp.Status)
 
-	// 11. Test the self inspect command
+	// 11. Test invalid POST request (empty name/description)
+	slog.Info("Testing invalid POST request with empty fields")
+	formData := url.Values{}
+	formData.Set("name", "")        // Empty name should fail validation
+	formData.Set("description", "") // Empty description should fail validation
+	
+	postResp, err := http.PostForm("http://localhost:8081/posts/new", formData)
+	if err != nil {
+		return fmt.Errorf("failed to make POST request: %w", err)
+	}
+	defer postResp.Body.Close()
+	
+	// 12. Verify the response indicates validation error (should NOT be 303 redirect)
+	if postResp.StatusCode == http.StatusSeeOther {
+		return fmt.Errorf("unexpected success: POST with empty fields should fail validation, got %d", postResp.StatusCode)
+	}
+	
+	// Should get 200 with validation errors rendered in the form (handler re-renders form with errors)
+	if postResp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status for validation error: got %d, want %d", postResp.StatusCode, http.StatusOK)
+	}
+	slog.Info("Invalid POST request test successful", "status", postResp.Status)
+
+	// 13. Test invalid command API request (empty name/description)
+	slog.Info("Testing invalid command API request with empty fields")
+	commandPayload := map[string]interface{}{
+		"type": "posts/create",
+		"payload": map[string]interface{}{
+			"name":        "",
+			"description": "",
+		},
+	}
+	
+	jsonData, err := json.Marshal(commandPayload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal command payload: %w", err)
+	}
+	
+	cmdResp, err := http.Post("http://localhost:8081/commands", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to make command API request: %w", err)
+	}
+	defer cmdResp.Body.Close()
+	
+	// Should get 400 Bad Request with validation errors
+	if cmdResp.StatusCode != http.StatusBadRequest {
+		return fmt.Errorf("unexpected status for command validation error: got %d, want %d", cmdResp.StatusCode, http.StatusBadRequest)
+	}
+	
+	// Verify the response is JSON with validation error details
+	var cmdErrorResp map[string]interface{}
+	if err := json.NewDecoder(cmdResp.Body).Decode(&cmdErrorResp); err != nil {
+		return fmt.Errorf("failed to decode command error response: %w", err)
+	}
+	
+	if cmdErrorResp["error"] != "Validation failed" {
+		return fmt.Errorf("unexpected error message: got %v, want 'Validation failed'", cmdErrorResp["error"])
+	}
+	
+	slog.Info("Invalid command API request test successful", "status", cmdResp.Status)
+
+	// 14. Test the self inspect command
 	slog.Info("Testing 'self inspect' command")
 	selfInspectCmd := exec.Command("go", "run", "./cmd/selftest", "self", "inspect")
 	
@@ -175,14 +238,14 @@ func runTest(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to run 'self inspect' command: %w", err)
 	}
 
-	// 12. Verify the output is valid JSON
+	// 15. Verify the output is valid JSON
 	slog.Info("Verifying 'self inspect' output is valid JSON")
 	var result map[string]interface{}
 	if err := json.Unmarshal(selfInspectOutput, &result); err != nil {
 		return fmt.Errorf("'self inspect' command did not produce valid JSON: %w", err)
 	}
 
-	// 13. Verify the JSON contains the expected keys
+	// 16. Verify the JSON contains the expected keys
 	expectedKeys := []string{"commands", "queries", "routes", "features", "workers"}
 	for _, key := range expectedKeys {
 		if _, ok := result[key]; !ok {
@@ -190,7 +253,7 @@ func runTest(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// 14. Verify workers are included in the output
+	// 17. Verify workers are included in the output
 	workers, ok := result["workers"].([]interface{})
 	if !ok {
 		return fmt.Errorf("'workers' key doesn't contain an array of workers")

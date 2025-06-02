@@ -18,9 +18,9 @@ var _ Validator = (*UpdateCommand)(nil)
 
 // UpdateCommand holds data needed to update an existing entity.
 type UpdateCommand struct {
-	ID          string    `json:"id"` // ID of the entity to update
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
+	ID          string    `json:"id" validate:"required"` // ID of the entity to update
+	Name        string    `json:"name" validate:"required,minlen=2,maxlen=100"`
+	Description string    `json:"description" validate:"required,minlen=5,maxlen=500"`
 	UpdatedBy   string    `json:"updated_by"`
 	UpdatedAt   time.Time `json:"updated_at"` // Timestamp when updated
 }

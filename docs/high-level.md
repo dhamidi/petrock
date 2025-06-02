@@ -46,7 +46,7 @@ core                     # package core takes care of all infrastructure concern
 core/app.go              # central App struct managing application lifecycle
 core/commands.go         # a registry for commands and their associated handlers
 core/queries.go          # a registry for queries and their associated handlers
-core/form.go             # a flexible data structure for capturing data with error states
+core/form.go             # form handling and tag-based validation system
 core/log.go              # a persistent event log, backed by sqlite3
 core/worker.go           # background worker management and interfaces
 core/kv.go               # persistent key-value store interface and SQLite implementation

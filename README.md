@@ -190,6 +190,51 @@ go run ./cmd/myapp kv list "*:config"
 
 For complete documentation on the KVStore, see [`docs/core/kv.md`](docs/core/kv.md).
 
+## Form Validation System
+
+Petrock features a powerful, extensible form validation system that works across multiple input sources (HTTP forms, JSON APIs, CLI arguments) with declarative validation rules.
+
+### Key Features
+
+- **Tag-Based Validation**: Define validation rules directly in struct tags
+- **Multiple Input Sources**: Parse and validate from HTTP forms, JSON, CLI args
+- **Structured Errors**: Rich error information with codes and metadata
+- **Extensible**: Add custom validators and type converters
+- **Type Safety**: Automatic type conversion with validation
+
+### Quick Example
+
+```go
+type CreateUserCommand struct {
+    Name     string `json:"name" validate:"required,minlen=2,maxlen=50"`
+    Email    string `json:"email" validate:"required,email"`
+    Age      int    `json:"age" validate:"min=0,max=120"`
+    Active   bool   `json:"active"`
+}
+
+// Parse from HTTP form with validation
+var cmd CreateUserCommand
+if err := core.ParseFromURLValues(r.PostForm, &cmd); err != nil {
+    if parseErrors, ok := err.(*core.ParseErrors); ok {
+        // Handle structured validation errors
+        for _, e := range parseErrors.Errors {
+            fmt.Printf("Field %s: %s (code: %s)\n", e.Field, e.Message, e.Code)
+        }
+    }
+}
+```
+
+### Available Validation Rules
+
+- `required` - Field cannot be empty
+- `minlen=N` / `maxlen=N` - String length constraints
+- `min=N` / `max=N` - Numeric range validation
+- `email` - Valid email format
+- `confirm_field=X` - Must match another field
+- `required_if=field:value` - Conditional validation
+
+For complete documentation, see [`docs/form-validation-guide.md`](docs/form-validation-guide.md).
+
 ## Generated Application
 
 A Petrock-generated application includes its own command-line interface:

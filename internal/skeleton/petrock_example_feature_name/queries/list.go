@@ -14,9 +14,9 @@ var _ core.QueryResult = (*ListQueryResult)(nil)
 
 // ListQuery holds data needed to retrieve a list of entities, possibly filtered or paginated.
 type ListQuery struct {
-	Page     int    `json:"page"`      // For pagination
-	PageSize int    `json:"page_size"` // For pagination
-	Filter   string `json:"filter"`    // Example filter criteria
+	Page     int    `json:"page" validate:"min=1"`           // For pagination
+	PageSize int    `json:"page_size" validate:"min=1,max=100"` // For pagination
+	Filter   string `json:"filter" validate:"maxlen=100"`    // Example filter criteria
 }
 
 // QueryName returns the unique kebab-case name for this query type.

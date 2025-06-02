@@ -21,7 +21,7 @@ The `handlers` directory contains HTTP handlers and middleware for processing we
 ## Responsibilities
 
 - Process incoming HTTP requests
-- Parse and validate input data
+- Parse and validate input data using the tag-based validation system (see [Form Validation Guide](../../form-validation-guide.md))
 - Execute commands or queries based on request
 - Render appropriate responses
 - Apply middleware for cross-cutting concerns
