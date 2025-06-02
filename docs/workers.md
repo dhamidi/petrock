@@ -272,134 +272,6 @@ func performSync(ctx context.Context, workerState *SyncWorkerState) error {
 }
 ```
 
-## Migration Guide
-
-### Converting Existing Workers
-
-Follow these steps to migrate from the old worker pattern to the new abstraction:
-
-#### Step 1: Identify Current Worker Components
-
-In your existing worker, identify:
-- Message processing loop
-- Command handling logic
-- Periodic work functions
-- State management
-- Context handling
-
-#### Step 2: Extract Business Logic
-
-Create separate functions for each command handler:
-
-```go
-// Old pattern
-func (w *OldWorker) Work() error {
-    for msg := range w.log.After(w.ctx, w.lastProcessedID) {
-        cmd, ok := msg.DecodedPayload.(Command)
-        if !ok {
-            continue
-        }
-
-        switch cmd.CommandName() {
-        case "feature/process":
-            processCmd := cmd.(*ProcessCommand)
-            // Business logic here...
-        case "feature/update":
-            updateCmd := cmd.(*UpdateCommand)
-            // Business logic here...
-        }
-    }
-}
-
-// New pattern
-func handleProcessCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState, pctx *core.ProcessingContext) error {
-    processCmd := cmd.(*ProcessCommand)
-    // Same business logic here...
-    // Use pctx.IsReplay to distinguish between replay and normal processing
-}
-
-func handleUpdateCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState, pctx *core.ProcessingContext) error {
-    updateCmd := cmd.(*UpdateCommand)
-    // Same business logic here...
-    // Use pctx.IsReplay to distinguish between replay and normal processing
-}
-```
-
-#### Step 3: Replace Worker Structure
-
-Replace the old worker struct with the new pattern:
-
-```go
-// Old pattern
-type OldWorker struct {
-    name            string
-    lastProcessedID uint64
-    state           *WorkerState
-    log             *core.MessageLog
-    executor        *core.Executor
-    ctx             context.Context
-    cancel          context.CancelFunc
-}
-
-// New pattern
-func NewWorker(app *core.App, state *State, log *core.MessageLog, executor *core.Executor) core.Worker {
-    workerState := &WorkerState{
-        // Initialize your state
-    }
-
-    worker := core.NewWorker("Worker Name", "Description", workerState)
-    worker.SetDependencies(log, executor, nil) // KVStore set automatically by App
-    
-    // Register handlers
-    worker.OnCommand("feature/process", func(ctx context.Context, cmd core.Command, msg *core.Message, pctx *core.ProcessingContext) error {
-        return handleProcessCommand(ctx, cmd, msg, workerState, pctx)
-    })
-    
-    return worker
-}
-```
-
-#### Step 4: Update Worker Registration
-
-Update your feature's main.go to use the new worker:
-
-```go
-// Old pattern
-func RegisterWorkers(app *core.App, state *State) {
-    worker := &OldWorker{
-        // initialization...
-    }
-    app.RegisterWorker(worker)
-}
-
-// New pattern
-func RegisterWorkers(app *core.App, state *State, log *core.MessageLog, executor *core.Executor) {
-    worker := NewWorker(app, state, log, executor)
-    app.RegisterWorker(worker)
-}
-```
-
-## Performance Characteristics
-
-### Message Processing
-
-- **Throughput**: Up to 10,000 messages/second per worker on modern hardware
-- **Memory Usage**: ~1MB base memory per worker + state size
-- **Latency**: Sub-millisecond command routing and dispatch
-
-### Scaling Considerations
-
-- **Workers per Project**: Tested with up to 100 workers in a single application
-- **Command Handlers**: Up to 50 commands per worker with no performance impact
-- **State Size**: Keep worker state under 100MB for optimal performance
-
-### Optimization Tips
-
-1. **Batch Processing**: Group related operations to reduce overhead
-2. **State Management**: Use maps for O(1) lookups instead of slices
-3. **Context Timeouts**: Use appropriate timeouts for external API calls
-4. **Logging**: Use structured logging at appropriate levels (Debug/Info/Warn/Error)
-
 ## Testing Strategies
 
 ### Unit Testing Command Handlers
@@ -464,6 +336,7 @@ func TestWorkerIntegration(t *testing.T) {
 **Symptoms**: Commands are executed but worker handlers are not called
 
 **Diagnosis**:
+
 ```go
 // Check if worker is started
 info := worker.WorkerInfo()
@@ -477,6 +350,7 @@ worker.OnCommand("debug/list-handlers", func(ctx context.Context, cmd core.Comma
 ```
 
 **Solutions**:
+
 - Verify worker is properly registered with the app
 - Check that `SetDependencies()` is called with correct MessageLog
 - Ensure command names match exactly (case-sensitive)
@@ -486,6 +360,7 @@ worker.OnCommand("debug/list-handlers", func(ctx context.Context, cmd core.Comma
 **Symptoms**: Worker memory usage grows over time
 
 **Diagnosis**:
+
 ```go
 func (w *WorkerState) debugMemoryUsage() {
     fmt.Printf("Pending tasks: %d\n", len(w.pendingTasks))
@@ -494,6 +369,7 @@ func (w *WorkerState) debugMemoryUsage() {
 ```
 
 **Solutions**:
+
 - Clean up completed tasks from worker state
 - Implement periodic cleanup in periodic work function
 - Use bounded caches with LRU eviction
@@ -503,6 +379,7 @@ func (w *WorkerState) debugMemoryUsage() {
 **Symptoms**: Worker stops processing after panic in handler
 
 **Diagnosis**:
+
 ```go
 func handleCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState, pctx *core.ProcessingContext) (err error) {
     defer func() {
@@ -518,6 +395,7 @@ func handleCommand(ctx context.Context, cmd core.Command, msg *core.Message, wor
 ```
 
 **Solutions**:
+
 - Add panic recovery in critical handlers
 - Validate command types with proper error handling
 - Use defensive programming for state access
@@ -527,6 +405,7 @@ func handleCommand(ctx context.Context, cmd core.Command, msg *core.Message, wor
 **Symptoms**: Worker Work() cycles take too long
 
 **Diagnosis**:
+
 ```go
 func processPendingTasks(ctx context.Context, workerState *WorkerState) error {
     start := time.Now()
@@ -543,6 +422,7 @@ func processPendingTasks(ctx context.Context, workerState *WorkerState) error {
 ```
 
 **Solutions**:
+
 - Implement batch processing for large datasets
 - Add context cancellation checks in long loops
 - Use timeouts for external API calls
@@ -552,6 +432,7 @@ func processPendingTasks(ctx context.Context, workerState *WorkerState) error {
 **Symptoms**: External API calls fail with rate limit errors
 
 **Solutions**:
+
 ```go
 type RateLimitedWorkerState struct {
     rateLimiter *time.Ticker
@@ -572,6 +453,7 @@ func callAPIWithRateLimit(ctx context.Context, workerState *RateLimitedWorkerSta
 **Symptoms**: Workers don't shut down cleanly
 
 **Solutions**:
+
 ```go
 func longRunningTask(ctx context.Context) error {
     for i := 0; i < 1000; i++ {
@@ -592,6 +474,7 @@ func longRunningTask(ctx context.Context) error {
 **Symptoms**: Inconsistent state or panics under load
 
 **Solutions**:
+
 ```go
 type ThreadSafeWorkerState struct {
     mu           sync.RWMutex
@@ -617,6 +500,7 @@ func (s *ThreadSafeWorkerState) GetTask(id string) (Task, bool) {
 **Symptoms**: Handler receives unexpected command types
 
 **Solutions**:
+
 ```go
 func handleTypedCommand(ctx context.Context, cmd core.Command, msg *core.Message, workerState *WorkerState, pctx *core.ProcessingContext) error {
     processCmd, ok := cmd.(*ProcessCommand)
@@ -638,6 +522,7 @@ func handleTypedCommand(ctx context.Context, cmd core.Command, msg *core.Message
 **Symptoms**: Worker fails to start or initialize
 
 **Diagnosis**:
+
 ```go
 func NewWorker(...) core.Worker {
     // Validate dependencies
@@ -657,6 +542,7 @@ func NewWorker(...) core.Worker {
 **Symptoms**: SetPeriodicWork function is never called
 
 **Solutions**:
+
 - Verify `SetPeriodicWork()` is called before worker registration
 - Check that App.StartWorkers() is called
 - Ensure worker Work() method is being invoked by the app

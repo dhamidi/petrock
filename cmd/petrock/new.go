@@ -30,23 +30,102 @@ var (
 // //go:embed all:../../internal/skeleton // Removed embed directive here
 // var skeletonFS embed.FS // Removed local embed FS variable
 
+
+
 // newCmd represents the new command
 var newCmd = &cobra.Command{
 	Use:   "new [projectName] [modulePath]",
-	Short: "Creates a new Petrock project structure",
+	Short: "Creates a new Petrock project structure or generates components",
 	Long: `Creates a new directory with the specified project name, initializes a Go module
 with the given module path, sets up a git repository, and generates the
 initial project files based on Petrock templates.
 
-Example:
-  petrock new myblog github.com/youruser/myblog`,
+For component generation, use the subcommands:
+  petrock new command <feature>/<name-of-thing>   - Generate command component
+  petrock new query <feature>/<name-of-thing>     - Generate query component  
+  petrock new worker <feature>/<name-of-thing>    - Generate worker component
+
+Examples:
+  petrock new myblog github.com/youruser/myblog
+  petrock new command posts/create
+  petrock new query posts/get
+  petrock new worker posts/summary`,
 	Args: cobra.ExactArgs(2), // Require both project name and module path
 	RunE: runNew,
 }
 
 func init() {
 	rootCmd.AddCommand(newCmd)
+	
+	// Add component subcommands
+	newCmd.AddCommand(newCommandCmd())
+	newCmd.AddCommand(newQueryCmd())
+	newCmd.AddCommand(newWorkerCmd())
+	
 	// Add flags here if needed in the future (e.g., --template-set)
+}
+
+
+
+// parseFeatureEntityName parses feature/entity format
+func parseFeatureEntityName(input string) (string, string, error) {
+	parts := strings.Split(input, "/")
+	if len(parts) != 2 {
+		return "", "", fmt.Errorf("invalid format %q: expected <feature>/<name-of-thing>", input)
+	}
+	
+	featureName := strings.TrimSpace(parts[0])
+	entityName := strings.TrimSpace(parts[1])
+	
+	if featureName == "" || entityName == "" {
+		return "", "", fmt.Errorf("invalid format %q: feature and entity names cannot be empty", input)
+	}
+	
+	// Basic validation of names (similar to existing validation)
+	if !dirNameRegex.MatchString(featureName) {
+		return "", "", fmt.Errorf("invalid feature name %q: must contain only letters, numbers, '.', '_', '-'", featureName)
+	}
+	if !dirNameRegex.MatchString(entityName) {
+		return "", "", fmt.Errorf("invalid entity name %q: must contain only letters, numbers, '.', '_', '-'", entityName)
+	}
+	
+	return featureName, entityName, nil
+}
+
+// newCommandCmd creates the command subcommand
+func newCommandCmd() *cobra.Command {
+	return NewCommandSubcommand()
+}
+
+// newQueryCmd creates the query subcommand  
+func newQueryCmd() *cobra.Command {
+	return NewQuerySubcommand()
+}
+
+// newWorkerCmd creates the worker subcommand
+func newWorkerCmd() *cobra.Command {
+	return NewWorkerSubcommand()
+}
+
+
+
+// detectModulePath reads go.mod to determine the current module path
+func detectModulePath(projectPath string) (string, error) {
+	goModPath := filepath.Join(projectPath, "go.mod")
+	content, err := os.ReadFile(goModPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read go.mod: %w", err)
+	}
+	
+	lines := strings.Split(string(content), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "module ") {
+			return strings.TrimSpace(strings.TrimPrefix(line, "module")), nil
+		}
+	}
+	
+	return "", fmt.Errorf("module directive not found in go.mod")
 }
 
 func runNew(cmd *cobra.Command, args []string) error {

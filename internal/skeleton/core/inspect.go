@@ -89,10 +89,10 @@ func (a *App) GetInspectResult() *InspectResult {
 	}
 
 	// Build worker schemas
-	result.Workers = make([]WorkerSchema, 0, len(a.workers))
+	result.Workers = make([]WorkerSchema, 0)
 	for _, worker := range a.workers {
-		schema := buildWorkerSchema(worker)
-		result.Workers = append(result.Workers, schema)
+		schemas := buildWorkerSchemas(worker)
+		result.Workers = append(result.Workers, schemas...)
 	}
 
 	return result
@@ -177,8 +177,46 @@ func buildQuerySchema(name string, queryType reflect.Type) QuerySchema {
 	return schema
 }
 
-// buildWorkerSchema creates a schema from a worker instance
-func buildWorkerSchema(worker Worker) WorkerSchema {
+// buildWorkerSchemas creates schemas from a worker instance, one for each registered command
+func buildWorkerSchemas(worker Worker) []WorkerSchema {
+	schemas := []WorkerSchema{}
+	
+	// Check if this is a CommandWorker that can report its registered commands
+	type commandRegistrar interface {
+		RegisteredCommands() []string
+	}
+	
+	if cmdWorker, ok := worker.(commandRegistrar); ok {
+		// Create a schema for each registered command
+		commands := cmdWorker.RegisteredCommands()
+		
+		if len(commands) == 0 {
+			// If no commands registered, fall back to the original behavior
+			return []WorkerSchema{buildSingleWorkerSchema(worker)}
+		}
+		
+		for _, commandName := range commands {
+			schema := WorkerSchema{
+				Name:        commandName, // Use command name instead of worker name
+				Description: fmt.Sprintf("Worker handler for %s command", commandName),
+				Type:        fmt.Sprintf("%T", worker),
+			}
+			
+			// Add standard worker methods
+			schema.Methods = []string{"Start", "Stop", "Work", "OnCommand", "Replay", "SetDependencies", "SetPeriodicWork", "State", "WorkerInfo"}
+			
+			schemas = append(schemas, schema)
+		}
+	} else {
+		// Fallback for workers that don't implement RegisteredCommands
+		schemas = append(schemas, buildSingleWorkerSchema(worker))
+	}
+	
+	return schemas
+}
+
+// buildSingleWorkerSchema creates a schema from a worker instance (original behavior)
+func buildSingleWorkerSchema(worker Worker) WorkerSchema {
 	schema := WorkerSchema{
 		Type: fmt.Sprintf("%T", worker),
 	}

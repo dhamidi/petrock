@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log/slog" // Import slog
 	"os"
 	"strings" // Import strings
@@ -16,11 +15,12 @@ var rootCmd = &cobra.Command{
 	Long: `Petrock helps create new Go projects based on event sourcing principles
 and generate feature modules within existing Petrock projects.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		// Skip git check for the 'new' command as it runs before the repo exists.
-		if cmd.Name() == "new" || cmd.Name() == "test" {
+		// Only check git workspace for major operations that warrant such caution
+		requireCleanGit := cmd.Name() == "feature"
+		if !requireCleanGit {
 			return nil
 		}
-		// Check if the Git workspace is clean before running commands other than 'new'
+		// Check if the Git workspace is clean before running major operations
 		if err := utils.CheckCleanWorkspace(); err != nil {
 			// Return the error directly; CheckCleanWorkspace provides context.
 			// Adding more context here might be redundant unless clarifying *why* it's checked.
@@ -38,9 +38,10 @@ func Execute() error {
 
 func init() {
 	// Add subcommands defined in other files
-	rootCmd.AddCommand(newCmd)     // From new.go
-	rootCmd.AddCommand(testCmd)    // From test.go
+	// Note: newCmd and testCmd are registered in their respective files
 	rootCmd.AddCommand(featureCmd) // From feature.go
+
+	// Use Cobra's default error handling
 
 	// Configure logging level based on environment variable
 	logLevel := slog.LevelInfo // Default level
@@ -64,7 +65,6 @@ func init() {
 
 func main() {
 	if err := Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }
