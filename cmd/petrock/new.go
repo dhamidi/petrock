@@ -185,7 +185,10 @@ func runNew(cmd *cobra.Command, args []string) error {
 	// Pass the embedded FS from the root petrock package
 	// Start copying from the 'internal/skeleton' directory within the embed FS
 	exclude := []string{"internal/skeleton/petrock_example_feature_name"}
-	err := utils.CopyDir(petrock.SkeletonFS, "internal/skeleton", projectName, projectNamePlaceholder, projectName, exclude)
+	fileCallback := func(operation, filePath string) {
+		cmdCtx.UI.ShowFileOperation(cmdCtx.Ctx, operation, filePath)
+	}
+	err := utils.CopyDir(petrock.SkeletonFS, "internal/skeleton", projectName, projectNamePlaceholder, projectName, exclude, fileCallback)
 	if err != nil {
 		return fmt.Errorf("failed to copy skeleton directory from embedded FS: %w", err)
 	}
@@ -201,6 +204,7 @@ func runNew(cmd *cobra.Command, args []string) error {
 		}
 		return fmt.Errorf("failed to rename %s to %s: %w", skelModPath, targetModPath, err)
 	}
+	cmdCtx.UI.ShowFileOperation(cmdCtx.Ctx, "create", targetModPath)
 
 
 	// Define replacements

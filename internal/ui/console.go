@@ -36,7 +36,7 @@ func NewConsoleUIWithWriters(stdout, stderr OutputWriter, stdin *bufio.Scanner) 
 // Present displays a message to the user with the specified type and formatting
 func (c *ConsoleUI) Present(ctx context.Context, msgType MessageType, message string, args ...interface{}) error {
 	formattedMessage := c.formatMessage(msgType, message, args...)
-	
+
 	// Write to appropriate output stream based on message type
 	var writer OutputWriter
 	switch msgType {
@@ -45,7 +45,7 @@ func (c *ConsoleUI) Present(ctx context.Context, msgType MessageType, message st
 	default:
 		writer = c.stdout
 	}
-	
+
 	_, err := fmt.Fprint(writer, formattedMessage)
 	return err
 }
@@ -57,7 +57,7 @@ func (c *ConsoleUI) Prompt(ctx context.Context, question string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	
+
 	// Read user input
 	if !c.stdin.Scan() {
 		if err := c.stdin.Err(); err != nil {
@@ -65,14 +65,14 @@ func (c *ConsoleUI) Prompt(ctx context.Context, question string) (string, error)
 		}
 		return "", fmt.Errorf("no input received")
 	}
-	
+
 	return strings.TrimSpace(c.stdin.Text()), nil
 }
 
 // ShowProgress displays progress information for long-running operations
 func (c *ConsoleUI) ShowProgress(ctx context.Context, state ProgressState) error {
 	var progressStr string
-	
+
 	if state.Progress >= 0 {
 		// Determinate progress
 		if state.Total > 0 {
@@ -82,15 +82,16 @@ func (c *ConsoleUI) ShowProgress(ctx context.Context, state ProgressState) error
 		}
 	} else {
 		// Indeterminate progress
-		progressStr = "... "
+		progressStr = "→ "
 	}
-	
+
 	message := progressStr + state.Step
 	if state.Details != "" {
 		message += ": " + state.Details
 	}
-	
-	return c.Present(ctx, MessageTypeProgress, message+"\n")
+
+	_, err := fmt.Fprint(c.stdout, message+"\n")
+	return err
 }
 
 // ShowError displays an error message to the user
@@ -103,10 +104,22 @@ func (c *ConsoleUI) ShowSuccess(ctx context.Context, message string, args ...int
 	return c.Present(ctx, MessageTypeSuccess, message, args...)
 }
 
+// ShowHeader displays a section header to group related output
+func (c *ConsoleUI) ShowHeader(ctx context.Context, title string) error {
+	_, err := fmt.Fprintf(c.stdout, "\n%s\n", title)
+	return err
+}
+
+// ShowFileOperation displays a file operation (create, update, etc.) to the user
+func (c *ConsoleUI) ShowFileOperation(ctx context.Context, operation, filePath string) error {
+	_, err := fmt.Fprintf(c.stdout, "%12s  %s\n", operation, filePath)
+	return err
+}
+
 // formatMessage formats a message based on its type
 func (c *ConsoleUI) formatMessage(msgType MessageType, message string, args ...interface{}) string {
 	formatted := fmt.Sprintf(message, args...)
-	
+
 	switch msgType {
 	case MessageTypeSuccess:
 		return "✓ " + formatted

@@ -105,7 +105,10 @@ func runFeature(cmd *cobra.Command, args []string) error {
 	// 3. Copy files using utils.CopyDir from the main SkeletonFS
 	// Pass nil for excludePaths as we want to copy everything from the feature template source.
 	// Pass empty strings for placeholder/replacement dirs as feature template doesn't need cmd dir rename.
-	err = utils.CopyDir(petrock.SkeletonFS, skeletonSourcePath, destinationPath, "", "", nil)
+	fileCallback := func(operation, filePath string) {
+		cmdCtx.UI.ShowFileOperation(cmdCtx.Ctx, operation, filePath)
+	}
+	err = utils.CopyDir(petrock.SkeletonFS, skeletonSourcePath, destinationPath, "", "", nil, fileCallback)
 	if err != nil {
 		return fmt.Errorf("failed to copy feature skeleton from embedded FS path %s: %w", skeletonSourcePath, err)
 	}
@@ -191,6 +194,7 @@ func runFeature(cmd *cobra.Command, args []string) error {
 	if err := os.WriteFile(featuresFilePath, []byte(modifiedContent), fileMode); err != nil {
 		return fmt.Errorf("failed to write modified features file %s: %w", featuresFilePath, err)
 	}
+	cmdCtx.UI.ShowFileOperation(cmdCtx.Ctx, "update", featuresFilePath)
 
 	slog.Debug("Feature registration added successfully.", "file", featuresFilePath)
 

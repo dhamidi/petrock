@@ -51,6 +51,12 @@ type UI interface {
 
 	// ShowSuccess displays a success message to the user
 	ShowSuccess(ctx context.Context, message string, args ...interface{}) error
+
+	// ShowHeader displays a section header to group related output
+	ShowHeader(ctx context.Context, title string) error
+
+	// ShowFileOperation displays a file operation (create, update, etc.) to the user
+	ShowFileOperation(ctx context.Context, operation, filePath string) error
 }
 
 // OutputWriter interface abstracts the destination for UI output,

@@ -20,12 +20,16 @@ func EnsureDir(path string) error {
 	return nil
 }
 
+// FileOperationCallback is called when a file operation occurs
+type FileOperationCallback func(operation, filePath string)
+
 // CopyDir recursively copies content from an fs.FS (like embed.FS) starting at srcRoot
 // to a destination directory on the filesystem (dest).
 // It specifically handles renaming a subdirectory named 'cmd/dirPlaceholder'
 // under srcRoot to 'cmd/dirReplacement' under dest.
 // It also allows specifying paths within fsys (relative to its root) to exclude from copying.
-func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string, excludePaths []string) error {
+// The callback parameter is optional and will be called for each file operation.
+func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string, excludePaths []string, callback FileOperationCallback) error {
 	// Ensure the base destination directory exists
 	if err := EnsureDir(dest); err != nil {
 		return fmt.Errorf("failed to ensure destination directory %s: %w", dest, err)
@@ -123,6 +127,9 @@ func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string, e
 					return fmt.Errorf("failed to create target directory %s: %w", targetPath, err)
 				}
 				slog.Debug("Successfully created directory", "targetPath", targetPath)
+				if callback != nil {
+					callback("create", targetPath)
+				}
 			} else {
 				slog.Debug("Skipping directory creation for source root", "path", path)
 			}
@@ -135,6 +142,9 @@ func CopyDir(fsys fs.FS, srcRoot, dest, dirPlaceholder, dirReplacement string, e
 				return fmt.Errorf("failed to copy file from FS path %q to %q: %w", path, targetPath, err)
 			}
 			slog.Debug("Successfully copied file", "from", path, "to", targetPath)
+			if callback != nil {
+				callback("create", targetPath)
+			}
 		}
 		return nil
 	})
@@ -243,7 +253,7 @@ func ReplaceInFiles(rootDir string, replacements map[string]string) error {
 }
 
 // WriteFile writes byte content to a file, ensuring the parent directory exists.
-func WriteFile(path string, content []byte) error {
+func WriteFile(path string, content []byte, callback FileOperationCallback) error {
 	dir := filepath.Dir(path)
 	if err := EnsureDir(dir); err != nil {
 		return fmt.Errorf("failed to ensure directory %s for file %s: %w", dir, path, err)
@@ -252,6 +262,9 @@ func WriteFile(path string, content []byte) error {
 	err := os.WriteFile(path, content, 0644) // 0644 is standard permission for files
 	if err != nil {
 		return fmt.Errorf("failed to write file %s: %w", path, err)
+	}
+	if callback != nil {
+		callback("create", path)
 	}
 	return nil
 }

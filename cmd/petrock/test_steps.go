@@ -44,7 +44,7 @@ func (s *SetupTempDirStep) Execute(ctx *TestContext) *StepResult {
 		return result.MarkFailure(fmt.Errorf("failed to create temporary directory in %s: %w", s.baseDir, err))
 	}
 	
-	slog.Info("Testing in temporary directory", "path", tempDir)
+	slog.Debug("Testing in temporary directory", "path", tempDir)
 	result.AddLog("Created temporary directory: %s", tempDir)
 	
 	// Explicitly set permissions to 0755 as MkdirTemp defaults to 0700
@@ -116,7 +116,7 @@ func (s *CreateProjectStep) Execute(ctx *TestContext) *StepResult {
 	slog.Debug("Changed working directory", "path", ctx.TempDir)
 	
 	// Run 'petrock new' command
-	slog.Info("Running 'petrock new'", "project", s.projectName, "module", s.modulePath)
+	slog.Debug("Running 'petrock new'", "project", s.projectName, "module", s.modulePath)
 	result.AddLog("Creating project: %s with module path: %s", s.projectName, s.modulePath)
 	
 	// Execute the 'new' command logic directly
@@ -125,7 +125,7 @@ func (s *CreateProjectStep) Execute(ctx *TestContext) *StepResult {
 		return result.MarkFailure(fmt.Errorf("'petrock new' command failed during test: %w", err))
 	}
 	
-	slog.Info("'petrock new' completed successfully")
+	slog.Debug("'petrock new' completed successfully")
 	result.AddLog("Project created successfully")
 	
 	// Set project info in context
@@ -169,7 +169,7 @@ func (s *AddFeatureStep) Execute(ctx *TestContext) *StepResult {
 	result.AddLog("Changed to project directory: %s", projectAbsDir)
 	
 	// Run 'petrock feature' command
-	slog.Info("Running 'petrock feature'", "feature", s.featureName)
+	slog.Debug("Running 'petrock feature'", "feature", s.featureName)
 	result.AddLog("Adding feature: %s", s.featureName)
 	
 	featureArgs := []string{s.featureName}
@@ -177,7 +177,7 @@ func (s *AddFeatureStep) Execute(ctx *TestContext) *StepResult {
 		return result.MarkFailure(fmt.Errorf("'petrock feature %s' command failed during test: %w", s.featureName, err))
 	}
 	
-	slog.Info("'petrock feature' completed successfully")
+	slog.Debug("'petrock feature' completed successfully")
 	result.AddLog("Feature added successfully")
 	
 	return result.MarkSuccess()
@@ -201,7 +201,7 @@ func (s *BuildProjectStep) Execute(ctx *TestContext) *StepResult {
 	result := NewStepResult(s.Name())
 	
 	// Run 'go build ./...' to ensure the project builds after adding the feature
-	slog.Info("Running 'go build ./...' (after adding feature)")
+	slog.Debug("Running 'go build ./...' (after adding feature)")
 	result.AddLog("Building project with 'go build ./...'")
 	
 	buildCmd := exec.Command("go", "build", "./...")
@@ -217,7 +217,7 @@ func (s *BuildProjectStep) Execute(ctx *TestContext) *StepResult {
 	result.AddLog("Project built successfully")
 	
 	// Also build the server binary for later use
-	slog.Info("Building server binary for integration test")
+	slog.Debug("Building server binary for integration test")
 	result.AddLog("Building server binary")
 	
 	buildServerCmd := exec.Command("go", "build", "-o", ctx.ProjectName+"-server", "./cmd/"+ctx.ProjectName)
@@ -251,7 +251,7 @@ func (s *StartServerStep) Execute(ctx *TestContext) *StepResult {
 	result := NewStepResult(s.Name())
 	
 	// Start the server directly (no go run)
-	slog.Info("Starting web server for integration test")
+	slog.Debug("Starting web server for integration test")
 	result.AddLog("Starting server on port %s", s.port)
 	
 	serverCmd := exec.Command("./"+ctx.ProjectName+"-server", "serve", "--port", s.port)
@@ -269,7 +269,7 @@ func (s *StartServerStep) Execute(ctx *TestContext) *StepResult {
 	// Add cleanup function to terminate server
 	ctx.AddCleanup(func() error {
 		if ctx.ServerCmd != nil && ctx.ServerCmd.Process != nil {
-			slog.Info("Terminating test web server")
+			slog.Debug("Terminating test web server")
 			if err := ctx.ServerCmd.Process.Kill(); err != nil {
 				slog.Error("Failed to kill web server process", "error", err)
 				return err
@@ -281,7 +281,7 @@ func (s *StartServerStep) Execute(ctx *TestContext) *StepResult {
 	})
 	
 	// Wait a moment for the server to initialize
-	slog.Info("Waiting for server to initialize...")
+	slog.Debug("Waiting for server to initialize...")
 	result.AddLog("Waiting for server to initialize...")
 	time.Sleep(2 * time.Second)
 	
@@ -310,7 +310,7 @@ func (s *StopServerStep) Execute(ctx *TestContext) *StepResult {
 		return result.MarkFailure(fmt.Errorf("no server process to stop"))
 	}
 	
-	slog.Info("Stopping web server")
+	slog.Debug("Stopping web server")
 	result.AddLog("Stopping web server")
 	
 	if err := ctx.ServerCmd.Process.Kill(); err != nil {
@@ -349,7 +349,7 @@ func (s *HTTPGetStep) Execute(ctx *TestContext) *StepResult {
 	result := NewStepResult(s.Name())
 	
 	// Make an HTTP request
-	slog.Info("Testing HTTP endpoint", "url", s.url)
+	slog.Debug("Testing HTTP endpoint", "url", s.url)
 	result.AddLog("Making HTTP GET request to: %s", s.url)
 	
 	resp, err := http.Get(s.url)
@@ -363,7 +363,7 @@ func (s *HTTPGetStep) Execute(ctx *TestContext) *StepResult {
 		return result.MarkFailure(fmt.Errorf("unexpected status code: got %d, want %d", resp.StatusCode, s.expectedStatus))
 	}
 	
-	slog.Info("HTTP endpoint test successful", "status", resp.Status)
+	slog.Debug("HTTP endpoint test successful", "status", resp.Status)
 	result.AddLog("HTTP GET request successful, status: %s", resp.Status)
 	
 	return result.MarkSuccess()
@@ -397,10 +397,10 @@ func (s *HTTPPostStep) Execute(ctx *TestContext) *StepResult {
 	result := NewStepResult(s.Name())
 	
 	if s.shouldFail {
-		slog.Info("Testing invalid POST request with empty fields")
+		slog.Debug("Testing invalid POST request with empty fields")
 		result.AddLog("Testing POST request expected to fail with status %d", s.expectedStatus)
 	} else {
-		slog.Info("Testing valid POST request")
+		slog.Debug("Testing valid POST request")
 		result.AddLog("Testing POST request expected to succeed with status %d", s.expectedStatus)
 	}
 	
@@ -416,10 +416,10 @@ func (s *HTTPPostStep) Execute(ctx *TestContext) *StepResult {
 	}
 	
 	if s.shouldFail {
-		slog.Info("Invalid POST request test successful", "status", postResp.Status)
+		slog.Debug("Invalid POST request test successful", "status", postResp.Status)
 		result.AddLog("POST request correctly failed with status: %s", postResp.Status)
 	} else {
-		slog.Info("Valid POST request test successful", "status", postResp.Status)
+		slog.Debug("Valid POST request test successful", "status", postResp.Status)
 		result.AddLog("POST request successful with status: %s", postResp.Status)
 	}
 	
@@ -451,7 +451,7 @@ func (s *CommandAPIStep) Name() string {
 func (s *CommandAPIStep) Execute(ctx *TestContext) *StepResult {
 	result := NewStepResult(s.Name())
 	
-	slog.Info("Testing command API request with validation error")
+	slog.Debug("Testing command API request with validation error")
 	result.AddLog("Testing command API request expected to return status %d", s.expectedStatus)
 	
 	jsonData, err := json.Marshal(s.payload)
@@ -482,7 +482,7 @@ func (s *CommandAPIStep) Execute(ctx *TestContext) *StepResult {
 		}
 	}
 	
-	slog.Info("Command API request test successful", "status", cmdResp.Status)
+	slog.Debug("Command API request test successful", "status", cmdResp.Status)
 	result.AddLog("Command API request successful with status: %s", cmdResp.Status)
 	
 	return result.MarkSuccess()
@@ -506,7 +506,7 @@ func (s *SelfInspectStep) Execute(ctx *TestContext) *StepResult {
 	result := NewStepResult(s.Name())
 	
 	// Test the self inspect command
-	slog.Info("Testing 'self inspect' command")
+	slog.Debug("Testing 'self inspect' command")
 	result.AddLog("Running 'go run ./cmd/%s self inspect'", ctx.ProjectName)
 	
 	selfInspectCmd := exec.Command("go", "run", "./cmd/"+ctx.ProjectName, "self", "inspect")
@@ -518,14 +518,14 @@ func (s *SelfInspectStep) Execute(ctx *TestContext) *StepResult {
 	}
 	
 	// Verify the output is valid JSON
-	slog.Info("Verifying 'self inspect' output is valid JSON")
+	slog.Debug("Verifying 'self inspect' output is valid JSON")
 	result.AddLog("Validating JSON output from self inspect command")
 	
 	if err := validateInspectJSON(selfInspectOutput); err != nil {
 		return result.MarkFailure(err)
 	}
 	
-	slog.Info("'self inspect' command test successful")
+	slog.Debug("'self inspect' command test successful")
 	result.AddLog("Self inspect command validation successful")
 	
 	return result.MarkSuccess()

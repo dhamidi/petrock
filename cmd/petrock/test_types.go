@@ -119,7 +119,7 @@ func (tr *TestRunner) AddStep(step TestStep) {
 
 // RunStep executes a single step and returns its result
 func (tr *TestRunner) RunStep(step TestStep) *StepResult {
-	slog.Info("Starting test step", "step", step.Name())
+	slog.Debug("Starting test step", "step", step.Name())
 	cmdCtx.UI.ShowProgress(cmdCtx.Ctx, ui.ProgressState{
 		Step: step.Name(),
 		Progress: -1,
@@ -129,7 +129,7 @@ func (tr *TestRunner) RunStep(step TestStep) *StepResult {
 	tr.results = append(tr.results, result)
 	
 	if result.Success {
-		slog.Info("Test step completed successfully", 
+		slog.Debug("Test step completed successfully", 
 			"step", step.Name(), 
 			"duration", result.Duration)
 	} else {
@@ -144,7 +144,8 @@ func (tr *TestRunner) RunStep(step TestStep) *StepResult {
 
 // RunAllSteps executes all registered steps in order
 func (tr *TestRunner) RunAllSteps(ctx context.Context) error {
-	slog.Info("Starting test execution", "stepCount", len(tr.steps))
+	cmdCtx.UI.ShowHeader(cmdCtx.Ctx, "Running Integration Tests")
+	slog.Debug("Starting test execution", "stepCount", len(tr.steps))
 	
 	for _, step := range tr.steps {
 		select {
@@ -158,7 +159,7 @@ func (tr *TestRunner) RunAllSteps(ctx context.Context) error {
 		}
 	}
 	
-	slog.Info("All test steps completed successfully")
+	slog.Debug("All test steps completed successfully")
 	return nil
 }
 

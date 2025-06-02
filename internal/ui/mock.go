@@ -87,6 +87,16 @@ func (m *MockUI) ShowSuccess(ctx context.Context, message string, args ...interf
 	return m.Present(ctx, MessageTypeSuccess, message, args...)
 }
 
+// ShowHeader captures the header for later verification
+func (m *MockUI) ShowHeader(ctx context.Context, title string) error {
+	return m.Present(ctx, MessageTypeInfo, title)
+}
+
+// ShowFileOperation captures the file operation for later verification
+func (m *MockUI) ShowFileOperation(ctx context.Context, operation, filePath string) error {
+	return m.Present(ctx, MessageTypeInfo, "%s  %s", operation, filePath)
+}
+
 // GetMessages returns all captured messages
 func (m *MockUI) GetMessages() []CapturedMessage {
 	m.mu.RLock()
