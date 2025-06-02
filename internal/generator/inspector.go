@@ -17,10 +17,32 @@ type ComponentInspector interface {
 
 // InspectResult represents the JSON structure returned by self inspect
 type InspectResult struct {
-	Commands map[string][]string `json:"commands"`
-	Queries  map[string][]string `json:"queries"`
-	Workers  map[string][]string `json:"workers"`
-	Routes   []string            `json:"routes"`
+	Commands []CommandInfo `json:"commands"`
+	Queries  []QueryInfo   `json:"queries"`
+	Workers  []WorkerInfo  `json:"workers"`
+	Routes   []string      `json:"routes"`
+	Features []string      `json:"features"`
+}
+
+// CommandInfo represents a command in the inspect output
+type CommandInfo struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Type        string `json:"type"`
+}
+
+// QueryInfo represents a query in the inspect output
+type QueryInfo struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Type        string `json:"type"`
+}
+
+// WorkerInfo represents a worker in the inspect output
+type WorkerInfo struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Type        string `json:"type"`
 }
 
 // ComponentInspectorImpl implements ComponentInspector
@@ -74,7 +96,8 @@ func (ci *ComponentInspectorImpl) InspectExistingComponents() (*InspectResult, e
 	slog.Debug("Self inspect completed successfully", 
 		"commands", len(result.Commands),
 		"queries", len(result.Queries), 
-		"workers", len(result.Workers))
+		"workers", len(result.Workers),
+		"features", len(result.Features))
 	
 	return &result, nil
 }
@@ -86,18 +109,30 @@ func (ci *ComponentInspectorImpl) ComponentExists(componentType ComponentType, f
 		return false, err
 	}
 	
+	expectedName := fmt.Sprintf("%s/%s", featureName, entityName)
+	
 	switch componentType {
 	case ComponentTypeCommand:
-		if commands, exists := result.Commands[featureName]; exists {
-			return contains(commands, entityName), nil
+		for _, cmd := range result.Commands {
+			if cmd.Name == expectedName {
+				return true, nil
+			}
 		}
 	case ComponentTypeQuery:
-		if queries, exists := result.Queries[featureName]; exists {
-			return contains(queries, entityName), nil
+		for _, query := range result.Queries {
+			if query.Name == expectedName {
+				return true, nil
+			}
 		}
 	case ComponentTypeWorker:
-		if workers, exists := result.Workers[featureName]; exists {
-			return contains(workers, entityName), nil
+		// For workers, check if any worker exists for this feature
+		// since each feature typically has one worker infrastructure that handles multiple commands
+		for _, worker := range result.Workers {
+			// Workers are reported as individual command handlers (e.g., "posts/create")
+			// If any worker exists for this feature, the worker infrastructure already exists
+			if strings.HasPrefix(worker.Name, featureName+"/") {
+				return true, nil
+			}
 		}
 	default:
 		return false, fmt.Errorf("unknown component type: %s", componentType)

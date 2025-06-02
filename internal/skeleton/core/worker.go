@@ -148,6 +148,15 @@ func (w *CommandWorker) State() interface{} {
 	return w.state
 }
 
+// RegisteredCommands returns a list of command names this worker handles
+func (w *CommandWorker) RegisteredCommands() []string {
+	commands := make([]string, 0, len(w.handlers))
+	for commandName := range w.handlers {
+		commands = append(commands, commandName)
+	}
+	return commands
+}
+
 // SetDependencies sets the core dependencies needed by the worker
 func (w *CommandWorker) SetDependencies(log *MessageLog, executor *Executor, kvStore KVStore) {
 	w.log = log
