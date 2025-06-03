@@ -7,3 +7,4 @@
 /petrock
 /tmp/
 internal/skeleton/go.mod
+/repomix-output.*

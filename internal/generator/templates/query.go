@@ -11,7 +11,8 @@ type QueryFileMap map[string]string
 // QueryPlaceholders holds query-specific placeholder definitions
 type QueryPlaceholders struct {
 	FeatureName      string
-	EntityName       string
+	EntityName       string // Keep as snake_case for file names
+	EntityKebab      string // Add kebab-case version for query names
 	ModulePath       string
 	QueryStructName  string
 	QueryMethodName  string
@@ -51,20 +52,21 @@ func GetQueryReplacements(placeholders QueryPlaceholders) map[string]string {
 	// Start with more specific replacements first
 	replacements := map[string]string{}
 	
-	// Replace query path first (more specific)
+	// Use kebab-case for query paths in QueryName() method
 	replacements["petrock_example_feature_name/get"] = 
-		fmt.Sprintf("%s/%s", placeholders.FeatureName, placeholders.EntityName)
+		fmt.Sprintf("%s/%s", placeholders.FeatureName, placeholders.EntityKebab)
 	
 	// Then add general replacements
 	replacements["petrock_example_feature_name"] = placeholders.FeatureName
 	replacements["github.com/petrock/example_module_path"] = placeholders.ModulePath
 	replacements["{{feature}}"] = placeholders.FeatureName
-	replacements["{{entity}}"] = placeholders.EntityName
+	replacements["{{entity}}"] = placeholders.EntityName // snake_case for files
+	replacements["{{entity_kebab}}"] = placeholders.EntityKebab // kebab-case for names
 	replacements["{{module_path}}"] = placeholders.ModulePath
 
 	// Add query-specific replacements
 	replacements[fmt.Sprintf("petrock_example_feature_name/%s", placeholders.EntityName)] = 
-		fmt.Sprintf("%s/%s", placeholders.FeatureName, placeholders.EntityName)
+		fmt.Sprintf("%s/%s", placeholders.FeatureName, placeholders.EntityKebab)
 
 	// Add struct name replacements (e.g., GetQuery -> SearchPublishedQuery)
 	if placeholders.QueryStructName != "" {
@@ -86,7 +88,7 @@ func GetQueryReplacements(placeholders QueryPlaceholders) map[string]string {
 
 	// Also replace just the path part for QueryName method (after general replacement)
 	replacements[fmt.Sprintf("%s/get", placeholders.FeatureName)] = 
-		fmt.Sprintf("%s/%s", placeholders.FeatureName, placeholders.EntityName)
+		fmt.Sprintf("%s/%s", placeholders.FeatureName, placeholders.EntityKebab)
 
 	// Add package path replacements
 	if placeholders.QueryPackagePath != "" {
@@ -115,7 +117,8 @@ func BuildQueryPlaceholders(featureName, entityName, modulePath string) QueryPla
 
 	return QueryPlaceholders{
 		FeatureName:      featureName,
-		EntityName:       normalizedEntityName,
+		EntityName:       normalizedEntityName,    // For file names
+		EntityKebab:      entityName,              // Keep original kebab-case
 		ModulePath:       modulePath,
 		QueryStructName:  queryStructName,
 		QueryMethodName:  queryMethodName,

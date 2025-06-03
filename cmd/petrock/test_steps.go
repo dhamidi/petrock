@@ -5,12 +5,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -928,5 +930,108 @@ func (s *StopMCPServerStep) Execute(ctx *TestContext) *StepResult {
 		result.AddLog("MCP server was not running")
 	}
 	
+	return result.MarkSuccess()
+}
+
+// GenerateCommandStep represents a step that generates a new command
+type GenerateCommandStep struct {
+	featureName string
+	commandName string
+}
+
+// NewGenerateCommandStep creates a new generate command step
+func NewGenerateCommandStep(featureName, commandName string) *GenerateCommandStep {
+	return &GenerateCommandStep{
+		featureName: featureName,
+		commandName: commandName,
+	}
+}
+
+// Name returns the step name
+func (s *GenerateCommandStep) Name() string {
+	return "Generate Command"
+}
+
+// Execute generates a new command using petrock command
+func (s *GenerateCommandStep) Execute(ctx *TestContext) *StepResult {
+	result := NewStepResult(s.Name())
+	
+	// Log current directory for clarity
+	currentWd, _ := os.Getwd()
+	slog.Debug("Generating command in current directory", "path", currentWd)
+	result.AddLog("Generating command in directory: %s", currentWd)
+	
+	// Run 'petrock new command' command
+	commandPath := fmt.Sprintf("%s/%s", s.featureName, s.commandName)
+	slog.Debug("Running 'petrock new command'", "commandPath", commandPath)
+	result.AddLog("Generating command %s", commandPath)
+	
+	cmd := exec.Command("petrock", "new", "command", commandPath)
+	// No need to set cmd.Dir since we already changed to the project directory
+	
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		result.AddLog("Command output: %s", string(output))
+		return result.MarkFailure(fmt.Errorf("failed to generate command: %w", err))
+	}
+	
+	result.AddLog("Command generated successfully")
+	result.AddLog("Output: %s", string(output))
+	
+	return result.MarkSuccess()
+}
+
+// VerifyCommandRegistrationStep represents a step that verifies a command is registered
+type VerifyCommandRegistrationStep struct {
+	url         string
+	commandName string
+}
+
+// NewVerifyCommandRegistrationStep creates a new verify command registration step
+func NewVerifyCommandRegistrationStep(url, commandName string) *VerifyCommandRegistrationStep {
+	return &VerifyCommandRegistrationStep{
+		url:         url,
+		commandName: commandName,
+	}
+}
+
+// Name returns the step name
+func (s *VerifyCommandRegistrationStep) Name() string {
+	return "Verify Command Registration"
+}
+
+// Execute verifies that the generated command is registered in the command list
+func (s *VerifyCommandRegistrationStep) Execute(ctx *TestContext) *StepResult {
+	result := NewStepResult(s.Name())
+	
+	slog.Debug("Fetching command list", "url", s.url)
+	result.AddLog("Fetching command list from %s", s.url)
+	
+	resp, err := http.Get(s.url)
+	if err != nil {
+		return result.MarkFailure(fmt.Errorf("failed to fetch command list: %w", err))
+	}
+	defer resp.Body.Close()
+	
+	if resp.StatusCode != http.StatusOK {
+		return result.MarkFailure(fmt.Errorf("unexpected status code: %d", resp.StatusCode))
+	}
+	
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return result.MarkFailure(fmt.Errorf("failed to read response body: %w", err))
+	}
+	
+	bodyStr := string(body)
+	result.AddLog("Command list response: %s", bodyStr)
+	
+	// Check if the command name appears in the response
+	if !strings.Contains(bodyStr, s.commandName) {
+		result.AddLog("Looking for command: %s", s.commandName)
+		result.AddLog("Available commands in response: %s", bodyStr)
+		return result.MarkFailure(fmt.Errorf("command %s not found in command list response", s.commandName))
+	}
+	
+	result.AddLog("✓ Command %s found in registered commands", s.commandName)
 	return result.MarkSuccess()
 }

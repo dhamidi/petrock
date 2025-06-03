@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path/filepath"
 
 	"github.com/dhamidi/petrock/internal/ui"
 	"github.com/spf13/cobra"
@@ -32,19 +33,38 @@ func runTest(cmd *cobra.Command, args []string) error {
 	// Setup all test steps
 	setupTestSteps(runner)
 	
-	// Execute the steps and handle cleanup
-	defer ctx.RunCleanup()
-	
 	// Execute all steps
 	testCtx := context.Background()
+	testSuccess := true
+	var testErr error
+	
 	if err := runner.RunAllSteps(testCtx); err != nil {
+		testSuccess = false
+		testErr = err
 		reportFinalResults(runner, false)
-		return err
+	} else {
+		reportFinalResults(runner, true)
+		cmdCtx.UI.ShowSuccess(cmdCtx.Ctx, "\nSuccess! The generated project builds correctly and serves content.\n")
 	}
 	
-	reportFinalResults(runner, true)
-	cmdCtx.UI.ShowSuccess(cmdCtx.Ctx, "\nSuccess! The generated project builds correctly and serves content.\n")
-	return nil
+	// Handle cleanup based on test results
+	if testSuccess {
+		// Clean up on success
+		ctx.RunCleanup()
+	} else {
+		// On failure, skip cleanup and show project location for debugging
+		cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "\n🔍 Test failed - project preserved for debugging:")
+		if ctx.TempDir != "" {
+			cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "   Base directory: %s\n", ctx.TempDir)
+		}
+		if ctx.ProjectName != "" && ctx.TempDir != "" {
+			projectPath := filepath.Join(ctx.TempDir, ctx.ProjectName)
+			cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "   Project directory: %s\n", projectPath)
+		}
+		cmdCtx.UI.Present(cmdCtx.Ctx, ui.MessageTypeInfo, "\nTo clean up manually: rm -rf %s\n", ctx.TempDir)
+	}
+	
+	return testErr
 }
 
 // setupTestSteps configures all the test steps in the correct order
@@ -57,11 +77,18 @@ func setupTestSteps(runner *TestRunner) {
 	// Build steps
 	runner.AddStep(NewBuildProjectStep())
 	
+	// Test command generation and registration
+	runner.AddStep(NewGenerateCommandStep("posts", "schedule-publication"))
+	runner.AddStep(NewBuildProjectStep()) // Rebuild after generating command
+	
 	// Server steps
 	runner.AddStep(NewStartServerStep("8081"))
 	
 	// HTTP testing steps
 	runner.AddStep(NewHTTPGetStep("http://localhost:8081/posts", http.StatusOK))
+	
+	// Test command registration - verify generated command appears in command list
+	runner.AddStep(NewVerifyCommandRegistrationStep("http://localhost:8081/commands", "posts/schedule-publication"))
 	
 	// Test invalid POST request (empty fields should fail validation)
 	invalidFormData := url.Values{}
