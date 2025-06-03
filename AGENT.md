@@ -21,6 +21,13 @@
 - Logging: Use log/slog package for structured logging
 - Use cobra for CLI commands (see cmd/petrock/\*.go for examples)
 
+## Committing
+
+At the end of a task, instead of writing a lengthy summary message,
+create a conventional commit which includes the markdown summary in the commit message.
+
+Only include files that were actually touched during the task.
+
 ## Important project idiosyncracies
 
 The project uses template code in internal/skeleton.
@@ -115,4 +122,3 @@ When making changes, ignore backwards compatibility.
 - Import management: avoid unused imports like `. "maragu.dev/gomponents/components"` in form components
 - Gallery styling: use `ui.CSSClass()` directly as first argument to `html.Div()`, not wrapped in `html.Class()`
 - Component structure: TextInput/TextArea/Select props follow consistent pattern with Type, Placeholder, Value, ValidationState, Required, Disabled fields
-
