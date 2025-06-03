@@ -11,7 +11,8 @@ type CommandFileMap map[string]string
 // CommandPlaceholders holds command-specific placeholder definitions
 type CommandPlaceholders struct {
 	FeatureName        string
-	EntityName         string
+	EntityName         string // Keep as snake_case for file names
+	EntityKebab        string // Add kebab-case version for command names
 	ModulePath         string
 	CommandStructName  string
 	CommandMethodName  string
@@ -51,20 +52,21 @@ func GetCommandReplacements(placeholders CommandPlaceholders) map[string]string 
 	// Start with more specific replacements first
 	replacements := map[string]string{}
 	
-	// Replace command path first (more specific)
+	// Use kebab-case for command paths in CommandName() method
 	replacements["petrock_example_feature_name/create"] = 
-		fmt.Sprintf("%s/%s", placeholders.FeatureName, placeholders.EntityName)
+		fmt.Sprintf("%s/%s", placeholders.FeatureName, placeholders.EntityKebab)
 	
 	// Then add general replacements
 	replacements["petrock_example_feature_name"] = placeholders.FeatureName
 	replacements["github.com/petrock/example_module_path"] = placeholders.ModulePath
 	replacements["{{feature}}"] = placeholders.FeatureName
-	replacements["{{entity}}"] = placeholders.EntityName
+	replacements["{{entity}}"] = placeholders.EntityName // snake_case for files
+	replacements["{{entity_kebab}}"] = placeholders.EntityKebab // kebab-case for names
 	replacements["{{module_path}}"] = placeholders.ModulePath
 
 	// Add command-specific replacements
 	replacements[fmt.Sprintf("petrock_example_feature_name/%s", placeholders.EntityName)] = 
-		fmt.Sprintf("%s/%s", placeholders.FeatureName, placeholders.EntityName)
+		fmt.Sprintf("%s/%s", placeholders.FeatureName, placeholders.EntityKebab)
 
 	// Add struct name replacements (e.g., CreateCommand -> SchedulePublicationCommand)
 	if placeholders.CommandStructName != "" {
@@ -80,7 +82,7 @@ func GetCommandReplacements(placeholders CommandPlaceholders) map[string]string 
 
 	// Also replace just the path part for CommandName method (after general replacement)
 	replacements[fmt.Sprintf("%s/create", placeholders.FeatureName)] = 
-		fmt.Sprintf("%s/%s", placeholders.FeatureName, placeholders.EntityName)
+		fmt.Sprintf("%s/%s", placeholders.FeatureName, placeholders.EntityKebab)
 
 	// Add package path replacements
 	if placeholders.CommandPackagePath != "" {
@@ -106,7 +108,8 @@ func BuildCommandPlaceholders(featureName, entityName, modulePath string) Comman
 
 	return CommandPlaceholders{
 		FeatureName:        featureName,
-		EntityName:         normalizedEntityName,
+		EntityName:         normalizedEntityName,    // For file names
+		EntityKebab:        entityName,              // Keep original kebab-case
 		ModulePath:         modulePath,
 		CommandStructName:  commandStructName,
 		CommandMethodName:  commandMethodName,

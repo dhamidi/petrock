@@ -91,7 +91,12 @@ func (qg *QueryGenerator) GenerateQueryComponentWithFields(featureName, entityNa
 	}
 
 	// Extract query files
-	return qg.ExtractQueryFiles(featureName, entityName, extractOptions)
+	if err := qg.ExtractQueryFiles(featureName, entityName, extractOptions); err != nil {
+		return err
+	}
+
+	// Register the query in main.go
+	return qg.registerQueryInMainFile(featureName, entityName, targetDir, modulePath)
 }
 
 // ExtractQueryFilesWithFields extracts query files and modifies them with custom fields using the editor
@@ -233,6 +238,52 @@ func (qg *QueryGenerator) modifyItemResultWithFields(content string, options Ext
 	}
 
 	return editor.String(), nil
+}
+
+// registerQueryInMainFile adds the registration line for a new query to the feature's main.go file
+func (qg *QueryGenerator) registerQueryInMainFile(featureName, entityName, targetDir, modulePath string) error {
+	slog.Debug("Registering query in main.go", 
+		"feature", featureName, 
+		"entity", entityName)
+
+	// Build the query placeholders
+	placeholders := templates.BuildQueryPlaceholders(featureName, entityName, modulePath)
+	
+	// Path to the main.go file
+	mainFilePath := filepath.Join(targetDir, featureName, "main.go")
+	
+	// Read the main.go file
+	content, err := os.ReadFile(mainFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read main.go file %s: %w", mainFilePath, err)
+	}
+
+	// Generate the registration line
+	registrationLine := fmt.Sprintf("\tapp.QueryRegistry.Register(queries.%s{}, featureQuerier.%s)", 
+		placeholders.QueryStructName, placeholders.QueryMethodName)
+
+	editor := ed.New(string(content))
+	
+	// Find the end of the query registration block by looking for the comment about message types
+	err = editor.Do(
+		ed.BeginningOfBuffer(),
+		ed.Search("// --- 6. Register Message Types for Decoding ---"),
+		ed.SetMark(),
+		ed.ForwardChar(0), // Stay at current position
+		ed.ReplaceRegion(registrationLine+"\n\n\t"),
+	)
+	
+	if err != nil {
+		return fmt.Errorf("failed to insert query registration: %w", err)
+	}
+
+	// Write the modified content back
+	if err := os.WriteFile(mainFilePath, []byte(editor.String()), 0644); err != nil {
+		return fmt.Errorf("failed to write modified main.go file %s: %w", mainFilePath, err)
+	}
+
+	slog.Debug("Successfully registered query in main.go", "file", mainFilePath, "query", placeholders.QueryStructName)
+	return nil
 }
 
 // ValidateQueryStructure validates the generated query structure

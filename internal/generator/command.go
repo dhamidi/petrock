@@ -92,7 +92,12 @@ func (cg *CommandGenerator) GenerateCommandComponentWithFields(featureName, enti
 	}
 
 	// Extract command files
-	return cg.ExtractCommandFiles(featureName, entityName, extractOptions)
+	if err := cg.ExtractCommandFiles(featureName, entityName, extractOptions); err != nil {
+		return err
+	}
+
+	// Register the command in main.go
+	return cg.registerCommandInMainFile(featureName, entityName, targetDir, modulePath)
 }
 
 // ExtractCommandFilesWithFields extracts command files and modifies them with custom fields using the editor
@@ -206,6 +211,64 @@ func (cg *CommandGenerator) modifyCommandStructWithFields(content string, option
 	}
 
 	return editor.String(), nil
+}
+
+// registerCommandInMainFile adds the registration line for a new command to the feature's main.go file
+func (cg *CommandGenerator) registerCommandInMainFile(featureName, entityName, targetDir, modulePath string) error {
+	slog.Debug("Registering command in main.go", 
+		"feature", featureName, 
+		"entity", entityName)
+
+	// Build the command placeholders
+	placeholders := templates.BuildCommandPlaceholders(featureName, entityName, modulePath)
+	
+	// Path to the main.go file
+	mainFilePath := filepath.Join(targetDir, featureName, "main.go")
+	
+	// Read the main.go file
+	content, err := os.ReadFile(mainFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read main.go file %s: %w", mainFilePath, err)
+	}
+
+	// Generate the registration line
+	registrationLine := fmt.Sprintf("\tapp.CommandRegistry.Register(&commands.%s{}, featureExecutor.%s, featureExecutor)", 
+		placeholders.CommandStructName, placeholders.CommandMethodName)
+
+	editor := ed.New(string(content))
+	
+	// Find the command registration section and add the new registration
+	// Look for the last command registration line and add after it
+	err = editor.Do(
+		ed.BeginningOfBuffer(),
+		ed.Search("app.CommandRegistry.Register"),
+		// Find the last command registration by searching for all of them
+	)
+	
+	if err != nil {
+		return fmt.Errorf("failed to find command registration section in main.go: %w", err)
+	}
+
+	// Find the end of the command registration block by looking for the comment about query handlers
+	err = editor.Do(
+		ed.BeginningOfBuffer(),
+		ed.Search("// --- 5. Register Core Query Handlers ---"),
+		ed.SetMark(),
+		ed.ForwardChar(0), // Stay at current position
+		ed.ReplaceRegion(registrationLine+"\n\n\t"),
+	)
+	
+	if err != nil {
+		return fmt.Errorf("failed to insert command registration: %w", err)
+	}
+
+	// Write the modified content back
+	if err := os.WriteFile(mainFilePath, []byte(editor.String()), 0644); err != nil {
+		return fmt.Errorf("failed to write modified main.go file %s: %w", mainFilePath, err)
+	}
+
+	slog.Debug("Successfully registered command in main.go", "file", mainFilePath, "command", placeholders.CommandStructName)
+	return nil
 }
 
 // ValidateCommandStructure validates the generated command structure

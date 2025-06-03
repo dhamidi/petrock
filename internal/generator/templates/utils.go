@@ -60,6 +60,11 @@ func kebabToSnakeCase(input string) string {
 	return strings.ReplaceAll(input, "-", "_")
 }
 
+// snakeToKebabCase converts snake_case to kebab-case (e.g., "schedule_publication" -> "schedule-publication")
+func snakeToKebabCase(input string) string {
+	return strings.ReplaceAll(input, "_", "-")
+}
+
 // isValidKebabName checks if a name follows kebab-case naming pattern
 func isValidKebabName(name string) bool {
 	if len(name) == 0 {
