@@ -108,7 +108,8 @@ func FormGroupWithValidation(formData *FormData, fieldName, label string, input 
 	}
 
 	var errorText string
-	if formData.HasError(fieldName) {
+	hasError := formData.HasError(fieldName)
+	if hasError {
 		errorText = formData.GetError(fieldName)
 	}
 

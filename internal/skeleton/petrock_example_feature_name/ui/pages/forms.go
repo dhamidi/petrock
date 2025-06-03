@@ -8,6 +8,15 @@ import (
 
 // EditForm renders an HTML <form> for creating or editing an item.
 func EditForm(form interface{}, item *Result, csrfToken string) g.Node {
+	// Cast the form to FormData
+	var formData *ui.FormData
+	if fd, ok := form.(*ui.FormData); ok {
+		formData = fd
+	} else {
+		// Create empty form data if not provided
+		formData = ui.NewFormData(nil, nil)
+	}
+
 	// Determine if we're editing (item != nil) or creating (item == nil)
 	isNewItem := item == nil
 	formTitle := "Create New Item"
@@ -59,53 +68,38 @@ func EditForm(form interface{}, item *Result, csrfToken string) g.Node {
 					// CSRF protection
 					ui.CSRFInput(csrfToken),
 					
-					// Form fields
-					ui.FormGroup(ui.FormGroupProps{
-						Label:    "Name",
-						HelpText: "A unique name for this item",
-						Required: true,
-						ID:       "name",
-					},
-						ui.TextInput(ui.TextInputProps{
-							ID:          "name",
+					// Form fields with validation
+					ui.FormGroupWithValidation(formData, "name", "Name",
+						ui.TextInputWithValidation(formData, ui.TextInputProps{
 							Name:        "name",
 							Type:        "text",
 							Value:       itemName,
 							Placeholder: "Enter item name",
 							Required:    true,
 						}),
+						"A unique name for this item",
 					),
 
-					ui.FormGroup(ui.FormGroupProps{
-						Label:    "Description",
-						HelpText: "A brief description of this item",
-						Required: true,
-						ID:       "description",
-					},
-						ui.TextArea(ui.TextAreaProps{
-							ID:          "description",
+					ui.FormGroupWithValidation(formData, "description", "Description",
+						ui.TextAreaWithValidation(formData, ui.TextAreaProps{
 							Name:        "description",
 							Value:       itemDescription,
 							Placeholder: "Enter item description",
 							Rows:        3,
 							Required:    true,
 						}),
+						"A brief description of this item",
 					),
 
-					ui.FormGroup(ui.FormGroupProps{
-						Label:    "Content",
-						HelpText: "The main content for this item. A summary will be automatically generated.",
-						Required: true,
-						ID:       "content",
-					},
-						ui.TextArea(ui.TextAreaProps{
-							ID:          "content",
+					ui.FormGroupWithValidation(formData, "content", "Content",
+						ui.TextAreaWithValidation(formData, ui.TextAreaProps{
 							Name:        "content",
 							Value:       itemContent,
 							Placeholder: "Enter item content",
 							Rows:        6,
 							Required:    true,
 						}),
+						"The main content for this item. A summary will be automatically generated.",
 					),
 					
 					// Form actions

@@ -15,10 +15,7 @@ func registerWebRoutes(app *core.App, deps *handlers.FeatureServer) {
 	// GET /petrock_example_feature_name/ - List items
 	app.RegisterRoute("GET "+featurePrefix+"/", deps.HandleListItems)
 
-	// GET /petrock_example_feature_name/{id} - View a specific item
-	// Note: Go 1.22+ required for path parameters in ServeMux patterns
-	app.RegisterRoute("GET "+featurePrefix+"/{id}", deps.HandleGetItem)
-
+	// Register specific routes before parameterized routes to avoid conflicts
 	// GET /petrock_example_feature_name/new - Show form for creating a new item
 	app.RegisterRoute("GET "+featurePrefix+"/new", deps.HandleNewForm)
 
@@ -36,4 +33,9 @@ func registerWebRoutes(app *core.App, deps *handlers.FeatureServer) {
 
 	// POST /petrock_example_feature_name/{id}/delete - Process the deletion
 	app.RegisterRoute("POST "+featurePrefix+"/"+"{id}/delete", deps.HandleDeleteConfirm)
+
+	// GET /petrock_example_feature_name/{id} - View a specific item
+	// Note: Go 1.22+ required for path parameters in ServeMux patterns
+	// This must be registered last as it's the most general pattern
+	app.RegisterRoute("GET "+featurePrefix+"/{id}", deps.HandleGetItem)
 }

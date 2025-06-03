@@ -36,7 +36,7 @@ func (fs *FeatureServer) HandleNewForm(w http.ResponseWriter, r *http.Request) {
 // HandleCreateForm handles requests to create a new item from a form submission.
 // Example route: POST /petrock_example_feature_name/new
 func (fs *FeatureServer) HandleCreateForm(w http.ResponseWriter, r *http.Request) {
-	slog.Debug("HandleCreateForm called", "feature", "petrock_example_feature_name")
+	slog.Debug("HandleCreateForm called", "feature", "petrock_example_feature_name", "method", r.Method, "url", r.URL.String())
 
 	// Parse the form
 	if err := r.ParseForm(); err != nil {
@@ -45,9 +45,13 @@ func (fs *FeatureServer) HandleCreateForm(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	slog.Debug("Form parsed successfully", "postForm", r.PostForm, "form", r.Form)
+
 	// Create the command and parse from form data
 	var cmd commands.CreateCommand
+	slog.Debug("Attempting to parse command from form data", "postForm", r.PostForm)
 	if err := core.ParseFromURLValues(r.PostForm, &cmd); err != nil {
+		slog.Error("Failed to parse command from form data", "error", err, "postForm", r.PostForm)
 		// Handle validation errors
 		if parseErrors, ok := err.(*core.ParseErrors); ok {
 			// Convert ParseErrors to ui.ParseError format
@@ -85,9 +89,13 @@ func (fs *FeatureServer) HandleCreateForm(w http.ResponseWriter, r *http.Request
 	cmd.CreatedBy = "user" // Replace with actual user ID if authentication is implemented
 	cmd.CreatedAt = time.Now().UTC()
 
+	slog.Debug("Command parsed successfully", "command", cmd)
+
 	// Execute the command
+	slog.Debug("Executing command", "command", cmd)
 	err := fs.app.Executor.Execute(r.Context(), &cmd)
 	if err != nil {
+		slog.Error("Command execution failed", "error", err, "command", cmd)
 		// Check if it's a validation error
 		if strings.Contains(err.Error(), "validation failed") || strings.Contains(err.Error(), "already exists") {
 			// Create FormData with validation error
@@ -118,11 +126,15 @@ func (fs *FeatureServer) HandleCreateForm(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	slog.Debug("Command executed successfully", "command", cmd)
+
 	// Set a success message in session (this would be implemented with a real session mechanism)
 	// For now, we'll use a direct redirect, but in a real implementation you would:
 	// session.SetFlash("success", "Item created successfully")
 
 	// Redirect to the list view on success
-	w.Header().Set("Location", "/petrock_example_feature_name?success=created")
+	redirectURL := "/petrock_example_feature_name?success=created"
+	slog.Debug("Redirecting to list view", "url", redirectURL)
+	w.Header().Set("Location", redirectURL)
 	w.WriteHeader(http.StatusSeeOther) // 303 See Other
 }
