@@ -49,6 +49,11 @@ func (f *FormData) Get(key string) string {
 	return f.Values.Get(key)
 }
 
+// HasValues returns true if the FormData contains any form values
+func (f *FormData) HasValues() bool {
+	return f.Values != nil && len(f.Values) > 0
+}
+
 // NewFormData creates a new FormData instance
 func NewFormData(values url.Values, errors []ParseError) *FormData {
 	return &FormData{

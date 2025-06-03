@@ -73,7 +73,12 @@ func EditForm(form interface{}, item *Result, csrfToken string) g.Node {
 						ui.TextInputWithValidation(formData, ui.TextInputProps{
 							Name:        "name",
 							Type:        "text",
-							Value:       itemName,
+							Value:       func() string {
+								if formData.HasValues() {
+									return ""  // Let validation function use form data
+								}
+								return itemName
+							}(),
 							Placeholder: "Enter item name",
 							Required:    true,
 						}),
@@ -83,7 +88,12 @@ func EditForm(form interface{}, item *Result, csrfToken string) g.Node {
 					ui.FormGroupWithValidation(formData, "description", "Description",
 						ui.TextAreaWithValidation(formData, ui.TextAreaProps{
 							Name:        "description",
-							Value:       itemDescription,
+							Value:       func() string {
+								if formData.HasValues() {
+									return ""  // Let validation function use form data
+								}
+								return itemDescription
+							}(),
 							Placeholder: "Enter item description",
 							Rows:        3,
 							Required:    true,
@@ -94,7 +104,12 @@ func EditForm(form interface{}, item *Result, csrfToken string) g.Node {
 					ui.FormGroupWithValidation(formData, "content", "Content",
 						ui.TextAreaWithValidation(formData, ui.TextAreaProps{
 							Name:        "content",
-							Value:       itemContent,
+							Value:       func() string {
+								if formData.HasValues() {
+									return ""  // Let validation function use form data
+								}
+								return itemContent
+							}(),
 							Placeholder: "Enter item content",
 							Rows:        6,
 							Required:    true,
