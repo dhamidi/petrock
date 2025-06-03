@@ -89,6 +89,29 @@ func ItemsListView(result ListResult) g.Node {
 								ui.CSSClass("text-gray-700", "text-sm", "mb-4"),
 								g.Text(item.Description),
 							),
+							// Content preview
+							func() g.Node {
+								if item.Content == "" {
+									return nil
+								}
+								// Truncate content for preview (first 150 characters)
+								contentPreview := item.Content
+								if len(contentPreview) > 150 {
+									contentPreview = contentPreview[:150] + "..."
+								}
+								return html.Div(
+									ui.CSSClass("border-t", "border-gray-100", "pt-3", "mb-3"),
+									html.H4(
+										ui.CSSClass("text-xs", "font-medium", "text-gray-500", "mb-1"),
+										g.Text("Content"),
+									),
+									html.P(
+										ui.CSSClass("text-sm", "text-gray-600", "bg-gray-50", "p-2", "rounded", "whitespace-pre-wrap"),
+										g.Text(contentPreview),
+									),
+								)
+							}(),
+							// Summary (if available)
 							func() g.Node {
 								if item.Summary == "" {
 									return nil

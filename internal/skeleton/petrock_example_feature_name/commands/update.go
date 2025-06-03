@@ -21,6 +21,7 @@ type UpdateCommand struct {
 	ID          string    `json:"id" validate:"required"` // ID of the entity to update
 	Name        string    `json:"name" validate:"required,minlen=2,maxlen=100"`
 	Description string    `json:"description" validate:"required,minlen=5,maxlen=500"`
+	Content     string    `json:"content" validate:"required,minlen=10"`
 	UpdatedBy   string    `json:"updated_by"`
 	UpdatedAt   time.Time `json:"updated_at"` // Timestamp when updated
 }
@@ -36,6 +37,7 @@ func (c *UpdateCommand) Validate(state *state.State) error {
 	trimmedID := strings.TrimSpace(c.ID)
 	trimmedName := strings.TrimSpace(c.Name)
 	trimmedDescription := strings.TrimSpace(c.Description)
+	trimmedContent := strings.TrimSpace(c.Content)
 
 	// Basic stateless validation
 	if trimmedID == "" {
@@ -48,6 +50,10 @@ func (c *UpdateCommand) Validate(state *state.State) error {
 
 	if trimmedDescription == "" {
 		return errors.New("item description cannot be empty")
+	}
+
+	if trimmedContent == "" {
+		return errors.New("item content cannot be empty")
 	}
 
 	// Example stateful validation: Check if the item exists
@@ -92,6 +98,7 @@ func (e *Executor) HandleUpdate(ctx context.Context, command core.Command, msg *
 	// Update the item properties
 	existingItem.Name = cmd.Name
 	existingItem.Description = cmd.Description
+	existingItem.Content = cmd.Content
 	existingItem.UpdatedAt = getTimestamp(msg)
 	existingItem.Version++
 	
