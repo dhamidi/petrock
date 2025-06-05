@@ -14,7 +14,7 @@ Petrock acts purely as a **code generator**. It creates files based on templates
 
 - **No Runtime Dependency:** Applications built with Petrock *do not* depend on Petrock itself at runtime. This favors code generation over adding external framework dependencies to your project.
 - **Opinionated Structure:** It generates a specific project structure and technology stack based on these core ideas:
-    - *Event Sourcing / Intent Capture:* The system logs user intent (commands) first and derives application state later, providing auditability and flexibility.
+    - *Command Sourcing / Intent Capture:* The system logs user intent (commands) first and derives application state later, providing auditability and flexibility.
     - *Simplicity:* It aims to keep the number of moving pieces low, using standard Go libraries and well-established tools like SQLite and Gomponents.
 - **Git Integration:** Petrock refuses to run if your Git working directory is not clean (no uncommitted changes). It automatically creates Git commits after generating code, ensuring changes are tracked. You can always revert unwanted changes using Git.
 - **AI Ready:** Petrock is designed with AI-assisted development in mind:
