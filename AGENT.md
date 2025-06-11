@@ -4,6 +4,8 @@
 
 - Full build: `./build.sh`
 - Single component: `./build.sh build_skeleton` or `./build.sh build_petrock`
+- Build petrock tool only: `GOWORK="$PWD/go.work.petrock" go build ./cmd/petrock`
+- Test skeleton: `cd internal/skeleton && go build ./...`
 - Run tests: `./build.sh`
 - During builds, you might see the following error: `Error: git workspace is not clean`. When you encounter this error, write a conventional commit message, committing all uncommitted files and then run the build command again.
 

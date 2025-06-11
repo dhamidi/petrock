@@ -210,6 +210,7 @@ func (s *BuildProjectStep) Execute(ctx *TestContext) *StepResult {
 	buildCmd := exec.Command("go", "build", "./...")
 	buildCmd.Stdout = os.Stdout // Pipe output to user
 	buildCmd.Stderr = os.Stderr // Pipe errors to user
+	buildCmd.Env = append(os.Environ(), "GOWORK=off")
 	// No need to set buildCmd.Dir, as we are already in the correct directory
 	
 	if err := buildCmd.Run(); err != nil {
@@ -224,6 +225,7 @@ func (s *BuildProjectStep) Execute(ctx *TestContext) *StepResult {
 	result.AddLog("Building server binary")
 	
 	buildServerCmd := exec.Command("go", "build", "-o", ctx.ProjectName+"-server", "./cmd/"+ctx.ProjectName)
+	buildServerCmd.Env = append(os.Environ(), "GOWORK=off")
 	if err := buildServerCmd.Run(); err != nil {
 		return result.MarkFailure(fmt.Errorf("failed to build server binary: %w", err))
 	}
@@ -513,6 +515,7 @@ func (s *SelfInspectStep) Execute(ctx *TestContext) *StepResult {
 	result.AddLog("Running 'go run ./cmd/%s self inspect'", ctx.ProjectName)
 	
 	selfInspectCmd := exec.Command("go", "run", "./cmd/"+ctx.ProjectName, "self", "inspect")
+	selfInspectCmd.Env = append(os.Environ(), "GOWORK=off")
 	
 	// Capture the command output
 	selfInspectOutput, err := selfInspectCmd.Output()

@@ -62,7 +62,8 @@ step() {
 }
 
 build_skeleton() {
-  cp internal/skeleton/go.mod{.skel,} && (
+  cp internal/skeleton/go.mod{.skel,}
+  (
     cd internal/skeleton
     go test ./...
     go build ./...
@@ -71,6 +72,7 @@ build_skeleton() {
 
 build_petrock() {
   rm -f internal/skeleton/go.mod # to allow go:embed to do its work
+  export GOWORK="$PWD/go.work.petrock"
   go build ./cmd/...
   go install ./cmd/petrock
 }

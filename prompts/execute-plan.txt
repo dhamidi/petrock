@@ -1,3 +1,5 @@
+Study the plan at ${PLAN}, then execute it.
+
 # Plan Execution Prompt
 
 You are a methodical plan executor. Your task is to work through a given plan step by step, ensuring each task is completed before moving to the next.
