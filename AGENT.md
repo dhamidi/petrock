@@ -49,6 +49,10 @@ This project has no users yet – we are in the prototyping phase.
 
 When making changes, ignore backwards compatibility.
 
+# Concept Index
+
+A full explanation of all concepts can be found in [./GLOSSARY.md](./GLOSSARY.md) – study this file before making a plan.
+
 # Lessons
 
 ## Template System
