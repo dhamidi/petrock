@@ -9,6 +9,43 @@
 - Run tests: `./build.sh`
 - During builds, you might see the following error: `Error: git workspace is not clean`. When you encounter this error, write a conventional commit message, committing all uncommitted files and then run the build command again.
 
+## Working in Skeleton Directory
+
+When making changes directly in `internal/skeleton/`, follow these steps:
+
+1. **Ensure go.mod exists**: The skeleton directory needs its own go.mod file for Go commands to work:
+   ```bash
+   cd internal/skeleton
+   # If go.mod doesn't exist, copy it from the template
+   cp go.mod.skel go.mod
+   ```
+
+2. **Standard Go commands work**: Once go.mod is present, you can use normal Go commands:
+   ```bash
+   cd internal/skeleton
+   go build ./...          # Build all packages
+   go test ./...           # Run tests
+   go mod tidy             # Clean up dependencies
+   go run ./cmd/petrock_example_project_name serve  # Run the template app
+   ```
+
+3. **Module resolution**: The workspace automatically resolves the placeholder import `github.com/petrock/example_module_path` to the local skeleton directory via the replace directive.
+
+4. **After skeleton changes**: When you've finished making changes to skeleton code:
+   ```bash
+   # Return to project root
+   cd ../..
+   # Rebuild petrock to embed your changes
+   ./build.sh build_petrock
+   ```
+
+5. **Testing skeleton changes**: Generate a test project to verify your skeleton modifications:
+   ```bash
+   petrock new test-project github.com/example/test-project
+   cd test-project
+   GOWORK=off go build ./...  # Verify generated project compiles
+   ```
+
 ## Lint Commands
 
 - Lint specific files: `./lint.sh file1.go file2.go`
